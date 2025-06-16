@@ -42,6 +42,12 @@ public class PacketHandler {
                 ModifyAttributePacket::encode,
                 ModifyAttributePacket::decode,
                 ModifyAttributePacket::handle);
+
+        INSTANCE.registerMessage(id++,
+                UpdatePointsPacket.class,
+                UpdatePointsPacket::encode,
+                UpdatePointsPacket::decode,
+                UpdatePointsPacket::handle);
     }
 
     private static int nextId() {

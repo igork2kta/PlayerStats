@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 public class StatsScreen extends Screen {
 
@@ -22,40 +23,47 @@ public class StatsScreen extends Screen {
         super(Component.literal("Player Stats"));
     }
 
-
+    private static final ResourceLocation BACKGROUND = new ResourceLocation("playerstats", "textures/gui/stats_background.png");
+    private static final int BG_WIDTH = 160;
+    private static final int BG_HEIGHT = 120;
+    private int leftPos;
+    private int topPos;
 
     @Override
     protected void init() {
         super.init();
-        double increment;
+
+        this.leftPos = (this.width - BG_WIDTH) / 2;
+        this.topPos = (this.height - BG_HEIGHT) / 2;
+
         Player player = Minecraft.getInstance().player;
+        Font font = Minecraft.getInstance().font;
+
         if (player == null) return;
 
-        int y = 20;
+        int y = topPos + 25;
         for (AttributeInstance attr : player.getAttributes().getSyncableAttributes()) {
             Attribute attribute = attr.getAttribute();
             String name = Component.translatable(attribute.getDescriptionId()).getString();
+            String value = String.format("%.2f", attr.getValue());
 
-            String attributeName = Component.translatable(attribute.getDescriptionId()).getString();
-
-            if(attributeName == "Max Health") increment = 1;
-            else increment = 0.01;
-
+            double increment = name.equals("Max Health") ? 1 : 0.01;
             double finalIncrement = increment;
-
-            // Botão +
-
-            addRenderableWidget(Button.builder(Component.literal("+"), btn -> {
-                sendAttributeChange(attribute, finalIncrement);
-            }).bounds(20, y +3, 10, 10).build());
 
             // Botão -
             addRenderableWidget(Button.builder(Component.literal("-"), btn -> {
-                sendAttributeChange(attribute, finalIncrement*-1);
-            }).bounds(35, y +3, 10, 10).build());
+                sendAttributeChange(attribute, -finalIncrement);
+            }).bounds(leftPos + 10, y, 12, 12).build());
+
+            // Botão +
+            addRenderableWidget(Button.builder(Component.literal("+"), btn -> {
+                sendAttributeChange(attribute, finalIncrement);
+            }).bounds(leftPos + 26, y, 12, 12).build());
 
             y += 15;
         }
+
+
     }
 
 
@@ -73,23 +81,30 @@ public class StatsScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(guiGraphics);
+        RenderSystem.setShaderTexture(0, BACKGROUND);
+        guiGraphics.blit(BACKGROUND, leftPos, topPos, 0, 0, BG_WIDTH, BG_HEIGHT);
+
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
         Player player = Minecraft.getInstance().player;
+        Font font = Minecraft.getInstance().font;
         if (player == null) return;
 
-        Font font = Minecraft.getInstance().font;
-        int y = 25;
+        int points = ClientAttributeCache.getPoints();
+
+        int y = topPos + 13;
+        guiGraphics.drawString(font,"Pontos disponíveis: " + points, leftPos + 10, y, 0xFFFFFF);
+        y += 13;
         for (AttributeInstance attr : player.getAttributes().getSyncableAttributes()) {
             Attribute attribute = attr.getAttribute();
             String name = Component.translatable(attribute.getDescriptionId()).getString();
             String value = String.format("%.2f", attr.getValue());
 
-            // Texto ao lado dos botões
-            guiGraphics.drawString(font, name + ": " + value, 50, y, 0xFFFFFF);
+            guiGraphics.drawString(font, name + ": " + value, leftPos + 45, y, 0xFFFFFF);
             y += 15;
         }
     }
+
 
 
     @Override

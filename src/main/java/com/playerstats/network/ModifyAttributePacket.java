@@ -38,12 +38,18 @@ public class ModifyAttributePacket {
                 Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
 
                 if (attr != null) {
+
                     AttributeInstance instance = player.getAttribute(attr);
-                    if (instance != null) {
+                    int points = PlayerAttributePersistence.getPoints(player);
+                    if (instance != null && points > 0) {
+
                         double newValue = instance.getBaseValue() + msg.amount;
                         instance.setBaseValue(newValue);
                         System.out.println("Set " + id + " to " + newValue + " for " + player.getName().getString());
                         PlayerAttributePersistence.saveAttribute(player, instance.getAttribute(), newValue);
+                        PlayerAttributePersistence.setPoints(player, points - 1);
+                        int newPoints = PlayerAttributePersistence.getPoints(player);
+                        PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
                     } else {
                         System.err.println("AttributeInstance is null for: " + id);
                     }

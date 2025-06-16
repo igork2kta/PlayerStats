@@ -32,10 +32,7 @@ public class KeyBindings {
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-//        if (event.phase == TickEvent.Phase.END && OPEN_STATS_KEY.consumeClick()) {
-//            System.out.println("Tecla R pressionada! Enviando pacote...");
-//            PacketHandler.sendToServer(new OpenStatsScreenPacket());
-//        }
+
         if (event.phase == TickEvent.Phase.END && OPEN_STATS_KEY.consumeClick()) {
             Minecraft.getInstance().setScreen(new StatsScreen());
         }

@@ -31,6 +31,12 @@ public class PlayerAttributePersistence {
         Player player = event.getEntity();
         CompoundTag tag = player.getPersistentData().getCompound(ATTRIBUTES_TAG);
 
+        // Inicializa pontos se não existir
+        CompoundTag persistentData = player.getPersistentData();
+        if (!persistentData.contains(POINTS_TAG)) {
+            setPoints(player, 10); // Exemplo: começa com 10 pontos
+        }
+
         for (String key : tag.getAllKeys()) {
             ResourceLocation id = new ResourceLocation(key);
             Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
@@ -48,5 +54,18 @@ public class PlayerAttributePersistence {
         CompoundTag tag = player.getPersistentData().getCompound(ATTRIBUTES_TAG);
         tag.putDouble(BuiltInRegistries.ATTRIBUTE.getKey(attr).toString(), value);
         player.getPersistentData().put(ATTRIBUTES_TAG, tag);
+    }
+
+
+    private static final String POINTS_TAG = "PlayerStatsPoints";
+
+    public static int getPoints(Player player) {
+        CompoundTag tag = player.getPersistentData();
+        return tag.getInt(POINTS_TAG);
+    }
+
+    public static void setPoints(Player player, int points) {
+        CompoundTag tag = player.getPersistentData();
+        tag.putInt(POINTS_TAG, points);
     }
 }
