@@ -1,6 +1,7 @@
 package com.playerstats.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.ModifyAttributePacket;
 import com.playerstats.network.PacketHandler;
 import net.minecraft.client.Minecraft;
@@ -21,10 +22,12 @@ public class StatsScreen extends Screen {
         super(Component.literal("Player Stats"));
     }
 
+
+
     @Override
     protected void init() {
         super.init();
-
+        double increment;
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
@@ -33,17 +36,25 @@ public class StatsScreen extends Screen {
             Attribute attribute = attr.getAttribute();
             String name = Component.translatable(attribute.getDescriptionId()).getString();
 
-            // Botão +1
+            String attributeName = Component.translatable(attribute.getDescriptionId()).getString();
+
+            if(attributeName == "Max Health") increment = 1;
+            else increment = 0.01;
+
+            double finalIncrement = increment;
+
+            // Botão +
+
             addRenderableWidget(Button.builder(Component.literal("+"), btn -> {
-                sendAttributeChange(attribute, 0.01);
-            }).bounds(20, y, 20, 20).build());
+                sendAttributeChange(attribute, finalIncrement);
+            }).bounds(20, y +3, 10, 10).build());
 
-            // Botão -1
+            // Botão -
             addRenderableWidget(Button.builder(Component.literal("-"), btn -> {
-                sendAttributeChange(attribute, -0.01);
-            }).bounds(50, y, 20, 20).build());
+                sendAttributeChange(attribute, finalIncrement*-1);
+            }).bounds(35, y +3, 10, 10).build());
 
-            y += 25;
+            y += 15;
         }
     }
 
@@ -52,6 +63,7 @@ public class StatsScreen extends Screen {
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (id != null) {
             PacketHandler.sendToServer(new ModifyAttributePacket(id.toString(), delta));
+
         } else {
             System.out.println("Atributo sem ResourceLocation válido!");
         }
@@ -74,8 +86,8 @@ public class StatsScreen extends Screen {
             String value = String.format("%.2f", attr.getValue());
 
             // Texto ao lado dos botões
-            guiGraphics.drawString(font, name + ": " + value, 80, y, 0xFFFFFF);
-            y += 25;
+            guiGraphics.drawString(font, name + ": " + value, 50, y, 0xFFFFFF);
+            y += 15;
         }
     }
 

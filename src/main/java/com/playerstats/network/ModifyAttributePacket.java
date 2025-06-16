@@ -1,5 +1,7 @@
 package com.playerstats.network;
 
+import com.playerstats.event.PlayerAttributePersistence;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -41,6 +43,7 @@ public class ModifyAttributePacket {
                         double newValue = instance.getBaseValue() + msg.amount;
                         instance.setBaseValue(newValue);
                         System.out.println("Set " + id + " to " + newValue + " for " + player.getName().getString());
+                        PlayerAttributePersistence.saveAttribute(player, instance.getAttribute(), newValue);
                     } else {
                         System.err.println("AttributeInstance is null for: " + id);
                     }
