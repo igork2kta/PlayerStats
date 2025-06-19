@@ -1,0 +1,6 @@
+{
+  "key.categories.playerstats": "Player Stats",
+  "key.playerstats.open_stats": "Open Stats Screen",
+  "gui.playerstats.title": "Player Stats",
+  "gui.playerstats.points": "Available Points: %s"
+}

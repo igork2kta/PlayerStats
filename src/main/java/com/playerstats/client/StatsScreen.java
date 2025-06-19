@@ -22,8 +22,8 @@ public class StatsScreen extends Screen {
     }
 
     private static final ResourceLocation BACKGROUND = new ResourceLocation("playerstats", "textures/gui/stats_background.png");
-    private static final int BG_WIDTH = 200;
-    private static final int BG_HEIGHT = 160;
+    private static final int BG_WIDTH = 255;
+    private static final int BG_HEIGHT = 255;
     private int leftPos;
     private int topPos;
 
@@ -62,6 +62,13 @@ public class StatsScreen extends Screen {
 
         int y = clipTop - scrollOffset;
         for (AttributeInstance attr : player.getAttributes().getSyncableAttributes()) {
+
+            Attribute attribute = attr.getAttribute();
+            String name = Component.translatable(attribute.getDescriptionId()).getString();
+            double increment;
+
+            if(name.equals("Armor")|| name.equals("Gravity")|| name.equals("Step Weight") || name.equals("Fall Flying")) continue;
+
             if (y + 12 < clipTop) {
                 y += 15;
                 continue; // antes da área visível
@@ -70,9 +77,26 @@ public class StatsScreen extends Screen {
                 break; // depois da área visível
             }
 
-            Attribute attribute = attr.getAttribute();
-            String name = Component.translatable(attribute.getDescriptionId()).getString();
-            double increment = name.equals("Max Health") ? 1 : 0.01;
+            switch(name) {
+                case "Max Health":
+                case "Luck":
+                case "Block Reach":
+                    increment = 1;
+                    break;
+                case "Max Mana":
+                case "Weight":
+                    increment = 10;
+                    break;
+                case "Speed":
+                case "Mana Regeneration":
+                    increment = 0.01;
+                    break;
+
+                default:
+                    increment = 0.1;
+                    break;
+            }
+
             double finalIncrement = increment;
 
             addRenderableWidget(Button.builder(Component.literal("-"), btn -> {
@@ -111,11 +135,16 @@ public class StatsScreen extends Screen {
         int points = ClientAttributeCache.getPoints();
 
         int y = topPos + 13;
-        guiGraphics.drawString(font, "Pontos disponíveis: " + points, leftPos + 10, y, 0xFFFFFF);
+        guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points) , leftPos + 10, y, 0xFFFFFF);
 
         // Renderizar atributos dentro dos limites
         y = clipTop - scrollOffset;
         for (AttributeInstance attr : player.getAttributes().getSyncableAttributes()) {
+            
+            Attribute attribute = attr.getAttribute();
+            String name = Component.translatable(attribute.getDescriptionId()).getString();
+            if(name.equals("Armor")|| name.equals("Gravity")|| name.equals("Step Weight") || name.equals("Fall Flying")) continue;
+
             if (y + 12 < clipTop) {
                 y += 15;
                 continue;
