@@ -23,6 +23,8 @@ public class KeyMappingsRegistrar {
             "key.categories.playerstats"
     );
 
+
+    //Aqui o atalho é registrado nos controles do jogo, permitindo alterar, o padrão é R
     @SubscribeEvent
     public static void onKeyMappingRegister(RegisterKeyMappingsEvent event) {
         event.register(OPEN_STATS_KEY);
