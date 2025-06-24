@@ -39,7 +39,7 @@ public class PlayerStatsCommands {
                                     int current = PlayerAttributePersistence.getPoints(player);
                                     int newValue = Math.max(0, current - amount);
                                     PlayerAttributePersistence.setPoints(player, newValue);
-                                    PacketHandler.sendToClient(new UpdatePointsPacket(current + amount), player);
+                                    PacketHandler.sendToClient(new UpdatePointsPacket(current - amount), player);
                                     ctx.getSource().sendSuccess(() ->
                                             net.minecraft.network.chat.Component.literal("Pontos removidos. Total: " + newValue), false);
                                     return 1;

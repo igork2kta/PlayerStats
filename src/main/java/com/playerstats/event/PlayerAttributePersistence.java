@@ -68,4 +68,10 @@ public class PlayerAttributePersistence {
         CompoundTag tag = player.getPersistentData();
         tag.putInt(POINTS_TAG, points);
     }
+
+    public static void addPoints(Player player, int points) {
+        CompoundTag tag = player.getPersistentData();
+        int playerPoints = tag.getInt(POINTS_TAG);
+        tag.putInt(POINTS_TAG, playerPoints + points);
+    }
 }
