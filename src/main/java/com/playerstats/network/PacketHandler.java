@@ -23,14 +23,6 @@ public class PacketHandler {
     );
 
     public static void register() {
-//        INSTANCE.registerMessage(
-//                nextId(),
-//                OpenStatsScreenPacket.class,
-//                OpenStatsScreenPacket::encode,
-//                OpenStatsScreenPacket::decode,
-//                OpenStatsScreenPacket::handle,
-//                Optional.of(NetworkDirection.PLAY_TO_CLIENT)
-//        );
 
         int id = 0;
         INSTANCE.registerMessage(id++, OpenStatsScreenPacket.class,
@@ -50,9 +42,6 @@ public class PacketHandler {
                 UpdatePointsPacket::handle);
     }
 
-    private static int nextId() {
-        return packetId++;
-    }
 
     public static <MSG> void sendToClient(MSG message, net.minecraft.server.level.ServerPlayer player) {
         INSTANCE.sendTo(message, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);

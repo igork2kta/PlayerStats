@@ -34,7 +34,7 @@ public class PlayerAttributePersistence {
         // Inicializa pontos se não existir
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(POINTS_TAG)) {
-            setPoints(player, 10); // Exemplo: começa com 10 pontos
+            setPoints(player, 0); // Exemplo: começa com 10 pontos
         }
 
         for (String key : tag.getAllKeys()) {
@@ -49,7 +49,7 @@ public class PlayerAttributePersistence {
         }
     }
 
-    // 3. Método utilitário para ser chamado sempre que um atributo for modificado
+    // 3. Metodo utilitário para ser chamado sempre que um atributo for modificado
     public static void saveAttribute(Player player, Attribute attr, double value) {
         CompoundTag tag = player.getPersistentData().getCompound(ATTRIBUTES_TAG);
         tag.putDouble(BuiltInRegistries.ATTRIBUTE.getKey(attr).toString(), value);

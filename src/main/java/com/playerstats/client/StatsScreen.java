@@ -151,8 +151,6 @@ public class StatsScreen extends Screen {
             }
             if (y > clipBottom) break;
 
-            Attribute attribute = attr.getAttribute();
-            String name = Component.translatable(attribute.getDescriptionId()).getString();
             String value = String.format("%.2f", attr.getValue());
 
             guiGraphics.drawString(font, name + ": " + value, leftPos + 45, y, 0xFFFFFF);

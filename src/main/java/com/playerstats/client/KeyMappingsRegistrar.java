@@ -2,12 +2,19 @@ package com.playerstats.client;
 
 
 import net.minecraft.client.KeyMapping;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
-@Mod.EventBusSubscriber(modid = "playerstats", bus = Mod.EventBusSubscriber.Bus.MOD)
+@OnlyIn(Dist.CLIENT)
+@Mod.EventBusSubscriber(
+        modid = "playerstats",
+        bus = Mod.EventBusSubscriber.Bus.MOD,
+        value = Dist.CLIENT // <-- ESSENCIAL para evitar carregamento no servidor
+)
 public class KeyMappingsRegistrar {
 
     public static final KeyMapping OPEN_STATS_KEY = new KeyMapping(
