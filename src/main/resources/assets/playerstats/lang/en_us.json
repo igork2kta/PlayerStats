@@ -4,6 +4,10 @@
   "gui.playerstats.title": "Player Stats",
   "gui.playerstats.points": "Available Points: %s",
   "gui.playerstats.reset": "Reset",
+  "gui.playerstatss.points_reset": "Attributes reset. Points refunded: %s",
   "gui.playerstats.can_reset": "You can reset the attributes (50 XP levels)",
-  "gui.playerstats.cant_reset": "You need 50 XP levels to reset"
+  "gui.playerstats.cant_reset": "You need 50 XP levels to reset",
+  "gui.playerstats.xp_cost": "XP cost: %s",
+  "gui.playerstats.added_points": "Added points. Total: %s",
+  "gui.playerstats.removed_points": "Removed points. Total: %s"
 }

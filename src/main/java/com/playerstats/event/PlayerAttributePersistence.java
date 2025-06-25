@@ -38,6 +38,15 @@ public class PlayerAttributePersistence {
         Player player = event.getEntity();
         CompoundTag tag = player.getPersistentData().getCompound(ATTRIBUTES_TAG);
 
+        // Chama o método que já verifica e inicializa pontos
+        ensurePointsInitialized(player);
+
+        //Atualiza o lado do cliente com os pontos e quantidade de upgrades
+        int points = getPoints(player);
+        PacketHandler.sendToClient(new UpdatePointsPacket(points),(ServerPlayer) player);
+        int count = getUpgradeCount(player);
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), (ServerPlayer) player);
+
         // Inicializa pontos se não existir
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(POINTS_TAG)) {
@@ -150,7 +159,7 @@ public class PlayerAttributePersistence {
         // Remove 50 níveis do jogador
         player.giveExperienceLevels(-50);
 
-        player.sendSystemMessage(Component.literal("§eAtributos resetados. Pontos devolvidos: " + refundedPoints));
+        player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
 
         // Atualiza o cache de pontos (ou manda pacote pro cliente)
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), (ServerPlayer) player);

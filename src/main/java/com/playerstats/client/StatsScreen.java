@@ -20,21 +20,20 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Set;
-import java.util.HashSet;
 
 public class StatsScreen extends Screen {
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
     }
+    private static final Set<String> IGNORED_ATTRIBUTES = Set.of("Armor", "Gravity", "Step Height", "Fall Flying", "Nametag Render Distance", "Armor Toughness", "Weight");
 
     private static final ResourceLocation BACKGROUND = new ResourceLocation("playerstats", "textures/gui/stats_background.png");
+    //Tamanho do background
     private static final int BG_WIDTH = 255;
     private static final int BG_HEIGHT = 255;
     private static final int SCROLL_STEP = 10;
     private static final int LINE_HEIGHT = 15;
-
-    private static final Set<String> IGNORED_ATTRIBUTES = Set.of("Armor", "Gravity", "Step Height", "Fall Flying", "Nametag Render Distance", "Armor Toughness", "Weight");
 
     private int leftPos;
     private int topPos;
@@ -85,10 +84,14 @@ public class StatsScreen extends Screen {
 
         for (Attribute attr : BuiltInRegistries.ATTRIBUTE) {
             AttributeInstance attribute = player.getAttributes().getInstance(attr);
+
+            //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
             if (attribute == null || !attribute.getAttribute().isClientSyncable() ) continue;
 
+            //Aqui, removemos os que não queremos que apareçam
             String name = AttributeUtils.getAttributeName(attr);
             if (IGNORED_ATTRIBUTES.contains(name)) continue;
+
 
             if (y + 12 < clipTop) {
                 y += LINE_HEIGHT;
@@ -98,20 +101,19 @@ public class StatsScreen extends Screen {
 
             double increment = AttributeUtils.getIncrement(name);
 
-            double finalIncrement = increment;
-
+            //Posição do botão de incrementar, varia pois no ambiente DEV tem o botão de decrementar
             int plusButtonPos;
 
             if (!net.minecraftforge.fml.loading.FMLEnvironment.production) {
                 addRenderableWidget(Button.builder(Component.literal("-"), btn ->
-                                sendAttributeChange(attr, -finalIncrement))
+                                sendAttributeChange(attr, -increment))
                         .bounds(leftPos + 10, y, 12, 12).build());
                 plusButtonPos = leftPos + 26;
             }
             else plusButtonPos =  leftPos + 10;
 
             addRenderableWidget(Button.builder(Component.literal("+"), btn ->
-                            sendAttributeChange(attr, finalIncrement))
+                            sendAttributeChange(attr, increment))
                     .bounds(plusButtonPos, y, 12, 12).build());
 
             y += LINE_HEIGHT;
@@ -119,10 +121,6 @@ public class StatsScreen extends Screen {
 
         addRenderableWidget(resetButton);
     }
-
-
-
-
 
     private void sendAttributeChange(Attribute attribute, double delta) {
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
@@ -147,9 +145,10 @@ public class StatsScreen extends Screen {
 
         int points = ClientAttributeCache.getPoints();
 
+        //Cor texto de pontos disponíveis
         int color;
-        if(points > 0) color = 0x00FF00;
-        else color = 0xFF5555;
+        if(points > 0) color = 0x00FF00; //Verde
+        else color = 0xFF5555; //Vermelho
 
         guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 13, color);
 
@@ -157,8 +156,11 @@ public class StatsScreen extends Screen {
 
         for (Attribute attr : BuiltInRegistries.ATTRIBUTE) {
             AttributeInstance instance = player.getAttributes().getInstance(attr);
+
+            //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
             if (instance == null || !instance.getAttribute().isClientSyncable()) continue;
 
+            //Aqui, removemos os que não queremos que apareça
             String name = AttributeUtils.getAttributeName(attr);
             if (IGNORED_ATTRIBUTES.contains(name)) continue;
 
@@ -181,6 +183,7 @@ public class StatsScreen extends Screen {
 
         if (resetButton != null && resetButton.isHovered()) {
             boolean hasXp = player.experienceLevel >= 50;
+
             MutableComponent text = hasXp
                     ? Component.translatable("gui.playerstats.can_reset")
                     : Component.translatable("gui.playerstats.cant_reset");
@@ -202,7 +205,7 @@ public class StatsScreen extends Screen {
         boolean hasXp = player.experienceLevel > xpCost;
         color = hasXp ? 0x00FF00 : 0xFF5555; // verde ou vermelho
 
-        guiGraphics.drawString(font, "Custo XP: " + xpCost, leftPos + 10, topPos + BG_HEIGHT - 30, color);
+        guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 10, topPos + BG_HEIGHT - 30, color);
 
 
     }

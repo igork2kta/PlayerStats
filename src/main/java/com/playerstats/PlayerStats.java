@@ -41,15 +41,7 @@ public class PlayerStats {
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            // Chama o método que já verifica e inicializa pontos
-            PlayerAttributePersistence.ensurePointsInitialized(player);
 
-            int points = PlayerAttributePersistence.getPoints(player);
-            PacketHandler.sendToClient(new UpdatePointsPacket(points), player);
-            int count = PlayerAttributePersistence.getUpgradeCount(player);
-            PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
-        }
     }
 }
 

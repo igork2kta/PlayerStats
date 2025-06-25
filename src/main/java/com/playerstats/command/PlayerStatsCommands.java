@@ -22,10 +22,11 @@ public class PlayerStatsCommands {
                                     int amount = IntegerArgumentType.getInteger(ctx, "amount");
 
                                     int current = PlayerAttributePersistence.getPoints(player);
-                                    PlayerAttributePersistence.setPoints(player, current + amount);
-                                    PacketHandler.sendToClient(new UpdatePointsPacket(current + amount), player);
+                                    int newValue = Math.max(0, current + amount);
+                                    PlayerAttributePersistence.setPoints(player, newValue);
+                                    PacketHandler.sendToClient(new UpdatePointsPacket(newValue), player);
                                     ctx.getSource().sendSuccess(() ->
-                                            net.minecraft.network.chat.Component.literal("Pontos adicionados. Total: " + (current + amount)), false);
+                                            net.minecraft.network.chat.Component.translatable("gui.playerstats.added_points", newValue), false);
                                     return 1;
                                 })
                         )
@@ -41,7 +42,7 @@ public class PlayerStatsCommands {
                                     PlayerAttributePersistence.setPoints(player, newValue);
                                     PacketHandler.sendToClient(new UpdatePointsPacket(newValue), player);
                                     ctx.getSource().sendSuccess(() ->
-                                            net.minecraft.network.chat.Component.literal("Pontos removidos. Total: " + newValue), false);
+                                            net.minecraft.network.chat.Component.translatable("gui.playerstats.removed_points: ", newValue), false);
                                     return 1;
                                 })
                         )
