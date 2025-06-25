@@ -13,6 +13,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -52,7 +53,7 @@ public class StatsScreen extends Screen {
         this.topPos = (this.height - BG_HEIGHT) / 2;
 
         this.clipTop = topPos + 38;
-        this.clipBottom = topPos + BG_HEIGHT - 30;
+        this.clipBottom = topPos + BG_HEIGHT - 45;
 
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
@@ -99,15 +100,19 @@ public class StatsScreen extends Screen {
 
             double finalIncrement = increment;
 
+            int plusButtonPos;
+
             if (!net.minecraftforge.fml.loading.FMLEnvironment.production) {
                 addRenderableWidget(Button.builder(Component.literal("-"), btn ->
                                 sendAttributeChange(attr, -finalIncrement))
                         .bounds(leftPos + 10, y, 12, 12).build());
+                plusButtonPos = leftPos + 26;
             }
+            else plusButtonPos =  leftPos + 10;
 
             addRenderableWidget(Button.builder(Component.literal("+"), btn ->
                             sendAttributeChange(attr, finalIncrement))
-                    .bounds(leftPos + 26, y, 12, 12).build());
+                    .bounds(plusButtonPos, y, 12, 12).build());
 
             y += LINE_HEIGHT;
         }
@@ -148,7 +153,7 @@ public class StatsScreen extends Screen {
 
         guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 13, color);
 
-        int y = clipTop - scrollOffset;
+        int y = clipTop - scrollOffset +2; //2 para alinhamento do texto com os botões
 
         for (Attribute attr : BuiltInRegistries.ATTRIBUTE) {
             AttributeInstance instance = player.getAttributes().getInstance(attr);
@@ -164,16 +169,21 @@ public class StatsScreen extends Screen {
             if (y > clipBottom) break;
 
             String value = String.format("%.2f", instance.getValue());
-            guiGraphics.drawString(font, name + ": " + value, leftPos + 45, y, 0xFFFFFF);
+
+            int pos;
+            if (!net.minecraftforge.fml.loading.FMLEnvironment.production) pos = leftPos + 45;
+            else pos =  leftPos + 29;
+
+            guiGraphics.drawString(font, name + ": " + value, pos, y, 0x303030, false);
 
             y += LINE_HEIGHT;
         }
 
         if (resetButton != null && resetButton.isHovered()) {
             boolean hasXp = player.experienceLevel >= 50;
-            String text = String.valueOf(hasXp
+            MutableComponent text = hasXp
                     ? Component.translatable("gui.playerstats.can_reset")
-                    : Component.translatable("gui.playerstats.cant_reset"));
+                    : Component.translatable("gui.playerstats.cant_reset");
 
             color = hasXp ? 0x00FF00 : 0xFF5555; // verde ou vermelho
 
@@ -182,7 +192,8 @@ public class StatsScreen extends Screen {
                     text,
                     mouseX + 10, // desenha próximo do cursor
                     mouseY,
-                    color
+                    color,
+                    false
             );
         }
         int upgradeCount = ClientAttributeCache.getUpgradeCount();
