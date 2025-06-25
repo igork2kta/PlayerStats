@@ -1,8 +1,11 @@
 package com.playerstats.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.ModifyAttributePacket;
 import com.playerstats.network.PacketHandler;
+import com.playerstats.network.ResetAttributesPacket;
+import com.playerstats.util.AttributeUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -38,6 +41,8 @@ public class StatsScreen extends Screen {
     private int maxScroll = 0;
     private int clipTop;
     private int clipBottom;
+    private Button resetButton;
+
 
     @Override
     protected void init() {
@@ -47,20 +52,26 @@ public class StatsScreen extends Screen {
         this.topPos = (this.height - BG_HEIGHT) / 2;
 
         this.clipTop = topPos + 38;
-        this.clipBottom = topPos + BG_HEIGHT - 10;
+        this.clipBottom = topPos + BG_HEIGHT - 30;
 
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
         int totalLines = (int) BuiltInRegistries.ATTRIBUTE.stream()
                 .map(player.getAttributes()::getInstance)
-                .filter(attr -> attr != null && !IGNORED_ATTRIBUTES.contains(getAttributeName(attr.getAttribute())))
+                .filter(attr -> attr != null && !IGNORED_ATTRIBUTES.contains(AttributeUtils.getAttributeName(attr.getAttribute())))
                 .count();
 
         int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
         maxScroll = Math.max(0, (totalLines - visibleLines) * LINE_HEIGHT);
 
+        resetButton = Button.builder(
+                Component.translatable("gui.playerstats.reset"),
+                btn -> PacketHandler.sendToServer(new ResetAttributesPacket())
+        ).bounds(leftPos + BG_WIDTH - 80, topPos + 10, 70, 20).build();
+
         rebuildButtons();
+
     }
 
     private void rebuildButtons() {
@@ -75,7 +86,7 @@ public class StatsScreen extends Screen {
             AttributeInstance attribute = player.getAttributes().getInstance(attr);
             if (attribute == null || !attribute.getAttribute().isClientSyncable() ) continue;
 
-            String name = getAttributeName(attr);
+            String name = AttributeUtils.getAttributeName(attr);
             if (IGNORED_ATTRIBUTES.contains(name)) continue;
 
             if (y + 12 < clipTop) {
@@ -84,13 +95,15 @@ public class StatsScreen extends Screen {
             }
             if (y > clipBottom) break;
 
-            double increment = getIncrement(name);
+            double increment = AttributeUtils.getIncrement(name);
 
             double finalIncrement = increment;
 
-            addRenderableWidget(Button.builder(Component.literal("-"), btn ->
-                            sendAttributeChange(attr, -finalIncrement))
-                    .bounds(leftPos + 10, y, 12, 12).build());
+            if (!net.minecraftforge.fml.loading.FMLEnvironment.production) {
+                addRenderableWidget(Button.builder(Component.literal("-"), btn ->
+                                sendAttributeChange(attr, -finalIncrement))
+                        .bounds(leftPos + 10, y, 12, 12).build());
+            }
 
             addRenderableWidget(Button.builder(Component.literal("+"), btn ->
                             sendAttributeChange(attr, finalIncrement))
@@ -98,21 +111,13 @@ public class StatsScreen extends Screen {
 
             y += LINE_HEIGHT;
         }
+
+        addRenderableWidget(resetButton);
     }
 
-    private double getIncrement(String name) {
-        return switch (name) {
-            case "Max Health", "Luck" -> 1;
-            case "Max Mana", "Weight" -> 10;
-            case "Speed", "Mana Regeneration" -> 0.01;
-            case "Entity Reach", "Block Reach" -> 0.3;
-            default -> 0.1;
-        };
-    }
 
-    private String getAttributeName(Attribute attr) {
-        return Component.translatable(attr.getDescriptionId()).getString();
-    }
+
+
 
     private void sendAttributeChange(Attribute attribute, double delta) {
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
@@ -136,7 +141,12 @@ public class StatsScreen extends Screen {
         if (player == null) return;
 
         int points = ClientAttributeCache.getPoints();
-        guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 13, 0xFFFFFF);
+
+        int color;
+        if(points > 0) color = 0x00FF00;
+        else color = 0xFF5555;
+
+        guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 13, color);
 
         int y = clipTop - scrollOffset;
 
@@ -144,7 +154,7 @@ public class StatsScreen extends Screen {
             AttributeInstance instance = player.getAttributes().getInstance(attr);
             if (instance == null || !instance.getAttribute().isClientSyncable()) continue;
 
-            String name = getAttributeName(attr);
+            String name = AttributeUtils.getAttributeName(attr);
             if (IGNORED_ATTRIBUTES.contains(name)) continue;
 
             if (y + 12 < clipTop) {
@@ -158,6 +168,32 @@ public class StatsScreen extends Screen {
 
             y += LINE_HEIGHT;
         }
+
+        if (resetButton != null && resetButton.isHovered()) {
+            boolean hasXp = player.experienceLevel >= 50;
+            String text = String.valueOf(hasXp
+                    ? Component.translatable("gui.playerstats.can_reset")
+                    : Component.translatable("gui.playerstats.cant_reset"));
+
+            color = hasXp ? 0x00FF00 : 0xFF5555; // verde ou vermelho
+
+            guiGraphics.drawString(
+                    font,
+                    text,
+                    mouseX + 10, // desenha próximo do cursor
+                    mouseY,
+                    color
+            );
+        }
+        int upgradeCount = ClientAttributeCache.getUpgradeCount();
+        int xpCost = (upgradeCount + 1) * 5;
+
+        boolean hasXp = player.experienceLevel > xpCost;
+        color = hasXp ? 0x00FF00 : 0xFF5555; // verde ou vermelho
+
+        guiGraphics.drawString(font, "Custo XP: " + xpCost, leftPos + 10, topPos + BG_HEIGHT - 30, color);
+
+
     }
 
     @Override

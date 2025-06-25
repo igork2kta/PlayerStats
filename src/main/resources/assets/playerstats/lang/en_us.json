@@ -2,5 +2,8 @@
   "key.categories.playerstats": "Player Stats",
   "key.playerstats.open_stats": "Open Stats Screen",
   "gui.playerstats.title": "Player Stats",
-  "gui.playerstats.points": "Available Points: %s"
+  "gui.playerstats.points": "Available Points: %s",
+  "gui.playerstats.reset": "Reset",
+  "gui.playerstats.can_reset": "You can reset the attributes (50 XP levels)",
+  "gui.playerstats.cant_reset": "You need 50 XP levels to reset"
 }

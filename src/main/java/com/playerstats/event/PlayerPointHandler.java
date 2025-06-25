@@ -31,7 +31,7 @@ public class PlayerPointHandler {
 
 
         // 50% para Wither e Dragão
-         if (mob.getType() == EntityType.WITHER || mob.getType() == EntityType.ENDER_DRAGON) {
+          if (mob.getType() == EntityType.WITHER || mob.getType() == EntityType.ENDER_DRAGON) {
             if (Math.random() < 0.5) givePoints( player, 1);
         }
 

@@ -5,6 +5,7 @@ import com.playerstats.command.PlayerStatsCommands;
 import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.network.UpdatePointsPacket;
+import com.playerstats.network.UpdateUpgradeCountPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -41,8 +42,13 @@ public class PlayerStats {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            // Chama o método que já verifica e inicializa pontos
+            PlayerAttributePersistence.ensurePointsInitialized(player);
+
             int points = PlayerAttributePersistence.getPoints(player);
             PacketHandler.sendToClient(new UpdatePointsPacket(points), player);
+            int count = PlayerAttributePersistence.getUpgradeCount(player);
+            PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
         }
     }
 }

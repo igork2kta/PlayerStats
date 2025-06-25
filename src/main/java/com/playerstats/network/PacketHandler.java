@@ -21,7 +21,8 @@ public class PacketHandler {
 
         int id = 0;
 
-        INSTANCE.registerMessage(id++, ModifyAttributePacket.class,
+        INSTANCE.registerMessage(id++,
+                ModifyAttributePacket.class,
                 ModifyAttributePacket::encode,
                 ModifyAttributePacket::decode,
                 ModifyAttributePacket::handle);
@@ -31,6 +32,20 @@ public class PacketHandler {
                 UpdatePointsPacket::encode,
                 UpdatePointsPacket::decode,
                 UpdatePointsPacket::handle);
+
+        INSTANCE.registerMessage( id++,
+                ResetAttributesPacket.class,
+                ResetAttributesPacket::toBytes,
+                ResetAttributesPacket::new,
+                ResetAttributesPacket::handle
+        );
+
+        INSTANCE.registerMessage(id++,
+                UpdateUpgradeCountPacket.class,
+                UpdateUpgradeCountPacket::encode,
+                UpdateUpgradeCountPacket::decode,
+                UpdateUpgradeCountPacket::handle
+        );
     }
 
 

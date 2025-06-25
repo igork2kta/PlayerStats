@@ -41,15 +41,30 @@ public class ModifyAttributePacket {
 
                     AttributeInstance instance = player.getAttribute(attr);
                     int points = PlayerAttributePersistence.getPoints(player);
-                    if (instance != null && points > 0) {
+                    int xpLevel = player.experienceLevel;
+                    int upgradesFeitos = PlayerAttributePersistence.getUpgradeCount(player);
+                    int xpCusto = (upgradesFeitos + 1) * 5; // começa com 5
+
+                    if (instance != null && points > 0 && xpLevel >= xpCusto) {
 
                         double newValue = instance.getBaseValue() + msg.amount;
-                        instance.setBaseValue(newValue);
+
+                        //Rastreamento de alterações
+                        //AttributeTracker.recordChange(player, attr, msg.amount);
                         System.out.println("Set " + id + " to " + newValue + " for " + player.getName().getString());
                         PlayerAttributePersistence.saveAttribute(player, instance.getAttribute(), newValue);
+                        instance.setBaseValue(newValue);
                         PlayerAttributePersistence.setPoints(player, points - 1);
                         int newPoints = PlayerAttributePersistence.getPoints(player);
                         PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
+
+
+                        PlayerAttributePersistence.incrementUpgradeCount(player); // ✅ incrementa contagem
+
+                        int count = PlayerAttributePersistence.getUpgradeCount(player);
+                        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
+                        player.giveExperienceLevels(-xpCusto); // ✅ remove níveis
+
                     } else {
                         System.err.println("AttributeInstance is null for: " + id);
                     }
