@@ -38,8 +38,6 @@ Choose the attribute you want to improve — spending points and XP
 
 ## 🔧 Example Config
 ```toml
-Copy
-Edit
 [geral]
 debugMode = true
 highHealthAmount = 50
@@ -55,7 +53,7 @@ Add your own mobs using customMobChances in the config
 
 Enable debugMode = true to print mob IDs to chat and logs when killed
 
-##🧩 Modded Compatibility
+## 🧩 Modded Compatibility
 ✅ Works with:
 
 Custom mobs (using standard EntityType)
@@ -64,7 +62,7 @@ Custom attributes from other mods (e.g., Epic Fight, Iron’s Spells ‘n Spellb
 
 All standard Forge-based server/client environments
 
-##🧑‍💻 For Modpacks & Developers
+## 🧑‍💻 For Modpacks & Developers
 Mod ID: playerstats
 
 No mixins or coremod hacks
