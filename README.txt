@@ -1,46 +1,73 @@
+# 🛡️ Player Stats
 
-Source installation information for modders
--------------------------------------------
-This code follows the Minecraft Forge installation methodology. It will apply
-some small patches to the vanilla MCP source code, giving you and it access 
-to some of the data and functions you need to build a successful mod.
+   A lightweight and highly configurable progression system for Minecraft players.  
+   Gain upgrade points by defeating mobs — then choose which attributes you want to improve.  
+   Fully supports modded mobs and attributes with a powerful configuration system.
 
-Note also that the patches are built against "un-renamed" MCP source code (aka
-SRG Names) - this means that you will not be able to read them directly against
-normal code.
+---
 
-Setup Process:
-==============================
+## 📦 Overview
 
-Step 1: Open your command-line and browse to the folder where you extracted the zip file.
+   Player Stats is a Forge mod that introduces a customizable RPG-like system where players receive upgrade points after killing mobs.  
+   Unlike other mods of the same style, attributes are loaded dynamically. This means that attributes added by mods like Iron’s Spells ‘n Spellbooks and Epic Fight can be upgraded.
+   Built with modded compatibility, performance, and configurability in mind.
 
-Step 2: You're left with a choice.
-If you prefer to use Eclipse:
-1. Run the following command: `./gradlew genEclipseRuns`
-2. Open Eclipse, Import > Existing Gradle Project > Select Folder 
-   or run `gradlew eclipse` to generate the project.
+---
 
-If you prefer to use IntelliJ:
-1. Open IDEA, and import project.
-2. Select your build.gradle file and have it import.
-3. Run the following command: `./gradlew genIntellijRuns`
-4. Refresh the Gradle Project in IDEA if required.
+## 🎯 Features
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can 
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-(this does not affect your code) and then start the process again.
+   - ✅ Gain upgrade points from killing mobs
+   - 🛠️ Manually allocate points to any supported attribute
+   - ⚙️ Configure which mobs give points and their drop chances
+   - 🧠 Smart caching of config values for better performance
+   - 🧪 Debug mode to help identify entity and attribute names
+   - 🔁 Support for custom attributes (modded or vanilla)
+   - 🧟 Fine-tuned chance for bosses like the Wither, Ender Dragon, Warden, etc.
+   - 🚫 Ignore certain attributes from being shown
+   - 🔧 Easy configuration via `playerstats-common.toml`
 
-Mapping Names:
-=============================
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license, if you do not agree with it you can change your mapping names to other crowdsourced names in your 
-build.gradle. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/MinecraftForge/MCPConfig/blob/master/Mojang.md
+---
 
-Additional Resources: 
-=========================
-Community Documentation: https://docs.minecraftforge.net/en/1.20.1/gettingstarted/
-LexManos' Install Video: https://youtu.be/8VEdtQLuLO0
-Forge Forums: https://forums.minecraftforge.net/
-Forge Discord: https://discord.minecraftforge.net/
+
+## 🎮 How It Works
+
+   1. Kill a mob (configured mob or boss)→ a chance to receive 1 upgrade point
+   2. Points are saved per player
+   3. Press your configured key (default: `R`) to open the upgrade screen
+   4. Choose the attribute you want to improve at cost of points and experience
+
+---
+
+## 🔧 Example Config
+
+   ```toml
+   [geral]
+   debugMode = true
+   highHealthAmount = 50
+   customMobChances = ["entity.minecraft.chicken=0.15", "entity.mymod.bossmob=0.75"]
+   customAttributeIncrement = ["attribute.name.generic.max_health=2.0"]
+   ignoredAttributes = ["attribute.name.generic.armor"]
+
+⚔️ Supported Entities
+   Fully supports vanilla and modded mobs
+   Add your own via customMobChances in the config
+   Enable debugMode = true to see mob IDs when killing them (logged and shown in chat)
+
+🧩 Modded Compatibility
+   ✅ Works with:
+      Custom mobs (as long as they use standard EntityType)
+      Custom attributes from other mods (e.g. Epic Fight, Iron’s Spells ‘n Spellbooks and Epic Fight, etc.)
+      Forge server environments
+
+🧑‍💻 For Modpacks & Developers
+   Mod ID: playerstats
+   No mixins or coremod hacks
+   Lightweight runtime
+   Easy to configure and extend
+
+📜 License
+This mod is licensed under the MIT License.
+You're free to use it in modpacks, forks, and redistribution — just credit the original project.
+
+
+
