@@ -1,4 +1,4 @@
-# 🛡️ Player Stats
+# Player Stats
 A lightweight and highly configurable progression system for Minecraft players.
 Gain upgrade points by defeating mobs — then choose which attributes you want to improve.
 Fully supports modded mobs and attributes through a powerful configuration system.
