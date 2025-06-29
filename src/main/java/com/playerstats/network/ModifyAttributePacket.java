@@ -8,6 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.level.GameType;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -44,6 +45,8 @@ public class ModifyAttributePacket {
                     int xpLevel = player.experienceLevel;
                     int upgradesFeitos = PlayerAttributePersistence.getUpgradeCount(player);
                     int xpCusto = (upgradesFeitos + 1) * 5; // começa com 5
+
+                    if(player.gameMode.getGameModeForPlayer() == GameType.CREATIVE) xpLevel = xpCusto;
 
                     if (instance != null && points > 0 && xpLevel >= xpCusto) {
 

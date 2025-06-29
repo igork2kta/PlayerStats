@@ -9,5 +9,16 @@
   "gui.playerstats.cant_reset": "You need 50 XP levels to reset",
   "gui.playerstats.xp_cost": "XP cost: %s",
   "gui.playerstats.added_points": "Added points. Total: %s",
-  "gui.playerstats.removed_points": "Removed points. Total: %s"
+  "gui.playerstats.removed_points": "Removed points. Total: %s",
+  "gui.playerstats.reloaded_configs": "Configurations reloaded",
+  "config.playerstats.debug_mode": "Enables the mod's debug mode",
+  "config.playerstats.high_health": "Amount of health considered high",
+  "config.playerstats.wither_chance": "Chance to gain points when killing Wither",
+  "config.playerstats.ender_dragon_chance": "Chance to gain points when killing Ender Dragon",
+  "config.playerstats.warden_chance": "Chance to gain points when killing Warden",
+  "config.playerstats.elder_guardian_chance": "Chance to gain points when killing Elder Guardian",
+  "config.playerstats.high_health_chance": "Chance to gain points when killing mobs with high health",
+  "config.playerstats.custom_mob_chances": "List of custom mob chances in the format id=chance (e.g. 'entity.minecraft.chicken', you can see the exact name by enabling debug mode, opening the developer console, and killing the desired mob.)",
+  "config.playerstats.ignored_attributes": "List of attribute names to ignore (e.g. 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')"
+
 }

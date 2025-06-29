@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -113,10 +114,10 @@ public class PlayerAttributePersistence {
         tag.putInt(POINTS_TAG, playerPoints + points);
     }
 
-    public static void resetAttributes(Player player) {
+    public static void resetAttributes(ServerPlayer player) {
 
         // Verifica se o jogador tem pelo menos 50 níveis
-        if (player.experienceLevel < 50) {
+        if (player.experienceLevel < 50 && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE) {
             player.sendSystemMessage(Component.translatable("gui.playerstats.cant_reset"));
             return;
         }

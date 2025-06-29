@@ -1,6 +1,8 @@
 package com.playerstats.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.playerstats.Config;
+import com.playerstats.PlayerStats;
 import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.ModifyAttributePacket;
 import com.playerstats.network.PacketHandler;
@@ -19,14 +21,14 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.Set;
+
+//import static com.playerstats.util.AttributeUtils.IGNORED_ATTRIBUTES;
 
 public class StatsScreen extends Screen {
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
     }
-    private static final Set<String> IGNORED_ATTRIBUTES = Set.of("Armor", "Gravity", "Step Height", "Fall Flying", "Nametag Render Distance", "Armor Toughness", "Weight");
 
     private static final ResourceLocation BACKGROUND = new ResourceLocation("playerstats", "textures/gui/stats_background.png");
     //Tamanho do background
@@ -59,7 +61,7 @@ public class StatsScreen extends Screen {
 
         int totalLines = (int) BuiltInRegistries.ATTRIBUTE.stream()
                 .map(player.getAttributes()::getInstance)
-                .filter(attr -> attr != null && !IGNORED_ATTRIBUTES.contains(AttributeUtils.getAttributeName(attr.getAttribute())))
+                .filter(attr -> attr != null && !Config.cachedIgnoredAttributes.contains(attr.getAttribute().getDescriptionId()))
                 .count();
 
         int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
@@ -89,8 +91,7 @@ public class StatsScreen extends Screen {
             if (attribute == null || !attribute.getAttribute().isClientSyncable() ) continue;
 
             //Aqui, removemos os que não queremos que apareçam
-            String name = AttributeUtils.getAttributeName(attr);
-            if (IGNORED_ATTRIBUTES.contains(name)) continue;
+            if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) continue;
 
 
             if (y + 12 < clipTop) {
@@ -99,7 +100,11 @@ public class StatsScreen extends Screen {
             }
             if (y > clipBottom) break;
 
-            double increment = AttributeUtils.getIncrement(name);
+            double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+
+            if (Config.DEBUG_MODE.get()) {
+                PlayerStats.LOGGER.info("Configurando atributo: {} Incremento: {}", attr.getDescriptionId(), increment);
+            }
 
             //Posição do botão de incrementar, varia pois no ambiente DEV tem o botão de decrementar
             int plusButtonPos;
@@ -162,7 +167,7 @@ public class StatsScreen extends Screen {
 
             //Aqui, removemos os que não queremos que apareça
             String name = AttributeUtils.getAttributeName(attr);
-            if (IGNORED_ATTRIBUTES.contains(name)) continue;
+            if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) continue;
 
             if (y + 12 < clipTop) {
                 y += LINE_HEIGHT;

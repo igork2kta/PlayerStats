@@ -1,0 +1,25 @@
+{
+  "key.categories.playerstats": "Player Stats",
+  "key.playerstats.open_stats": "Abrir Tela de Atributos",
+  "gui.playerstats.title": "Atributos do Jogador",
+  "gui.playerstats.points": "Pontos Disponíveis: %s",
+  "gui.playerstats.reset": "Resetar",
+  "gui.playerstatss.points_reset": "Atributos resetados. Pontos devolvidos: %s",
+  "gui.playerstats.can_reset": "Você pode resetar os atributos (50 níveis de XP)",
+  "gui.playerstats.cant_reset": "Você precisa de 50 níveis de XP para resetar",
+  "gui.playerstats.xp_cost": "Custo de XP: %s",
+  "gui.playerstats.added_points": "Pontos adicionados. Total: %s",
+  "gui.playerstats.removed_points": "Pontos removidos. Total: %s",
+  "gui.playerstats.reloaded_configs": "Configurações recarregadas",
+  "config.playerstats.debug_mode": "Ativa o modo debug do mod",
+  "config.playerstats.high_health": "Quantidade de vida considerada como alta",
+  "config.playerstats.wither_chance": "Chance de ganhar pontos ao matar o Wither",
+  "config.playerstats.ender_dragon_chance": "Chance de ganhar pontos ao matar o Ender Dragon",
+  "config.playerstats.warden_chance": "Chance de ganhar pontos ao matar o Warden",
+  "config.playerstats.elder_guardian_chance": "Chance de ganhar pontos ao matar o Elder Guardian",
+  "config.playerstats.high_health_chance": "Chance de ganhar pontos ao matar mobs com vida alta",
+  "config.playerstats.custom_mob_chances": "Lista de chances de mobs customizados no formato id=chance (por exemplo: 'entity.minecraft.chicken', você pode ver o nome exato ativando o modo debug, habilitando o console de desenvolvedor e matando o mob desejado)",
+  "config.playerstats.custom_attribute_increment": "Lista de atributos personalizados (de mods ou vanilla) que aumentam ao evoluir, no formato id=incremento (ex: 'attribute.name.generic.max_health=2'). Você pode ver o nome exato ativando o modo debug, abrindo o console de desenvolvedor e abrindo a janela de status. O padrão é 0.1)",
+  "config.playerstats.ignored_attributes": "Lista de nomes de atributos a serem ignorados (ex: 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')"
+
+}

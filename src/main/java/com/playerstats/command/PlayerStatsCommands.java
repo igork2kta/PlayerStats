@@ -3,6 +3,7 @@ package com.playerstats.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.playerstats.Config;
 import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.network.UpdatePointsPacket;
@@ -42,10 +43,19 @@ public class PlayerStatsCommands {
                                     PlayerAttributePersistence.setPoints(player, newValue);
                                     PacketHandler.sendToClient(new UpdatePointsPacket(newValue), player);
                                     ctx.getSource().sendSuccess(() ->
-                                            net.minecraft.network.chat.Component.translatable("gui.playerstats.removed_points: ", newValue), false);
+                                            net.minecraft.network.chat.Component.translatable("gui.playerstats.removed_points", newValue), false);
                                     return 1;
                                 })
                         )
+                )
+                .then(Commands.literal("reloadconfig")
+                        .requires(source -> source.hasPermission(2)) // Só operadores
+                        .executes(context -> {
+                            Config.reloadCustomMobChances();
+                            context.getSource().sendSuccess(() ->
+                                    net.minecraft.network.chat.Component.translatable("gui.playerstats.reloaded_configs"), true);
+                            return 1;
+                        })
                 )
         );
     }
