@@ -28,6 +28,7 @@ public class PlayerStats {
 
         // Registrar config no construtor (ESSENCIAL)
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SERVER);
 
         // Registrar pacotes de rede
         PacketHandler.register();
@@ -54,7 +55,7 @@ public class PlayerStats {
     }
 
     private void onConfigReload(ModConfigEvent event) {
-        if (event.getConfig().getSpec() == Config.COMMON) {
+        if (event.getConfig().getSpec() == Config.SERVER) {
             Config.reloadCustomMobChances();
         }
     }

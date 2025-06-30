@@ -3,7 +3,6 @@ package com.playerstats.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
-import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.ModifyAttributePacket;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.network.ResetAttributesPacket;
@@ -20,9 +19,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
-
-
-//import static com.playerstats.util.AttributeUtils.IGNORED_ATTRIBUTES;
 
 public class StatsScreen extends Screen {
 
@@ -106,6 +102,7 @@ public class StatsScreen extends Screen {
                 PlayerStats.LOGGER.info("Configurando atributo: {} Incremento: {}", attr.getDescriptionId(), increment);
             }
 
+
             //Posição do botão de incrementar, varia pois no ambiente DEV tem o botão de decrementar
             int plusButtonPos;
 
@@ -115,7 +112,9 @@ public class StatsScreen extends Screen {
                         .bounds(leftPos + 10, y, 12, 12).build());
                 plusButtonPos = leftPos + 26;
             }
-            else plusButtonPos =  leftPos + 10;
+            else
+
+            plusButtonPos =  leftPos + 10;
 
             addRenderableWidget(Button.builder(Component.literal("+"), btn ->
                             sendAttributeChange(attr, increment))
@@ -127,10 +126,10 @@ public class StatsScreen extends Screen {
         addRenderableWidget(resetButton);
     }
 
-    private void sendAttributeChange(Attribute attribute, double delta) {
+    private void sendAttributeChange(Attribute attribute, double increment) {
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (id != null) {
-            PacketHandler.sendToServer(new ModifyAttributePacket(id.toString(), delta));
+            PacketHandler.sendToServer(new ModifyAttributePacket(id.toString(), increment));
         } else {
             System.out.println("Atributo sem ResourceLocation válido!");
         }

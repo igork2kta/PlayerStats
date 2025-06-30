@@ -1,7 +1,6 @@
 package com.playerstats.network;
 
 import com.playerstats.event.PlayerAttributePersistence;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,16 +14,16 @@ import java.util.function.Supplier;
 
 public class ModifyAttributePacket {
     private final String attributeId;
-    private final double amount;
+    private final double increment;
 
-    public ModifyAttributePacket(String attributeId, double amount) {
+    public ModifyAttributePacket(String attributeId, double increment) {
         this.attributeId = attributeId;
-        this.amount = amount;
+        this.increment = increment;
     }
 
     public static void encode(ModifyAttributePacket msg, FriendlyByteBuf buf) {
         buf.writeUtf(msg.attributeId);
-        buf.writeDouble(msg.amount);
+        buf.writeDouble(msg.increment);
     }
 
     public static ModifyAttributePacket decode(FriendlyByteBuf buf) {
@@ -50,19 +49,22 @@ public class ModifyAttributePacket {
 
                     if (instance != null && points > 0 && xpLevel >= xpCusto) {
 
-                        double newValue = instance.getBaseValue() + msg.amount;
+                        double newValue = instance.getBaseValue() + msg.increment;
 
                         //Rastreamento de alterações
                         //AttributeTracker.recordChange(player, attr, msg.amount);
                         System.out.println("Set " + id + " to " + newValue + " for " + player.getName().getString());
-                        PlayerAttributePersistence.saveAttribute(player, instance.getAttribute(), newValue);
-                        instance.setBaseValue(newValue);
+
+                        PlayerAttributePersistence.applyUpgrade(player, instance.getAttribute());
                         PlayerAttributePersistence.setPoints(player, points - 1);
+
+                        instance.setBaseValue(newValue);
+
                         int newPoints = PlayerAttributePersistence.getPoints(player);
                         PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
 
 
-                        PlayerAttributePersistence.incrementUpgradeCount(player); // ✅ incrementa contagem
+                        //PlayerAttributePersistence.incrementUpgradeCount(player); // ✅ incrementa contagem
 
                         int count = PlayerAttributePersistence.getUpgradeCount(player);
                         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
