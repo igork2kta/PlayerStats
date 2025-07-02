@@ -128,7 +128,7 @@ public class PlayerPointHandler {
         PlayerAttributePersistence.addPoints(player, amount);
         int newPoints = PlayerAttributePersistence.getPoints(player);
         PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
-        player.sendSystemMessage(Component.literal("§aVocê ganhou +1 ponto de atributo!"));
+        player.sendSystemMessage(Component.translatable("event.playerstats.point_given"));
     }
 
     public static boolean isProgressiveBossesInstalled(){

@@ -69,8 +69,8 @@ public class StatsScreen extends Screen {
         ).bounds(leftPos + BG_WIDTH - 80, topPos + 10, 70, 20).build();
 
         rebuildButtons();
-
     }
+
 
     private void rebuildButtons() {
         this.clearWidgets();
@@ -96,19 +96,18 @@ public class StatsScreen extends Screen {
             }
             if (y > clipBottom) break;
 
-            double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
 
             if (Config.DEBUG_MODE.get()) {
+                double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
                 PlayerStats.LOGGER.info("Configurando atributo: {} Incremento: {}", attr.getDescriptionId(), increment);
             }
-
 
             //Posição do botão de incrementar, varia pois no ambiente DEV tem o botão de decrementar
             int plusButtonPos;
 
             if (!net.minecraftforge.fml.loading.FMLEnvironment.production) {
                 addRenderableWidget(Button.builder(Component.literal("-"), btn ->
-                                sendAttributeChange(attr, -increment))
+                                sendAttributeChange(attr))
                         .bounds(leftPos + 10, y, 12, 12).build());
                 plusButtonPos = leftPos + 26;
             }
@@ -117,7 +116,7 @@ public class StatsScreen extends Screen {
             plusButtonPos =  leftPos + 10;
 
             addRenderableWidget(Button.builder(Component.literal("+"), btn ->
-                            sendAttributeChange(attr, increment))
+                            sendAttributeChange(attr))
                     .bounds(plusButtonPos, y, 12, 12).build());
 
             y += LINE_HEIGHT;
@@ -126,10 +125,10 @@ public class StatsScreen extends Screen {
         addRenderableWidget(resetButton);
     }
 
-    private void sendAttributeChange(Attribute attribute, double increment) {
+    private void sendAttributeChange(Attribute attribute) {
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (id != null) {
-            PacketHandler.sendToServer(new ModifyAttributePacket(id.toString(), increment));
+            PacketHandler.sendToServer(new ModifyAttributePacket(id.toString()));
         } else {
             System.out.println("Atributo sem ResourceLocation válido!");
         }

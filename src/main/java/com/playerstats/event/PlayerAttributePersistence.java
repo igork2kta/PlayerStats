@@ -1,5 +1,7 @@
 package com.playerstats.event;
 
+import com.playerstats.Config;
+import com.playerstats.PlayerStats;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.network.UpdatePointsPacket;
 import com.playerstats.network.UpdateUpgradeCountPacket;
@@ -13,6 +15,8 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -35,11 +39,14 @@ public class PlayerAttributePersistence {
 
     @SubscribeEvent
     public static void onLogin(PlayerLoggedInEvent event) {
+
         Player player = event.getEntity();
-        /*
+
         CompoundTag root = player.getPersistentData();
 
-        ensurePointsInitialized(player);
+        if (ensurePointsInitialized(player)) return;
+
+
 
         CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
         for (String key : upgradesTag.getAllKeys()) {
@@ -52,16 +59,57 @@ public class PlayerAttributePersistence {
                 instance.setBaseValue(instance.getBaseValue() + (upgradeCount * increment));
             }
         }
-*/
+
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), (ServerPlayer) player);
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
+    }
+
+    public static void upgradeAttribute(ServerPlayer player, String attributeId){
+
+        ResourceLocation id = new ResourceLocation(attributeId);
+        Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+
+        if (attr != null) {
+
+            AttributeInstance instance = player.getAttribute(attr);
+            int playerPoints = getPoints(player);
+            int playerXpLevel = player.experienceLevel;
+            int playerUpgrades = getUpgradeCount(player);
+            int xpCost = (playerUpgrades + 1) * 5; //Starts with 5 and increment by 5
+
+            if(player.gameMode.getGameModeForPlayer() == GameType.CREATIVE) playerXpLevel = xpCost; //Creative mod doesn't need XP
+
+            if (instance != null && playerPoints > 0 && playerXpLevel >= xpCost) {
+                
+                double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+                double newValue = instance.getBaseValue() + increment;
+
+                applyUpgrade(player, attr);
+                setPoints(player, playerPoints - 1);
+
+                //Increment attribute value to player
+                instance.setBaseValue(newValue);
+
+                int newPoints = getPoints(player);
+                PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
+
+
+                int count = PlayerAttributePersistence.getUpgradeCount(player);
+                PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
+                //player.giveExperienceLevels(-xpCost); // ✅ remove níveis
+                consumeExperience(player,-xpCost);
+            } else {
+                System.err.println("AttributeInstance is null for: " + id);
+            }
+        } else {
+            System.err.println("Unknown attribute ID: " + id);
+        }
+
     }
 
     public static void applyUpgrade(Player player, Attribute attr) {
         ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
         CompoundTag upgrades = player.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
-
-
 
         int currentUpgrades = upgrades.getInt(key.toString());
         upgrades.putInt(key.toString(), currentUpgrades + 1);
@@ -103,18 +151,38 @@ public class PlayerAttributePersistence {
         player.getPersistentData().remove(UPGRADE_COUNT_TAG);
 
         setPoints(player, getPoints(player) + refundedPoints);
-        player.giveExperienceLevels(-50);
+        consumeExperience(player,-50);
 
         player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), player);
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(0), player);
     }
 
-    public static void ensurePointsInitialized(Player player) {
+    public static void consumeExperience(Player player, int level){
+        int points;
+        if (level <= 16) {
+            points = level * level + 6 * level;
+        } else if (level <= 31) {
+            points = (int)(2.5 * level * level - 40.5 * level + 360);
+        } else {
+            points = (int)(4.5 * level * level - 162.5 * level + 2220);
+        }
+        player.giveExperiencePoints(points);
+    }
+
+    public static boolean ensurePointsInitialized(Player player) {
         CompoundTag tag = player.getPersistentData();
         if (!tag.contains(POINTS_TAG)) {
+            if (Config.DEBUG_MODE.get()) {
+                    PlayerStats.LOGGER.info("Configuring player points");
+
+            }
             setPoints(player, 0);
+            return false;
         }
+        if (Config.DEBUG_MODE.get())
+            PlayerStats.LOGGER.info("Player points already configured");
+        return true;
     }
 
     public static int getPoints(Player player) {
