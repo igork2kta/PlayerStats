@@ -49,8 +49,8 @@ public class StatsScreen extends Screen {
         this.leftPos = (this.width - BG_WIDTH) / 2;
         this.topPos = (this.height - BG_HEIGHT) / 2;
 
-        this.clipTop = topPos + 38;
-        this.clipBottom = topPos + BG_HEIGHT - 45;
+        this.clipTop = topPos + 48;
+        this.clipBottom = topPos + BG_HEIGHT - 55;
 
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
@@ -66,7 +66,7 @@ public class StatsScreen extends Screen {
         resetButton = Button.builder(
                 Component.translatable("gui.playerstats.reset"),
                 btn -> PacketHandler.sendToServer(new ResetAttributesPacket())
-        ).bounds(leftPos + BG_WIDTH - 80, topPos + 10, 70, 20).build();
+        ).bounds(leftPos + (BG_WIDTH / 2) - 35, topPos + BG_HEIGHT - 30, 70, 20).build();
 
         rebuildButtons();
     }
@@ -113,7 +113,7 @@ public class StatsScreen extends Screen {
             }
             else
 
-            plusButtonPos =  leftPos + 10;
+                plusButtonPos =  leftPos + 10;
 
             addRenderableWidget(Button.builder(Component.literal("+"), btn ->
                             sendAttributeChange(attr))
@@ -153,7 +153,8 @@ public class StatsScreen extends Screen {
         if(points > 0) color = 0x00FF00; //Verde
         else color = 0xFF5555; //Vermelho
 
-        guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 13, color);
+        guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 12, color);
+
 
         int y = clipTop - scrollOffset +2; //2 para alinhamento do texto com os botões
 
@@ -202,13 +203,14 @@ public class StatsScreen extends Screen {
                     false
             );
         }
+
         int upgradeCount = ClientAttributeCache.getUpgradeCount();
         int xpCost = (upgradeCount + 1) * 5;
+        boolean hasXpForUpgrade = player.experienceLevel > xpCost;
+        color = hasXpForUpgrade ? 0x00FF00 : 0xFF5555; // verde ou vermelho
 
-        boolean hasXp = player.experienceLevel > xpCost;
-        color = hasXp ? 0x00FF00 : 0xFF5555; // verde ou vermelho
+        guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 10, topPos + 24, color);
 
-        guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 10, topPos + BG_HEIGHT - 30, color);
 
 
     }

@@ -2,6 +2,7 @@ package com.playerstats.event;
 
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
+import com.playerstats.client.ClientAttributeCache;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.network.UpdatePointsPacket;
 import com.playerstats.network.UpdateUpgradeCountPacket;
@@ -15,12 +16,12 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = "playerstats")
 public class PlayerAttributePersistence {
@@ -44,19 +45,26 @@ public class PlayerAttributePersistence {
 
         CompoundTag root = player.getPersistentData();
 
-        if (ensurePointsInitialized(player)) return;
+        ensurePointsInitialized(player);
 
+        //if(ClientAttributeCache.pointsInitialized)return;
 
+        ClientAttributeCache.clean();
 
         CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
         for (String key : upgradesTag.getAllKeys()) {
             ResourceLocation id = new ResourceLocation(key);
             Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
             AttributeInstance instance = player.getAttribute(attr);
+
             if (attr != null && instance != null) {
                 int upgradeCount = upgradesTag.getInt(key);
                 double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-                instance.setBaseValue(instance.getBaseValue() + (upgradeCount * increment));
+
+                PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
+                double totalIncrement = upgradeCount * increment;
+                // Antes: instance.setBaseValue(...);
+                applyModifier(instance, attr.getDescriptionId(), totalIncrement);
             }
         }
 
@@ -80,7 +88,7 @@ public class PlayerAttributePersistence {
             if(player.gameMode.getGameModeForPlayer() == GameType.CREATIVE) playerXpLevel = xpCost; //Creative mod doesn't need XP
 
             if (instance != null && playerPoints > 0 && playerXpLevel >= xpCost) {
-                
+                /*
                 double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
                 double newValue = instance.getBaseValue() + increment;
 
@@ -97,7 +105,19 @@ public class PlayerAttributePersistence {
                 int count = PlayerAttributePersistence.getUpgradeCount(player);
                 PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
                 //player.giveExperienceLevels(-xpCost); // ✅ remove níveis
-                consumeExperience(player,-xpCost);
+                consumeExperience(player,xpCost);*/
+                // Ao aplicar o upgrade
+                applyUpgrade(player, attr); // Isso já chama applyModifier agora
+
+                setPoints(player, playerPoints - 1);
+
+                int newPoints = getPoints(player);
+                PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
+
+                int count = PlayerAttributePersistence.getUpgradeCount(player);
+                PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
+
+                consumeExperience(player, xpCost);
             } else {
                 System.err.println("AttributeInstance is null for: " + id);
             }
@@ -107,23 +127,51 @@ public class PlayerAttributePersistence {
 
     }
 
+    public static boolean setAttribute(ServerPlayer player, String attributeId, double value){
+
+        ResourceLocation id = new ResourceLocation(attributeId);
+        Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+
+        if (attr != null) {
+
+            AttributeInstance instance = player.getAttribute(attr);
+
+            //applyUpgrade(player, attr);
+
+            //Increment attribute value to player
+            instance.setBaseValue(value);
+            return true;
+        } else {
+            System.err.println("AttributeInstance is null for: " + id);
+            return false;
+        }
+
+
+    }
+
     public static void applyUpgrade(Player player, Attribute attr) {
         ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
         CompoundTag upgrades = player.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
 
-        int currentUpgrades = upgrades.getInt(key.toString());
-        upgrades.putInt(key.toString(), currentUpgrades + 1);
+        int currentUpgrades = upgrades.getInt(key.toString()) +1;
+        upgrades.putInt(key.toString(), currentUpgrades);
         player.getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, upgrades);
 
         AttributeInstance instance = player.getAttribute(attr);
         if (instance != null) {
             double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-            instance.setBaseValue(instance.getBaseValue() + increment);
+            //currentUpgrades = getUpgrades(player, key.toString()) + 1;
+            applyModifier(instance, attr.getDescriptionId(), increment * currentUpgrades);
         }
 
         decrementPoints(player);
         incrementUpgradeCount(player);
 
+    }
+
+    private static int getUpgrades(Player player, String attrKey) {
+        CompoundTag upgrades = player.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
+        return upgrades.getInt(attrKey);
     }
 
     public static void resetAttributes(ServerPlayer player) {
@@ -142,7 +190,12 @@ public class PlayerAttributePersistence {
             if (attr != null && instance != null) {
                 int upgradesApplied = upgrades.getInt(key);
                 double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-                instance.setBaseValue(instance.getBaseValue() - (upgradesApplied * increment));
+                //instance.setBaseValue(instance.getBaseValue() - (upgradesApplied * increment));
+                // Remove o modificador
+                instance.getModifiers().stream()
+                        .filter(mod -> mod.getName().equals("playerstats:" + attr.getDescriptionId()))
+                        .toList()
+                        .forEach(instance::removeModifier);
                 refundedPoints += upgradesApplied;
             }
         }
@@ -151,7 +204,7 @@ public class PlayerAttributePersistence {
         player.getPersistentData().remove(UPGRADE_COUNT_TAG);
 
         setPoints(player, getPoints(player) + refundedPoints);
-        consumeExperience(player,-50);
+        consumeExperience(player,50);
 
         player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), player);
@@ -167,7 +220,7 @@ public class PlayerAttributePersistence {
         } else {
             points = (int)(4.5 * level * level - 162.5 * level + 2220);
         }
-        player.giveExperiencePoints(points);
+        player.giveExperiencePoints(points * -1);
     }
 
     public static boolean ensurePointsInitialized(Player player) {
@@ -184,6 +237,27 @@ public class PlayerAttributePersistence {
             PlayerStats.LOGGER.info("Player points already configured");
         return true;
     }
+
+
+    private static void applyModifier(AttributeInstance instance, String attrId, double value) {
+        // Remover qualquer modificador antigo com o mesmo nome
+        instance.getModifiers().stream()
+                .filter(mod -> mod.getName().equals("playerstats:" + attrId))
+                .toList()
+                .forEach(instance::removeModifier);
+
+        AttributeModifier modifier = new AttributeModifier(
+                UUID.randomUUID(),
+                "playerstats:" + attrId,
+                value,
+                AttributeModifier.Operation.ADDITION
+        );
+
+        instance.addPermanentModifier(modifier);
+    }
+
+
+
 
     public static int getPoints(Player player) {
         return player.getPersistentData().getInt(POINTS_TAG);
