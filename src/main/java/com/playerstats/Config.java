@@ -14,6 +14,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue DEBUG_MODE;
 
     // SERVER config
+    public static final ForgeConfigSpec.BooleanValue RESET_ON_DEATH;
     public static final ForgeConfigSpec.ConfigValue<Integer> HIGH_HEALTH;
     public static final ForgeConfigSpec.DoubleValue WITHER_CHANCE;
     public static final ForgeConfigSpec.DoubleValue ENDER_DRAGON_CHANCE;
@@ -34,7 +35,7 @@ public class Config {
         commonBuilder.push("geral");
 
         DEBUG_MODE = commonBuilder
-                .comment("Ativa o modo debug do mod")
+                .comment("Activate debug mode")
                 .define("debugMode", false);
 
         commonBuilder.pop();
@@ -43,6 +44,10 @@ public class Config {
         // SERVER
         ForgeConfigSpec.Builder serverBuilder = new ForgeConfigSpec.Builder();
         serverBuilder.push("geral");
+
+        RESET_ON_DEATH = serverBuilder
+                .comment("Reset attributes on death")
+                .define("resetOnDeath", false);
 
         HIGH_HEALTH = serverBuilder
                 .comment("Amount of health considered high")

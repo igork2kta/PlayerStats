@@ -8,6 +8,7 @@
   "gui.playerstats.can_reset": "You can reset the attributes (50 XP levels)",
   "gui.playerstats.cant_reset": "You need 50 XP levels to reset",
   "gui.playerstats.xp_cost": "XP cost: %s",
+  "gui.playerstats.search_placeholder": "Search...",
   "event.playerstats.point_given":"§aYou earned +1 attribute point!",
   "gui.playerstats.added_points": "Added points. Total: %s",
   "gui.playerstats.removed_points": "Removed points. Total: %s",

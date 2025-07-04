@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -20,6 +21,8 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.List;
+
 public class StatsScreen extends Screen {
 
     public StatsScreen() {
@@ -27,7 +30,6 @@ public class StatsScreen extends Screen {
     }
 
     private static final ResourceLocation BACKGROUND = new ResourceLocation("playerstats", "textures/gui/stats_background.png");
-    //Tamanho do background
     private static final int BG_WIDTH = 255;
     private static final int BG_HEIGHT = 255;
     private static final int SCROLL_STEP = 10;
@@ -39,8 +41,10 @@ public class StatsScreen extends Screen {
     private int maxScroll = 0;
     private int clipTop;
     private int clipBottom;
-    private Button resetButton;
 
+    private Button resetButton;
+    private EditBox searchBox;
+    private String searchText = "";
 
     @Override
     protected void init() {
@@ -49,19 +53,19 @@ public class StatsScreen extends Screen {
         this.leftPos = (this.width - BG_WIDTH) / 2;
         this.topPos = (this.height - BG_HEIGHT) / 2;
 
-        this.clipTop = topPos + 48;
+        this.clipTop = topPos + 60;
         this.clipBottom = topPos + BG_HEIGHT - 55;
 
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
-        int totalLines = (int) BuiltInRegistries.ATTRIBUTE.stream()
-                .map(player.getAttributes()::getInstance)
-                .filter(attr -> attr != null && !Config.cachedIgnoredAttributes.contains(attr.getAttribute().getDescriptionId()))
-                .count();
-
-        int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
-        maxScroll = Math.max(0, (totalLines - visibleLines) * LINE_HEIGHT);
+        this.searchBox = new EditBox(this.font, leftPos + 10, topPos + 36, 120, 14, Component.literal("Search"));
+        this.searchBox.setMaxLength(50);
+        this.searchBox.setResponder(text -> {
+            this.searchText = text.toLowerCase();
+            rebuildButtons();
+        });
+        this.addRenderableWidget(this.searchBox);
 
         resetButton = Button.builder(
                 Component.translatable("gui.playerstats.reset"),
@@ -71,53 +75,55 @@ public class StatsScreen extends Screen {
         rebuildButtons();
     }
 
-
     private void rebuildButtons() {
         this.clearWidgets();
+        this.addRenderableWidget(this.searchBox);
 
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
+        List<Attribute> filteredAttributes = BuiltInRegistries.ATTRIBUTE.stream()
+                .filter(attr -> {
+                    AttributeInstance attribute = player.getAttributes().getInstance(attr);
+                    if (attribute == null || !attribute.getAttribute().isClientSyncable()) return false;
+                    if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
+                    if (!searchText.isEmpty()) {
+                        String name = AttributeUtils.getAttributeName(attr).toLowerCase();
+                        return name.contains(searchText);
+                    }
+                    return true;
+                }).toList();
+
+        int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
+        maxScroll = Math.max(0, (filteredAttributes.size() - visibleLines) * LINE_HEIGHT);
+
         int y = clipTop - scrollOffset;
 
-        for (Attribute attr : BuiltInRegistries.ATTRIBUTE) {
+        for (Attribute attr : filteredAttributes) {
             AttributeInstance attribute = player.getAttributes().getInstance(attr);
-
-            //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
-            if (attribute == null || !attribute.getAttribute().isClientSyncable() ) continue;
-
-            //Aqui, removemos os que não queremos que apareçam
-            if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) continue;
-
-
             if (y + 12 < clipTop) {
                 y += LINE_HEIGHT;
                 continue;
             }
             if (y > clipBottom) break;
 
-
             if (Config.DEBUG_MODE.get()) {
                 double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
                 PlayerStats.LOGGER.info("Configurando atributo: {} Incremento: {}", attr.getDescriptionId(), increment);
             }
 
-            //Posição do botão de incrementar, varia pois no ambiente DEV tem o botão de decrementar
             int plusButtonPos;
 
             if (!net.minecraftforge.fml.loading.FMLEnvironment.production) {
                 addRenderableWidget(Button.builder(Component.literal("-"), btn ->
-                                sendAttributeChange(attr))
-                        .bounds(leftPos + 10, y, 12, 12).build());
+                        sendAttributeChange(attr)).bounds(leftPos + 10, y, 12, 12).build());
                 plusButtonPos = leftPos + 26;
+            } else {
+                plusButtonPos = leftPos + 10;
             }
-            else
-
-                plusButtonPos =  leftPos + 10;
 
             addRenderableWidget(Button.builder(Component.literal("+"), btn ->
-                            sendAttributeChange(attr))
-                    .bounds(plusButtonPos, y, 12, 12).build());
+                    sendAttributeChange(attr)).bounds(plusButtonPos, y, 12, 12).build());
 
             y += LINE_HEIGHT;
         }
@@ -140,79 +146,69 @@ public class StatsScreen extends Screen {
         RenderSystem.setShaderTexture(0, BACKGROUND);
         guiGraphics.blit(BACKGROUND, leftPos, topPos, 0, 0, BG_WIDTH, BG_HEIGHT);
 
+        this.searchBox.render(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
+        // Placeholder: mostrar só se estiver vazio e não focado
+        if (searchBox.getValue().isEmpty() && !searchBox.isFocused()) {
+            guiGraphics.drawString(
+                    this.font,
+                    Component.translatable("gui.playerstats.search_placeholder"),
+                    searchBox.getX() + 4,
+                    searchBox.getY() + 3,
+                    0xA0A0A0 ,
+                    false
+            );
+        }
+
 
         Player player = Minecraft.getInstance().player;
         Font font = Minecraft.getInstance().font;
         if (player == null) return;
 
         int points = ClientAttributeCache.getPoints();
-
-        //Cor texto de pontos disponíveis
-        int color;
-        if(points > 0) color = 0x00FF00; //Verde
-        else color = 0xFF5555; //Vermelho
-
+        int color = points > 0 ? 0x00FF00 : 0xFF5555;
         guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 12, color);
 
+        List<Attribute> filteredAttributes = BuiltInRegistries.ATTRIBUTE.stream()
+                .filter(attr -> {
+                    AttributeInstance instance = player.getAttributes().getInstance(attr);
+                    if (instance == null || !instance.getAttribute().isClientSyncable()) return false;
+                    if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
+                    if (!searchText.isEmpty()) {
+                        String name = AttributeUtils.getAttributeName(attr).toLowerCase();
+                        return name.contains(searchText);
+                    }
+                    return true;
+                }).toList();
 
-        int y = clipTop - scrollOffset +2; //2 para alinhamento do texto com os botões
+        int y = clipTop - scrollOffset + 2;
 
-        for (Attribute attr : BuiltInRegistries.ATTRIBUTE) {
+        for (Attribute attr : filteredAttributes) {
             AttributeInstance instance = player.getAttributes().getInstance(attr);
-
-            //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
-            if (instance == null || !instance.getAttribute().isClientSyncable()) continue;
-
-            //Aqui, removemos os que não queremos que apareça
             String name = AttributeUtils.getAttributeName(attr);
-            if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) continue;
-
-            if (y + 12 < clipTop) {
-                y += LINE_HEIGHT;
-                continue;
-            }
-            if (y > clipBottom) break;
-
             String value = String.format("%.2f", instance.getValue());
 
-            int pos;
-            if (!net.minecraftforge.fml.loading.FMLEnvironment.production) pos = leftPos + 45;
-            else pos =  leftPos + 29;
-
+            int pos = net.minecraftforge.fml.loading.FMLEnvironment.production ? leftPos + 29 : leftPos + 45;
             guiGraphics.drawString(font, name + ": " + value, pos, y, 0x303030, false);
 
             y += LINE_HEIGHT;
+            if (y > clipBottom) break;
         }
 
         if (resetButton != null && resetButton.isHovered()) {
             boolean hasXp = player.experienceLevel >= 50;
-
             MutableComponent text = hasXp
                     ? Component.translatable("gui.playerstats.can_reset")
                     : Component.translatable("gui.playerstats.cant_reset");
-
-            color = hasXp ? 0x00FF00 : 0xFF5555; // verde ou vermelho
-
-            guiGraphics.drawString(
-                    font,
-                    text,
-                    mouseX + 10, // desenha próximo do cursor
-                    mouseY,
-                    color,
-                    false
-            );
+            color = hasXp ? 0x00FF00 : 0xFF5555;
+            guiGraphics.drawString(font, text, mouseX + 10, mouseY, color, false);
         }
 
         int upgradeCount = ClientAttributeCache.getUpgradeCount();
         int xpCost = (upgradeCount + 1) * 5;
         boolean hasXpForUpgrade = player.experienceLevel > xpCost;
-        color = hasXpForUpgrade ? 0x00FF00 : 0xFF5555; // verde ou vermelho
-
+        color = hasXpForUpgrade ? 0x00FF00 : 0xFF5555;
         guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 10, topPos + 24, color);
-
-
-
     }
 
     @Override

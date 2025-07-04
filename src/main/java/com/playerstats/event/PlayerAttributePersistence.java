@@ -34,7 +34,40 @@ public class PlayerAttributePersistence {
     public static void onClone(PlayerEvent.Clone event) {
         CompoundTag originalNBT = event.getOriginal().getPersistentData();
         if (originalNBT.contains(ATTRIBUTE_UPGRADES_TAG)) {
-            event.getEntity().getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
+
+            Player player = event.getEntity();
+
+            //player.getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
+
+            ClientAttributeCache.clean();
+            CompoundTag root = player.getPersistentData();
+            root.put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
+
+            if(Config.RESET_ON_DEATH.get()){
+                resetAttributes((ServerPlayer) player, false);
+            }
+            else{
+                CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
+                for (String key : upgradesTag.getAllKeys()) {
+                    ResourceLocation id = new ResourceLocation(key);
+                    Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+                    AttributeInstance instance = player.getAttribute(attr);
+
+                    if (attr != null && instance != null) {
+                        int upgradeCount = upgradesTag.getInt(key);
+                        double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+
+                        PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
+                        double totalIncrement = upgradeCount * increment;
+                        // Antes: instance.setBaseValue(...);
+                        applyModifier(instance, attr.getDescriptionId(), totalIncrement);
+                    }
+                }
+            }
+
+
+            PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), (ServerPlayer) player);
+            PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
         }
     }
 
@@ -174,8 +207,8 @@ public class PlayerAttributePersistence {
         return upgrades.getInt(attrKey);
     }
 
-    public static void resetAttributes(ServerPlayer player) {
-        if (player.experienceLevel < 50 && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE) {
+    public static void resetAttributes(ServerPlayer player, boolean consumeXp) {
+        if (player.experienceLevel < 50 && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE && consumeXp) {
             player.sendSystemMessage(Component.translatable("gui.playerstats.cant_reset"));
             return;
         }
@@ -204,7 +237,9 @@ public class PlayerAttributePersistence {
         player.getPersistentData().remove(UPGRADE_COUNT_TAG);
 
         setPoints(player, getPoints(player) + refundedPoints);
-        consumeExperience(player,50);
+
+        if(consumeXp)
+            consumeExperience(player,50);
 
         player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), player);

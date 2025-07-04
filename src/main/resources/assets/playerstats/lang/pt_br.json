@@ -8,6 +8,7 @@
   "gui.playerstats.can_reset": "Você pode resetar os atributos (50 níveis de XP)",
   "gui.playerstats.cant_reset": "Você precisa de 50 níveis de XP para resetar",
   "gui.playerstats.xp_cost": "Custo de XP: %s",
+  "gui.playerstats.search_placeholder": "Pesquisar...",
   "event.playerstats.point_given": "§aVocê ganhou +1 ponto de atributo!",
   "gui.playerstats.added_points": "Pontos adicionados. Total: %s",
   "gui.playerstats.removed_points": "Pontos removidos. Total: %s",

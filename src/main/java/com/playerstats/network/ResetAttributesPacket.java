@@ -15,7 +15,7 @@ public class ResetAttributesPacket {
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
-            PlayerAttributePersistence.resetAttributes(player);
+            PlayerAttributePersistence.resetAttributes(player, true);
         });
         ctx.get().setPacketHandled(true);
     }
