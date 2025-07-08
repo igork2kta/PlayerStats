@@ -30,6 +30,7 @@ public class StatsScreen extends Screen {
     }
 
     private static final ResourceLocation BACKGROUND = new ResourceLocation("playerstats", "textures/gui/stats_background.png");
+    //Tamanho do background
     private static final int BG_WIDTH = 255;
     private static final int BG_HEIGHT = 255;
     private static final int SCROLL_STEP = 10;
@@ -53,7 +54,7 @@ public class StatsScreen extends Screen {
         this.leftPos = (this.width - BG_WIDTH) / 2;
         this.topPos = (this.height - BG_HEIGHT) / 2;
 
-        this.clipTop = topPos + 60;
+        this.clipTop = topPos + 62;
         this.clipBottom = topPos + BG_HEIGHT - 55;
 
         Player player = Minecraft.getInstance().player;
@@ -63,7 +64,9 @@ public class StatsScreen extends Screen {
         this.searchBox.setMaxLength(50);
         this.searchBox.setResponder(text -> {
             this.searchText = text.toLowerCase();
+            this.scrollOffset = 0;
             rebuildButtons();
+
         });
         this.addRenderableWidget(this.searchBox);
 
@@ -85,7 +88,9 @@ public class StatsScreen extends Screen {
         List<Attribute> filteredAttributes = BuiltInRegistries.ATTRIBUTE.stream()
                 .filter(attr -> {
                     AttributeInstance attribute = player.getAttributes().getInstance(attr);
+                    //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
                     if (attribute == null || !attribute.getAttribute().isClientSyncable()) return false;
+                    //Aqui, removemos os que não queremos que apareçam
                     if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
                     if (!searchText.isEmpty()) {
                         String name = AttributeUtils.getAttributeName(attr).toLowerCase();
@@ -105,7 +110,7 @@ public class StatsScreen extends Screen {
                 y += LINE_HEIGHT;
                 continue;
             }
-            if (y > clipBottom) break;
+            if (y + 2 > clipBottom) break;
 
             if (Config.DEBUG_MODE.get()) {
                 double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
@@ -150,6 +155,7 @@ public class StatsScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
         // Placeholder: mostrar só se estiver vazio e não focado
         if (searchBox.getValue().isEmpty() && !searchBox.isFocused()) {
+
             guiGraphics.drawString(
                     this.font,
                     Component.translatable("gui.playerstats.search_placeholder"),
@@ -159,6 +165,7 @@ public class StatsScreen extends Screen {
                     false
             );
         }
+
 
 
         Player player = Minecraft.getInstance().player;
@@ -172,7 +179,9 @@ public class StatsScreen extends Screen {
         List<Attribute> filteredAttributes = BuiltInRegistries.ATTRIBUTE.stream()
                 .filter(attr -> {
                     AttributeInstance instance = player.getAttributes().getInstance(attr);
+                    //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
                     if (instance == null || !instance.getAttribute().isClientSyncable()) return false;
+                    //Aqui, removemos os que não queremos que apareça
                     if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
                     if (!searchText.isEmpty()) {
                         String name = AttributeUtils.getAttributeName(attr).toLowerCase();
@@ -181,11 +190,17 @@ public class StatsScreen extends Screen {
                     return true;
                 }).toList();
 
-        int y = clipTop - scrollOffset + 2;
+        int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
 
         for (Attribute attr : filteredAttributes) {
             AttributeInstance instance = player.getAttributes().getInstance(attr);
             String name = AttributeUtils.getAttributeName(attr);
+
+            if (y + 12 < clipTop) {
+                y += LINE_HEIGHT;
+                continue;
+            }
+
             String value = String.format("%.2f", instance.getValue());
 
             int pos = net.minecraftforge.fml.loading.FMLEnvironment.production ? leftPos + 29 : leftPos + 45;
@@ -207,7 +222,7 @@ public class StatsScreen extends Screen {
         int upgradeCount = ClientAttributeCache.getUpgradeCount();
         int xpCost = (upgradeCount + 1) * 5;
         boolean hasXpForUpgrade = player.experienceLevel > xpCost;
-        color = hasXpForUpgrade ? 0x00FF00 : 0xFF5555;
+        color = hasXpForUpgrade ? 0x00FF00 : 0xFF5555; // verde ou vermelho
         guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 10, topPos + 24, color);
     }
 
@@ -217,6 +232,23 @@ public class StatsScreen extends Screen {
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
         rebuildButtons();
         return true;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Verifica se foi o botão direito do mouse (2)
+        if (button == 1) {
+            // Verifica se o mouse está dentro da caixa de texto
+            if (searchBox.isMouseOver(mouseX, mouseY)) {
+                searchBox.setValue("");       // limpa o texto
+                scrollOffset = 0;             // reseta scroll (opcional)
+                rebuildButtons();             // atualiza a lista
+                return true;
+            }
+        }
+
+        // Deixa o restante do sistema processar cliques normalmente
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override

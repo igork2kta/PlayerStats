@@ -44,7 +44,7 @@ public class PlayerAttributePersistence {
             root.put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
 
             if(Config.RESET_ON_DEATH.get()){
-                resetAttributes((ServerPlayer) player, false);
+                resetAttributes((ServerPlayer) player, true);
             }
             else{
                 CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
@@ -207,8 +207,8 @@ public class PlayerAttributePersistence {
         return upgrades.getInt(attrKey);
     }
 
-    public static void resetAttributes(ServerPlayer player, boolean consumeXp) {
-        if (player.experienceLevel < 50 && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE && consumeXp) {
+    public static void resetAttributes(ServerPlayer player, boolean resetByDeath) {
+        if (player.experienceLevel < 50 && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE && !resetByDeath) {
             player.sendSystemMessage(Component.translatable("gui.playerstats.cant_reset"));
             return;
         }
@@ -233,17 +233,20 @@ public class PlayerAttributePersistence {
             }
         }
 
+
         player.getPersistentData().remove(ATTRIBUTE_UPGRADES_TAG);
         player.getPersistentData().remove(UPGRADE_COUNT_TAG);
 
-        setPoints(player, getPoints(player) + refundedPoints);
+        if(!resetByDeath) {
 
-        if(consumeXp)
-            consumeExperience(player,50);
+            setPoints(player, getPoints(player) + refundedPoints);
+            consumeExperience(player, 50);
+            player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
+        }
 
-        player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), player);
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(0), player);
+
     }
 
     public static void consumeExperience(Player player, int level){
