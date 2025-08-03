@@ -24,6 +24,8 @@ public class Config {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> CUSTOM_MOB_CHANCES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> CUSTOM_ATTRIBUTE_INCREMENT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> IGNORED_ATTRIBUTES;
+    public static final ForgeConfigSpec.BooleanValue CONSUME_EXPERIENCE;
+    public static final ForgeConfigSpec.IntValue EXPERIENCE_COST_INCREMENT;
 
     public static final Map<String, Double> cachedCustomMobChances = new HashMap<>();
     public static final Map<String, Double> cachedCustomAttributeIncrement = new HashMap<>();
@@ -90,6 +92,14 @@ public class Config {
                         "forge.step_height",
                         "attribute.name.generic.armor_toughness"
                 ), o -> o instanceof String);
+
+        EXPERIENCE_COST_INCREMENT = serverBuilder
+                .comment("The cost of experience that will be incremented for the next upgrade (COMING SOON)")
+                .defineInRange("experienceCostIncrement", 5, 1, 999);
+
+        CONSUME_EXPERIENCE = serverBuilder
+                .comment("Consume experience on upgrade? (COMING SOON)")
+                .define("consumeExperience", true);
 
         serverBuilder.pop();
         SERVER = serverBuilder.build();

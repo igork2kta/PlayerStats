@@ -9,7 +9,7 @@
   "gui.playerstats.cant_reset": "Você precisa de 50 níveis de XP para resetar",
   "gui.playerstats.xp_cost": "Custo de XP: %s",
   "gui.playerstats.search_placeholder": "Pesquisar...",
-  "event.playerstats.point_given": "§aVocê ganhou +1 ponto de atributo!",
+  "event.playerstats.point_given": "§aVocê ganhou +1 ponto de atributo! Pressione %s para utilizar.",
   "gui.playerstats.added_points": "Pontos adicionados. Total: %s",
   "gui.playerstats.removed_points": "Pontos removidos. Total: %s",
   "gui.playerstats.reloaded_configs": "Configurações recarregadas",
@@ -22,6 +22,10 @@
   "config.playerstats.high_health_chance": "Chance de ganhar pontos ao matar mobs com vida alta",
   "config.playerstats.custom_mob_chances": "Lista de chances de mobs customizados no formato id=chance (por exemplo: 'entity.minecraft.chicken', você pode ver o nome exato ativando o modo debug, habilitando o console de desenvolvedor e matando o mob desejado)",
   "config.playerstats.custom_attribute_increment": "Lista de atributos personalizados (de mods ou vanilla) que aumentam ao evoluir, no formato id=incremento (ex: 'attribute.name.generic.max_health=2'). Você pode ver o nome exato ativando o modo debug, abrindo o console de desenvolvedor e abrindo a janela de status. O padrão é 0.1)",
-  "config.playerstats.ignored_attributes": "Lista de nomes de atributos a serem ignorados (ex: 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')"
+  "config.playerstats.ignored_attributes": "Lista de nomes de atributos a serem ignorados (ex: 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')",
+
+  "item.playerstats.upgrade_rune": "Runa do Aprimoramento",
+  "item.playerstats.upgrade_rune.hoverText": "Uma antiga runa pulsando com energia desconhecida. Dizem que ela desperta o verdadeiro potencial de quem a usa.",
+  "item.playerstats.upgrade_rune.message": "Você sente um poder crescendo dentro de si..."
 
 }

@@ -9,7 +9,7 @@
   "gui.playerstats.cant_reset": "You need 50 XP levels to reset",
   "gui.playerstats.xp_cost": "XP cost: %s",
   "gui.playerstats.search_placeholder": "Search...",
-  "event.playerstats.point_given":"§aYou earned +1 attribute point!",
+  "event.playerstats.point_given":"§aYou earned +1 attribute point! Press %s to use it.",
   "gui.playerstats.added_points": "Added points. Total: %s",
   "gui.playerstats.removed_points": "Removed points. Total: %s",
   "gui.playerstats.reloaded_configs": "Configurations reloaded",
@@ -21,6 +21,9 @@
   "config.playerstats.elder_guardian_chance": "Chance to gain points when killing Elder Guardian",
   "config.playerstats.high_health_chance": "Chance to gain points when killing mobs with high health",
   "config.playerstats.custom_mob_chances": "List of custom mob chances in the format id=chance (e.g. 'entity.minecraft.chicken', you can see the exact name by enabling debug mode, opening the developer console, and killing the desired mob.)",
-  "config.playerstats.ignored_attributes": "List of attribute names to ignore (e.g. 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')"
+  "config.playerstats.ignored_attributes": "List of attribute names to ignore (e.g. 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')",
 
+  "item.playerstats.upgrade_rune": "Upgrade Rune",
+  "item.playerstats.upgrade_rune.hoverText": "An ancient rune pulsing with unknown energy. It is said to awaken the true potential of those who use it.",
+  "item.playerstats.upgrade_rune.message": "You feel a power growing within you..."
 }
