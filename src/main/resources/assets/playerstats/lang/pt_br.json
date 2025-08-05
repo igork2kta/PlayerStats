@@ -26,6 +26,10 @@
 
   "item.playerstats.upgrade_rune": "Runa do Aprimoramento",
   "item.playerstats.upgrade_rune.hoverText": "Uma antiga runa pulsando com energia desconhecida. Dizem que ela desperta o verdadeiro potencial de quem a usa.",
-  "item.playerstats.upgrade_rune.message": "Você sente um poder crescendo dentro de si..."
+  "item.playerstats.upgrade_rune.message": "Você sente um poder crescendo dentro de si...",
+
+  "item.playerstats.attribute_boost_scroll": "Pergaminho do Boost de Atributo",
+  "item.playerstats.attribute_boost_scroll.hover_text": "Clique com o botão direito para desvendar o poder do pergaminho.",
+  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Concede temporariamente um aprimoramento a: %s."
 
 }

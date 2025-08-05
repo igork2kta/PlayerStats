@@ -25,5 +25,10 @@
 
   "item.playerstats.upgrade_rune": "Upgrade Rune",
   "item.playerstats.upgrade_rune.hoverText": "An ancient rune pulsing with unknown energy. It is said to awaken the true potential of those who use it.",
-  "item.playerstats.upgrade_rune.message": "You feel a power growing within you..."
+  "item.playerstats.upgrade_rune.message": "You feel a power growing within you...",
+
+  "item.playerstats.attribute_boost_scroll": "Attribute Boost Scroll",
+  "item.playerstats.attribute_boost_scroll.hover_text": "Right-click to unveil the scroll's power.",
+  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Temporarily grants a boost to: %s."
+
 }

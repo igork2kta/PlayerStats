@@ -96,6 +96,7 @@ public class PlayerStats {
     private void addCreative(BuildCreativeModeTabContentsEvent event){
         if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES){
             event.accept(ModItems.UPGRADE_RUNE);
+            event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL);
         }
     }
 
