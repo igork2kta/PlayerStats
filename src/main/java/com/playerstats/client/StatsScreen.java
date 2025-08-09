@@ -85,19 +85,7 @@ public class StatsScreen extends Screen {
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
-        List<Attribute> filteredAttributes = BuiltInRegistries.ATTRIBUTE.stream()
-                .filter(attr -> {
-                    AttributeInstance attribute = player.getAttributes().getInstance(attr);
-                    //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
-                    if (attribute == null || !attribute.getAttribute().isClientSyncable()) return false;
-                    //Aqui, removemos os que não queremos que apareçam
-                    if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
-                    if (!searchText.isEmpty()) {
-                        String name = AttributeUtils.getAttributeName(attr).toLowerCase();
-                        return name.contains(searchText);
-                    }
-                    return true;
-                }).toList();
+        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(player, searchText);
 
         int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
         maxScroll = Math.max(0, (filteredAttributes.size() - visibleLines) * LINE_HEIGHT);
@@ -176,19 +164,7 @@ public class StatsScreen extends Screen {
         int color = points > 0 ? 0x00FF00 : 0xFF5555;
         guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 10, topPos + 12, color);
 
-        List<Attribute> filteredAttributes = BuiltInRegistries.ATTRIBUTE.stream()
-                .filter(attr -> {
-                    AttributeInstance instance = player.getAttributes().getInstance(attr);
-                    //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
-                    if (instance == null || !instance.getAttribute().isClientSyncable()) return false;
-                    //Aqui, removemos os que não queremos que apareça
-                    if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
-                    if (!searchText.isEmpty()) {
-                        String name = AttributeUtils.getAttributeName(attr).toLowerCase();
-                        return name.contains(searchText);
-                    }
-                    return true;
-                }).toList();
+        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(player, searchText);
 
         int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
 
@@ -202,9 +178,19 @@ public class StatsScreen extends Screen {
             }
 
             String value = String.format("%.2f", instance.getValue());
-
             int pos = net.minecraftforge.fml.loading.FMLEnvironment.production ? leftPos + 29 : leftPos + 45;
-            guiGraphics.drawString(font, name + ": " + value, pos, y, 0x303030, false);
+
+            // Parte base (nome + valor normal)
+            String baseText = name + ": " + value;
+            guiGraphics.drawString(font, baseText, pos, y, 0x303030, false);
+
+            // Parte do boost (somente se existir)
+            ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
+            if (boost != null) {
+                String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
+                int boostX = pos + font.width(baseText); // começa logo após o valor
+                guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+            }
 
             y += LINE_HEIGHT;
             if (y > clipBottom) break;

@@ -30,6 +30,7 @@
 
   "item.playerstats.attribute_boost_scroll": "Pergaminho do Boost de Atributo",
   "item.playerstats.attribute_boost_scroll.hover_text": "Clique com o botão direito para desvendar o poder do pergaminho.",
+  "item.playerstats.attribute_boost_scroll.hover_text_values": "+%.2f por %d segundos",
   "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Concede temporariamente um aprimoramento a: %s."
 
 }

@@ -14,7 +14,6 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.LootTableLoadEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -85,6 +84,11 @@ public class PlayerStats {
                     .setRolls(ConstantValue.exactly(1)) // tenta adicionar um item
                     .add(LootItem.lootTableItem(ModItems.UPGRADE_RUNE.get())
                             .when(LootItemRandomChanceCondition.randomChance(0.10f)) // 10% de chance
+                            .setWeight(1)
+                            .setQuality(1))
+                    // Attribute Boost Scroll
+                    .add(LootItem.lootTableItem(ModItems.ATTRIBUTE_BOOST_SCROLL.get())
+                            .when(LootItemRandomChanceCondition.randomChance(0.10f))
                             .setWeight(1)
                             .setQuality(1))
                     .build();

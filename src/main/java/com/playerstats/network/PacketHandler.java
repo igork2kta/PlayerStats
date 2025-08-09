@@ -2,9 +2,13 @@ package com.playerstats.network;
 
 import com.playerstats.PlayerStats;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
+
+import java.util.Optional;
 
 
 public class PacketHandler {
@@ -46,11 +50,23 @@ public class PacketHandler {
                 UpdateUpgradeCountPacket::decode,
                 UpdateUpgradeCountPacket::handle
         );
+
+        INSTANCE.registerMessage(id++, BoostsSyncPacket.class,
+                BoostsSyncPacket::encode,
+                BoostsSyncPacket::decode,
+                BoostsSyncPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT)
+        );
+
     }
 
 
     public static <MSG> void sendToClient(MSG message, net.minecraft.server.level.ServerPlayer player) {
         INSTANCE.sendTo(message, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    }
+
+    public static void sendToClient(ServerPlayer player, Object packet) {
+        INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 
     public static <MSG> void sendToServer(MSG message) {

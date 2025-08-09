@@ -2,9 +2,13 @@ package com.playerstats.util;
 
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.player.Player;
 
+import java.util.List;
 import java.util.Set;
 
 public class AttributeUtils {
@@ -37,4 +41,22 @@ public class AttributeUtils {
     public static String getAttributeName(Attribute attr) {
         return Component.translatable(attr.getDescriptionId()).getString();
     }
+
+
+    public static List<Attribute> getAttributes(Player player, String searchText){
+        return BuiltInRegistries.ATTRIBUTE.stream()
+                .filter(attr -> {
+                    AttributeInstance instance = player.getAttributes().getInstance(attr);
+                    //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
+                    if (instance == null || !instance.getAttribute().isClientSyncable()) return false;
+                    //Aqui, removemos os que não queremos que apareça
+                    if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
+                    if (!searchText.isEmpty()) {
+                        String name = AttributeUtils.getAttributeName(attr).toLowerCase();
+                        return name.contains(searchText);
+                    }
+                    return true;
+                }).toList();
+    }
+
 }

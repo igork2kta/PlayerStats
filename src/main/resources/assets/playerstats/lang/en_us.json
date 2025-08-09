@@ -29,6 +29,7 @@
 
   "item.playerstats.attribute_boost_scroll": "Attribute Boost Scroll",
   "item.playerstats.attribute_boost_scroll.hover_text": "Right-click to unveil the scroll's power.",
+  "item.playerstats.attribute_boost_scroll.hover_text_values": "+%.2f for %d seconds",
   "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Temporarily grants a boost to: %s."
 
 }

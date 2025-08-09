@@ -13,26 +13,41 @@ public class Config {
     // COMMON config
     public static final ForgeConfigSpec.BooleanValue DEBUG_MODE;
 
-    // SERVER config
+    // SERVER config - Geral
     public static final ForgeConfigSpec.BooleanValue RESET_ON_DEATH;
     public static final ForgeConfigSpec.ConfigValue<Integer> HIGH_HEALTH;
+
+    // SERVER config - Chances de mobs
     public static final ForgeConfigSpec.DoubleValue WITHER_CHANCE;
     public static final ForgeConfigSpec.DoubleValue ENDER_DRAGON_CHANCE;
     public static final ForgeConfigSpec.DoubleValue WARDEN_CHANCE;
     public static final ForgeConfigSpec.DoubleValue ELDER_GUARDIAN_CHANCE;
     public static final ForgeConfigSpec.DoubleValue HIGH_HEALTH_CHANCE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> CUSTOM_MOB_CHANCES;
+
+    // SERVER config - Incrementos e atributos
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> CUSTOM_ATTRIBUTE_INCREMENT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> IGNORED_ATTRIBUTES;
+
+    // SERVER config - Experiência
     public static final ForgeConfigSpec.BooleanValue CONSUME_EXPERIENCE;
     public static final ForgeConfigSpec.IntValue EXPERIENCE_COST_INCREMENT;
 
+    // SERVER config - Boost de atributos
+    public static final ForgeConfigSpec.IntValue BOOST_AMOUNT_MIN_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue BOOST_AMOUNT_MAX_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue BOOST_DURATION_MIN_MINUTES;
+    public static final ForgeConfigSpec.IntValue BOOST_DURATION_MAX_MINUTES;
+
+
+    //Cache
     public static final Map<String, Double> cachedCustomMobChances = new HashMap<>();
     public static final Map<String, Double> cachedCustomAttributeIncrement = new HashMap<>();
     public static final Set<String> cachedIgnoredAttributes = new HashSet<>();
 
+
     static {
-        // COMMON
+        // ===================== COMMON =====================
         ForgeConfigSpec.Builder commonBuilder = new ForgeConfigSpec.Builder();
         commonBuilder.push("geral");
 
@@ -43,8 +58,10 @@ public class Config {
         commonBuilder.pop();
         COMMON = commonBuilder.build();
 
-        // SERVER
+        // ===================== SERVER =====================
         ForgeConfigSpec.Builder serverBuilder = new ForgeConfigSpec.Builder();
+
+        // ----- Geral -----
         serverBuilder.push("geral");
 
         RESET_ON_DEATH = serverBuilder
@@ -54,6 +71,11 @@ public class Config {
         HIGH_HEALTH = serverBuilder
                 .comment("Amount of health considered high")
                 .define("highHealthAmount", 50);
+
+        serverBuilder.pop();
+
+        // ----- Chances de Mobs -----
+        serverBuilder.push("mob_chances");
 
         WITHER_CHANCE = serverBuilder
                 .comment("Chance to gain points when killing Wither")
@@ -79,6 +101,11 @@ public class Config {
                 .comment("Custom mob chances (id=chance)")
                 .defineListAllowEmpty("customMobChances", List.of(), o -> o instanceof String && ((String) o).contains("="));
 
+        serverBuilder.pop();
+
+        // ----- Incrementos e Atributos -----
+        serverBuilder.push("attribute_settings");
+
         CUSTOM_ATTRIBUTE_INCREMENT = serverBuilder
                 .comment("Custom attribute increment (id=increment)")
                 .defineListAllowEmpty("customAttributeIncrement", List.of(), o -> o instanceof String && ((String) o).contains("="));
@@ -93,6 +120,11 @@ public class Config {
                         "attribute.name.generic.armor_toughness"
                 ), o -> o instanceof String);
 
+        serverBuilder.pop();
+
+        // ----- Experiência -----
+        serverBuilder.push("experience");
+
         EXPERIENCE_COST_INCREMENT = serverBuilder
                 .comment("The cost of experience that will be incremented for the next upgrade (COMING SOON)")
                 .defineInRange("experienceCostIncrement", 5, 1, 999);
@@ -102,6 +134,28 @@ public class Config {
                 .define("consumeExperience", true);
 
         serverBuilder.pop();
+
+        // ----- Boost de Atributos -----
+        serverBuilder.push("attribute_boost");
+
+        BOOST_AMOUNT_MIN_MULTIPLIER = serverBuilder
+                .comment("Minimum multiplier for attribute boost (1.0 = base increment)")
+                .defineInRange("boostAmountMinMultiplier", 1, 1, 10);
+
+        BOOST_AMOUNT_MAX_MULTIPLIER = serverBuilder
+                .comment("Maximum multiplier for attribute boost (3.0 = triple the base increment)")
+                .defineInRange("boostAmountMaxMultiplier", 3, 1, 10);
+
+        BOOST_DURATION_MIN_MINUTES = serverBuilder
+                .comment("Minimum duration of boost in minutes")
+                .defineInRange("boostDurationMinMinutes", 10, 1, 240);
+
+        BOOST_DURATION_MAX_MINUTES = serverBuilder
+                .comment("Maximum duration of boost in minutes")
+                .defineInRange("boostDurationMaxMinutes", 30, 1, 240);
+
+        serverBuilder.pop();
+
         SERVER = serverBuilder.build();
     }
 
