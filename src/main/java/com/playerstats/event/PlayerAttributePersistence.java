@@ -116,29 +116,15 @@ public class PlayerAttributePersistence {
             int playerPoints = getPoints(player);
             int playerXpLevel = player.experienceLevel;
             int playerUpgrades = getUpgradeCount(player);
-            int xpCost = (playerUpgrades + 1) * 5; //Starts with 5 and increment by 5
+            int xpIncrement = Config.XP_COST_INCREMENT.get();
 
-            if(player.gameMode.getGameModeForPlayer() == GameType.CREATIVE) playerXpLevel = xpCost; //Creative mod doesn't need XP
+            int xpCost = (playerUpgrades + 1) * xpIncrement; //Starts with 5 and increment by 5
 
-            if (instance != null && playerPoints > 0 && playerXpLevel >= xpCost) {
-                /*
-                double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-                double newValue = instance.getBaseValue() + increment;
+            boolean consumeXp = Config.CONSUME_XP.get();
+            if(player.gameMode.getGameModeForPlayer() == GameType.CREATIVE) consumeXp = false ;//Creative mod doesn't need XP
 
-                applyUpgrade(player, attr);
-                setPoints(player, playerPoints - 1);
+            if (instance != null && playerPoints > 0 && (playerXpLevel >= xpCost || !consumeXp)) {
 
-                //Increment attribute value to player
-                instance.setBaseValue(newValue);
-
-                int newPoints = getPoints(player);
-                PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
-
-
-                int count = PlayerAttributePersistence.getUpgradeCount(player);
-                PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
-                //player.giveExperienceLevels(-xpCost); // ✅ remove níveis
-                consumeExperience(player,xpCost);*/
                 // Ao aplicar o upgrade
                 applyUpgrade(player, attr); // Isso já chama applyModifier agora
 
@@ -150,7 +136,8 @@ public class PlayerAttributePersistence {
                 int count = PlayerAttributePersistence.getUpgradeCount(player);
                 PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
 
-                consumeExperience(player, xpCost);
+                if(consumeXp) consumeExperience(player, xpCost);
+
             } else {
                 System.err.println("AttributeInstance is null for: " + id);
             }
@@ -193,7 +180,6 @@ public class PlayerAttributePersistence {
         AttributeInstance instance = player.getAttribute(attr);
         if (instance != null) {
             double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-            //currentUpgrades = getUpgrades(player, key.toString()) + 1;
             applyModifier(instance, attr.getDescriptionId(), increment * currentUpgrades);
         }
 
@@ -208,8 +194,11 @@ public class PlayerAttributePersistence {
     }
 
     public static void resetAttributes(ServerPlayer player, boolean resetByDeath) {
-        if (player.experienceLevel < 50 && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE && !resetByDeath) {
-            player.sendSystemMessage(Component.translatable("gui.playerstats.cant_reset"));
+
+        boolean consumeXp = Config.CONSUME_XP.get();
+        int requiredXp = Config.REQUIRED_XP_FOR_RESET.get();
+        if (player.experienceLevel < requiredXp && player.gameMode.getGameModeForPlayer() != GameType.CREATIVE && !resetByDeath && consumeXp) {
+            player.sendSystemMessage(Component.translatable("gui.playerstats.cant_reset", requiredXp));
             return;
         }
 
@@ -240,7 +229,8 @@ public class PlayerAttributePersistence {
         if(!resetByDeath) {
 
             setPoints(player, getPoints(player) + refundedPoints);
-            consumeExperience(player, 50);
+
+            if(consumeXp) consumeExperience(player, requiredXp);
             player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
         }
 

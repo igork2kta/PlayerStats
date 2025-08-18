@@ -83,12 +83,12 @@ public class PlayerStats {
                     .name("upgrade_rune_pool")
                     .setRolls(ConstantValue.exactly(1)) // tenta adicionar um item
                     .add(LootItem.lootTableItem(ModItems.UPGRADE_RUNE.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.10f)) // 10% de chance
+                            .when(LootItemRandomChanceCondition.randomChance(0.07f)) // 7% de chance
                             .setWeight(1)
                             .setQuality(1))
                     // Attribute Boost Scroll
                     .add(LootItem.lootTableItem(ModItems.ATTRIBUTE_BOOST_SCROLL.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.10f))
+                            .when(LootItemRandomChanceCondition.randomChance(0.12f))
                             .setWeight(1)
                             .setQuality(1))
                     .build();
