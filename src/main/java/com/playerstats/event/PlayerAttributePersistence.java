@@ -33,9 +33,7 @@ public class PlayerAttributePersistence {
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         CompoundTag originalNBT = event.getOriginal().getPersistentData();
-        if (originalNBT.contains(ATTRIBUTE_UPGRADES_TAG)) {
-
-            Player player = event.getEntity();
+        Player player = event.getEntity();
 
             //player.getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
 
@@ -47,6 +45,7 @@ public class PlayerAttributePersistence {
                 resetAttributes((ServerPlayer) player, true);
             }
             else{
+                setPoints(player, getPoints(event.getOriginal()));
                 CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
                 for (String key : upgradesTag.getAllKeys()) {
                     ResourceLocation id = new ResourceLocation(key);
@@ -69,7 +68,7 @@ public class PlayerAttributePersistence {
             PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player)), (ServerPlayer) player);
             PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
         }
-    }
+
 
     @SubscribeEvent
     public static void onLogin(PlayerLoggedInEvent event) {
