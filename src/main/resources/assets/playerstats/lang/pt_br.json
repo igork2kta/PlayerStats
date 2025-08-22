@@ -1,6 +1,7 @@
 {
-  "key.categories.playerstats": "Player Stats",
+  "key.categories.playerstats": "Status do Jogador",
   "key.playerstats.open_stats": "Abrir Tela de Atributos",
+  "key.playerstats.open_entity_stats": "Abrir tela de atributos da entidade (entidade na mira)",
   "gui.playerstats.title": "Atributos do Jogador",
   "gui.playerstats.points": "Pontos Disponíveis: %s",
   "gui.playerstats.reset": "Resetar",

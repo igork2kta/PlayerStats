@@ -15,7 +15,7 @@ import org.lwjgl.glfw.GLFW;
         bus = Mod.EventBusSubscriber.Bus.MOD,
         value = Dist.CLIENT // <-- ESSENCIAL para evitar carregamento no servidor
 )
-public class KeyMappingsRegistrar {
+public class KeyMappings {
 
     public static final KeyMapping OPEN_STATS_KEY = new KeyMapping(
             "key.playerstats.open_stats",
@@ -23,10 +23,17 @@ public class KeyMappingsRegistrar {
             "key.categories.playerstats"
     );
 
+    public static final KeyMapping OPEN_ENTITY_STATS_KEY = new KeyMapping(
+            "key.playerstats.open_entity_stats", // chave de tradução
+            GLFW.GLFW_KEY_H,                // tecla H
+            "key.categories.playerstats"    // categoria
+    );
+
 
     //Aqui o atalho é registrado nos controles do jogo, permitindo alterar, o padrão é R
     @SubscribeEvent
     public static void onKeyMappingRegister(RegisterKeyMappingsEvent event) {
         event.register(OPEN_STATS_KEY);
+        event.register(OPEN_ENTITY_STATS_KEY);
     }
 }

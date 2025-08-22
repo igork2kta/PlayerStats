@@ -21,7 +21,7 @@ public class CustomSearchBox extends EditBox {
     public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         // Fundo customizado
         graphics.blit(
-                new ResourceLocation("playerstats", "textures/gui/search_box.png"),
+                ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/search_box.png"),
                 this.getX() - 5,
                 this.getY() - (this.height - 8) / 2,
                 0,

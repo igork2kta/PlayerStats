@@ -4,6 +4,7 @@ import com.playerstats.Config;
 import com.playerstats.PlayerStats;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
@@ -43,7 +44,7 @@ public class AttributeUtils {
     }
 
 
-    public static List<Attribute> getAttributes(Player player, String searchText){
+    public static List<Attribute> getAttributes(LivingEntity player, String searchText){
         return BuiltInRegistries.ATTRIBUTE.stream()
                 .filter(attr -> {
                     AttributeInstance instance = player.getAttributes().getInstance(attr);

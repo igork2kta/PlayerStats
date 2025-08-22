@@ -1,6 +1,7 @@
 {
   "key.categories.playerstats": "Player Stats",
   "key.playerstats.open_stats": "Open Stats Screen",
+  "key.playerstats.open_entity_stats": "Open Entity stats screen (targeted entity)",
   "gui.playerstats.title": "Player Stats",
   "gui.playerstats.points": "Available Points: %s",
   "gui.playerstats.reset": "Reset",

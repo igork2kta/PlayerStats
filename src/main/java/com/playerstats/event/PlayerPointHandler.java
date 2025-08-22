@@ -2,7 +2,7 @@ package com.playerstats.event;
 
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
-import com.playerstats.client.KeyMappingsRegistrar;
+import com.playerstats.client.KeyMappings;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.network.UpdatePointsPacket;
 import net.minecraft.network.chat.Component;
@@ -129,7 +129,7 @@ public class PlayerPointHandler {
         PlayerAttributePersistence.addPoints(player, amount);
         int newPoints = PlayerAttributePersistence.getPoints(player);
         PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
-        player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappingsRegistrar.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+        player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
     }
 
     public static boolean isProgressiveBossesInstalled(){

@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
@@ -104,17 +105,21 @@ public class PlayerAttributePersistence {
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
     }
 
-    public static void upgradeAttribute(ServerPlayer player, String attributeId){
+    public static void upgradeAttribute(LivingEntity entity, String attributeId) {
+        if(entity instanceof ServerPlayer player)
+            upgradeAttribute(entity, player, attributeId);
+    }
+    public static void upgradeAttribute(LivingEntity entity, ServerPlayer player, String attributeId){
 
         ResourceLocation id = new ResourceLocation(attributeId);
         Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
 
         if (attr != null) {
 
-            AttributeInstance instance = player.getAttribute(attr);
+            AttributeInstance instance = entity.getAttribute(attr);
             int playerPoints = getPoints(player);
             int playerXpLevel = player.experienceLevel;
-            int playerUpgrades = getUpgradeCount(player);
+            int playerUpgrades = getUpgradeCount(entity);
             int xpIncrement = Config.XP_COST_INCREMENT.get();
 
             int xpCost = (playerUpgrades + 1) * xpIncrement; //Starts with 5 and increment by 5
@@ -125,14 +130,14 @@ public class PlayerAttributePersistence {
             if (instance != null && playerPoints > 0 && (playerXpLevel >= xpCost || !consumeXp)) {
 
                 // Ao aplicar o upgrade
-                applyUpgrade(player, attr); // Isso já chama applyModifier agora
+                applyUpgrade(entity, attr); // Isso já chama applyModifier agora
 
                 setPoints(player, playerPoints - 1);
 
                 int newPoints = getPoints(player);
                 PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
 
-                int count = PlayerAttributePersistence.getUpgradeCount(player);
+                int count = PlayerAttributePersistence.getUpgradeCount(entity);
                 PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
 
                 if(consumeXp) consumeExperience(player, xpCost);
@@ -168,7 +173,7 @@ public class PlayerAttributePersistence {
 
     }
 
-    public static void applyUpgrade(Player player, Attribute attr) {
+    public static void applyUpgrade(LivingEntity player, Attribute attr) {
         ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
         CompoundTag upgrades = player.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
 
@@ -182,8 +187,8 @@ public class PlayerAttributePersistence {
             applyModifier(instance, attr.getDescriptionId(), increment * currentUpgrades);
         }
 
-        decrementPoints(player);
-        incrementUpgradeCount(player);
+        //decrementPoints(player);
+        //incrementUpgradeCount(player);
 
     }
 
@@ -192,7 +197,11 @@ public class PlayerAttributePersistence {
         return upgrades.getInt(attrKey);
     }
 
-    public static void resetAttributes(ServerPlayer player, boolean resetByDeath) {
+    public static void resetAttributes(LivingEntity entity, boolean resetByDeath) {
+        if(entity instanceof ServerPlayer player)
+            resetAttributes(entity, player, resetByDeath);
+    }
+    public static void resetAttributes(LivingEntity entity, ServerPlayer player, boolean resetByDeath) {
 
         boolean consumeXp = Config.CONSUME_XP.get();
         int requiredXp = Config.REQUIRED_XP_FOR_RESET.get();
@@ -201,16 +210,16 @@ public class PlayerAttributePersistence {
             return;
         }
 
-        CompoundTag upgrades = player.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
+        CompoundTag upgrades = entity.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
         int refundedPoints = 0;
 
         for (String key : upgrades.getAllKeys()) {
             ResourceLocation id = new ResourceLocation(key);
             Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-            AttributeInstance instance = player.getAttribute(attr);
+            AttributeInstance instance = entity.getAttribute(attr);
             if (attr != null && instance != null) {
                 int upgradesApplied = upgrades.getInt(key);
-                double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+                //double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
                 //instance.setBaseValue(instance.getBaseValue() - (upgradesApplied * increment));
                 // Remove o modificador
                 instance.getModifiers().stream()
@@ -222,8 +231,8 @@ public class PlayerAttributePersistence {
         }
 
 
-        player.getPersistentData().remove(ATTRIBUTE_UPGRADES_TAG);
-        player.getPersistentData().remove(UPGRADE_COUNT_TAG);
+        entity.getPersistentData().remove(ATTRIBUTE_UPGRADES_TAG);
+        entity.getPersistentData().remove(UPGRADE_COUNT_TAG);
 
         if(!resetByDeath) {
 
@@ -306,8 +315,8 @@ public class PlayerAttributePersistence {
         tag.putInt(POINTS_TAG, Math.max(0, current - 1));
     }
 
-    public static int getUpgradeCount(Player player) {
-        return player.getPersistentData().getInt(UPGRADE_COUNT_TAG);
+    public static int getUpgradeCount(LivingEntity entity) {
+        return entity.getPersistentData().getInt(UPGRADE_COUNT_TAG);
     }
 
     public static void incrementUpgradeCount(Player player) {

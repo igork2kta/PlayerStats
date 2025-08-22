@@ -5,9 +5,7 @@ import com.playerstats.Config;
 import com.playerstats.PlayerStats;
 import com.playerstats.client.widget.CustomSearchBox;
 import com.playerstats.client.widget.CustomButton;
-import com.playerstats.network.ModifyAttributePacket;
-import com.playerstats.network.PacketHandler;
-import com.playerstats.network.ResetAttributesPacket;
+import com.playerstats.network.*;
 import com.playerstats.util.AttributeUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -18,6 +16,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
@@ -26,8 +25,8 @@ import java.util.List;
 
 public class StatsScreen extends Screen {
 
-    private static final ResourceLocation BACKGROUND = new ResourceLocation("playerstats", "textures/gui/stats_background.png");
-    private static final ResourceLocation PLUS_BUTTON_TEXTURE = new ResourceLocation("playerstats", "textures/gui/plus_button.png");
+    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/stats_background.png");
+    private static final ResourceLocation PLUS_BUTTON_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/plus_button.png");
     //Tamanho do background
     private static final int BG_WIDTH = 300;
     private static final int BG_HEIGHT = 300;
@@ -45,6 +44,9 @@ public class StatsScreen extends Screen {
     private EditBox searchBox;
     private String searchText = "";
 
+    //Entidade que ser alterada
+    private LivingEntity entity;
+    //Player de onde serão subtraídos XP e pontos
     private Player player;
 
     private final boolean consumeXp = Config.CONSUME_XP.get();
@@ -53,6 +55,11 @@ public class StatsScreen extends Screen {
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
+    }
+
+    public StatsScreen(LivingEntity entity) {
+        super(Component.literal("Player Stats"));
+        this.entity = entity;
     }
 
     @Override
@@ -66,19 +73,19 @@ public class StatsScreen extends Screen {
         this.clipTop = topPos + 110;
         this.clipBottom = topPos + BG_HEIGHT - 60;
 
+        //Se não tiver entidade, é o proprio player
         player = Minecraft.getInstance().player;
-        if (player == null) return;
+        if (entity == null) entity = player;
 
         this.searchBox = new CustomSearchBox(this.font, leftPos + 25, topPos + 80, 260, 19);
 
-        //Toda vez que o usuaio digita algo, muda para minusculo, reseta a barra de rolagem e redesenha os botões
+        //Toda vez que o usuario digita algo, muda para minusculo, reseta a barra de rolagem e redesenha os botões
         this.searchBox.setResponder(text -> {
             this.searchText = text.toLowerCase();
             this.scrollOffset = 0;
             rebuildButtons();
 
         });
-        this.addRenderableWidget(this.searchBox);
 
         resetButton = new CustomButton(
                 leftPos + (BG_WIDTH / 2) - 35,   // X
@@ -86,15 +93,9 @@ public class StatsScreen extends Screen {
                 70,                              // largura
                 20,                              // altura
                 Component.translatable("gui.playerstats.reset"),
-                new ResourceLocation("playerstats", "textures/gui/reset_button.png"),
-                btn -> PacketHandler.sendToServer(new ResetAttributesPacket())
+                ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
+                btn -> PacketHandler.sendToServer(new ResetAttributesPacket(entity.getId()))
         );
-
-        /*
-        resetButton = Button.builder(
-                Component.translatable("gui.playerstats.reset"),
-                btn -> PacketHandler.sendToServer(new ResetAttributesPacket())
-        ).bounds(leftPos + (BG_WIDTH / 2) - 35, topPos + BG_HEIGHT - 30, 70, 20).build();*/
 
         rebuildButtons();
     }
@@ -119,14 +120,13 @@ public class StatsScreen extends Screen {
             color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
             guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 115, topPos + 41, color);
         }
+        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
 
-
-        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(player, searchText);
 
         int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
 
         for (Attribute attr : filteredAttributes) {
-            AttributeInstance instance = player.getAttributes().getInstance(attr);
+            AttributeInstance instance = entity.getAttributes().getInstance(attr);
             String name = AttributeUtils.getAttributeName(attr);
 
             if (y + 15 <= clipTop) {
@@ -164,7 +164,6 @@ public class StatsScreen extends Screen {
             guiGraphics.renderTooltip(font, text, mouseX, mouseY);
         }
 
-
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
     }
@@ -174,7 +173,7 @@ public class StatsScreen extends Screen {
         this.clearWidgets();
         this.addRenderableWidget(this.searchBox);
 
-        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(player, searchText);
+        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
 
         int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
         maxScroll = Math.max(0, (filteredAttributes.size() - visibleLines) * LINE_HEIGHT);
@@ -182,7 +181,7 @@ public class StatsScreen extends Screen {
         int y = clipTop - scrollOffset;
 
         for (Attribute attr : filteredAttributes) {
-            AttributeInstance attribute = player.getAttributes().getInstance(attr);
+            AttributeInstance attribute = entity.getAttributes().getInstance(attr);
             if (y + 17 <= clipTop) {
                 y += LINE_HEIGHT;
                 continue;
@@ -218,7 +217,8 @@ public class StatsScreen extends Screen {
     private void sendAttributeChange(Attribute attribute) {
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (id != null) {
-            PacketHandler.sendToServer(new ModifyAttributePacket(id.toString()));
+                PacketHandler.sendToServer(new ModifyAttributePacket(entity.getId(), id.toString()));
+
         } else {
             System.out.println("Atributo sem ResourceLocation válido!");
         }

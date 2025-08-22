@@ -26,10 +26,10 @@ public class PacketHandler {
         int id = 0;
 
         INSTANCE.registerMessage(id++,
-                ModifyAttributePacket.class,
-                ModifyAttributePacket::encode,
-                ModifyAttributePacket::decode,
-                ModifyAttributePacket::handle);
+                ModifyAttributePacket_OLD.class,
+                ModifyAttributePacket_OLD::encode,
+                ModifyAttributePacket_OLD::decode,
+                ModifyAttributePacket_OLD::handle);
 
         INSTANCE.registerMessage(id++,
                 UpdatePointsPacket.class,
@@ -38,11 +38,17 @@ public class PacketHandler {
                 UpdatePointsPacket::handle);
 
         INSTANCE.registerMessage( id++,
-                ResetAttributesPacket.class,
-                ResetAttributesPacket::toBytes,
-                ResetAttributesPacket::new,
-                ResetAttributesPacket::handle
+                ResetAttributesPacket_OLD.class,
+                ResetAttributesPacket_OLD::toBytes,
+                ResetAttributesPacket_OLD::new,
+                ResetAttributesPacket_OLD::handle
         );
+
+        INSTANCE.registerMessage(id++,
+                ResetAttributesPacket.class,
+                ResetAttributesPacket::encode,
+                ResetAttributesPacket::decode,
+                ResetAttributesPacket::handle);
 
         INSTANCE.registerMessage(id++,
                 UpdateUpgradeCountPacket.class,
@@ -57,6 +63,12 @@ public class PacketHandler {
                 BoostsSyncPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT)
         );
+
+        INSTANCE.registerMessage(id++, ModifyAttributePacket.class,
+                ModifyAttributePacket::encode,
+                ModifyAttributePacket::decode,
+                ModifyAttributePacket::handle);
+
 
     }
 

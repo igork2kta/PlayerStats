@@ -1,6 +1,6 @@
 package com.playerstats.items;
 
-import com.playerstats.client.KeyMappingsRegistrar;
+import com.playerstats.client.KeyMappings;
 import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.network.UpdatePointsPacket;
@@ -46,7 +46,7 @@ public class UpgradeRuneItem extends Item {
             PlayerAttributePersistence.addPoints(player, 1);
             int newPoints = PlayerAttributePersistence.getPoints(player);
             PacketHandler.sendToClient(new UpdatePointsPacket(newPoints),(ServerPlayer) player);
-            player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappingsRegistrar.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+            player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
         }
 
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
