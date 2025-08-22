@@ -2,8 +2,10 @@ package com.playerstats.util;
 
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -58,6 +60,10 @@ public class AttributeUtils {
                     }
                     return true;
                 }).toList();
+    }
+
+    public static AttributeInstance getAttributeInstance(LivingEntity entity, Attribute attribute){
+        return entity.getAttributes().getInstance(attribute);
     }
 
 }

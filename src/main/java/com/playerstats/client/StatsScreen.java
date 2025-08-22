@@ -126,7 +126,7 @@ public class StatsScreen extends Screen {
         int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
 
         for (Attribute attr : filteredAttributes) {
-            AttributeInstance instance = entity.getAttributes().getInstance(attr);
+            AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
             String name = AttributeUtils.getAttributeName(attr);
 
             if (y + 15 <= clipTop) {
@@ -181,7 +181,7 @@ public class StatsScreen extends Screen {
         int y = clipTop - scrollOffset;
 
         for (Attribute attr : filteredAttributes) {
-            AttributeInstance attribute = entity.getAttributes().getInstance(attr);
+
             if (y + 17 <= clipTop) {
                 y += LINE_HEIGHT;
                 continue;
