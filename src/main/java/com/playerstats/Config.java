@@ -1,55 +1,56 @@
 package com.playerstats;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.common.Mod;
+import com.playerstats.util.AttributeUtils;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = PlayerStats.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
-    public static final ForgeConfigSpec COMMON;
-    public static final ForgeConfigSpec SERVER;
+    public static final ModConfigSpec COMMON;
+    public static final ModConfigSpec SERVER;
+
 
     // COMMON config
-    public static final ForgeConfigSpec.BooleanValue DEBUG_MODE;
+    public static final ModConfigSpec.BooleanValue DEBUG_MODE;
 
     // SERVER config - Geral
-    public static final ForgeConfigSpec.BooleanValue RESET_ON_DEATH;
-    public static final ForgeConfigSpec.ConfigValue<Integer> HIGH_HEALTH;
+    public static final ModConfigSpec.BooleanValue RESET_ON_DEATH;
+    public static final ModConfigSpec.ConfigValue<Integer> HIGH_HEALTH;
 
     // SERVER config - Chances de mobs
-    public static final ForgeConfigSpec.DoubleValue WITHER_CHANCE;
-    public static final ForgeConfigSpec.DoubleValue ENDER_DRAGON_CHANCE;
-    public static final ForgeConfigSpec.DoubleValue WARDEN_CHANCE;
-    public static final ForgeConfigSpec.DoubleValue ELDER_GUARDIAN_CHANCE;
-    public static final ForgeConfigSpec.DoubleValue HIGH_HEALTH_CHANCE;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> CUSTOM_MOB_CHANCES;
+    public static final ModConfigSpec.DoubleValue WITHER_CHANCE;
+    public static final ModConfigSpec.DoubleValue ENDER_DRAGON_CHANCE;
+    public static final ModConfigSpec.DoubleValue WARDEN_CHANCE;
+    public static final ModConfigSpec.DoubleValue ELDER_GUARDIAN_CHANCE;
+    public static final ModConfigSpec.DoubleValue HIGH_HEALTH_CHANCE;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> CUSTOM_MOB_CHANCES;
 
     // SERVER config - Incrementos e atributos
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> CUSTOM_ATTRIBUTE_INCREMENT;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> IGNORED_ATTRIBUTES;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> CUSTOM_ATTRIBUTE_INCREMENT;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> IGNORED_ATTRIBUTES;
 
     // SERVER config - Experiência
-    public static final ForgeConfigSpec.BooleanValue CONSUME_XP;
-    public static final ForgeConfigSpec.IntValue XP_COST_INCREMENT;
-    public static final ForgeConfigSpec.IntValue REQUIRED_XP_FOR_RESET;
+    public static final ModConfigSpec.BooleanValue CONSUME_XP;
+    public static final ModConfigSpec.IntValue XP_COST_INCREMENT;
+    public static final ModConfigSpec.IntValue REQUIRED_XP_FOR_RESET;
 
     // SERVER config - Boost de atributos
-    public static final ForgeConfigSpec.IntValue BOOST_AMOUNT_MIN_MULTIPLIER;
-    public static final ForgeConfigSpec.IntValue BOOST_AMOUNT_MAX_MULTIPLIER;
-    public static final ForgeConfigSpec.IntValue BOOST_DURATION_MIN_MINUTES;
-    public static final ForgeConfigSpec.IntValue BOOST_DURATION_MAX_MINUTES;
+    public static final ModConfigSpec.IntValue BOOST_AMOUNT_MIN_MULTIPLIER;
+    public static final ModConfigSpec.IntValue BOOST_AMOUNT_MAX_MULTIPLIER;
+    public static final ModConfigSpec.IntValue BOOST_DURATION_MIN_MINUTES;
+    public static final ModConfigSpec.IntValue BOOST_DURATION_MAX_MINUTES;
 
-
-    //Cache
+    // Cache
     public static final Map<String, Double> cachedCustomMobChances = new HashMap<>();
     public static final Map<String, Double> cachedCustomAttributeIncrement = new HashMap<>();
     public static final Set<String> cachedIgnoredAttributes = new HashSet<>();
 
+    private static final ModConfigSpec.Builder commonBuilder = new ModConfigSpec.Builder();
+
 
     static {
         // ===================== COMMON =====================
-        ForgeConfigSpec.Builder commonBuilder = new ForgeConfigSpec.Builder();
+
         commonBuilder.push("geral");
 
         DEBUG_MODE = commonBuilder
@@ -60,7 +61,7 @@ public class Config {
         COMMON = commonBuilder.build();
 
         // ===================== SERVER =====================
-        ForgeConfigSpec.Builder serverBuilder = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder serverBuilder = new ModConfigSpec.Builder();
 
         // ----- Geral -----
         serverBuilder.push("geral");
@@ -100,7 +101,8 @@ public class Config {
 
         CUSTOM_MOB_CHANCES = serverBuilder
                 .comment("Custom mob chances (id=chance)")
-                .defineListAllowEmpty("customMobChances", List.of(), o -> o instanceof String && ((String) o).contains("="));
+                .defineListAllowEmpty("customMobChances", List.of(),
+                        o -> o instanceof String && ((String) o).contains("="));
 
         serverBuilder.pop();
 
@@ -109,17 +111,12 @@ public class Config {
 
         CUSTOM_ATTRIBUTE_INCREMENT = serverBuilder
                 .comment("Custom attribute increment (id=increment)")
-                .defineListAllowEmpty("customAttributeIncrement", List.of(), o -> o instanceof String && ((String) o).contains("="));
+                .defineListAllowEmpty("customAttributeIncrement", List.of(),
+                        o -> o instanceof String && ((String) o).contains("="));
 
         IGNORED_ATTRIBUTES = serverBuilder
                 .comment("List of attribute names to ignore")
-                .defineListAllowEmpty("ignoredAttributes", List.of(
-                        "attribute.name.generic.armor",
-                        "forge.name_tag_distance",
-                        "forge.entity_gravity",
-                        "forge.step_height",
-                        "attribute.name.generic.armor_toughness"
-                ), o -> o instanceof String);
+                .defineListAllowEmpty("ignoredAttributes", List.of(), o -> o instanceof String);
 
         serverBuilder.pop();
 
@@ -199,6 +196,11 @@ public class Config {
             }
         }
 
-        cachedIgnoredAttributes.addAll(IGNORED_ATTRIBUTES.get().stream().map(String::trim).toList());
+        cachedIgnoredAttributes.addAll(
+                AttributeUtils.IGNORED_ATTRIBUTES
+        );
+        cachedIgnoredAttributes.addAll(
+                IGNORED_ATTRIBUTES.get().stream().map(String::trim).toList()
+        );
     }
 }

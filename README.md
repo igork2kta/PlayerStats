@@ -1,76 +1,25 @@
-# 🛡️ Player Stats
-A lightweight and highly configurable progression system for Minecraft players.
-Gain upgrade points by defeating mobs — then choose which attributes you want to improve.
-Fully supports modded mobs and attributes through a powerful configuration system.
 
-## 📦 Overview
-Player Stats is a Forge mod that introduces a customizable RPG-like system where players earn upgrade points by killing mobs.
-Unlike other mods of the same style, attributes are loaded dynamically — meaning that attributes from mods like Iron’s Spells ‘n Spellbooks and Epic Fight can also be upgraded.
-Built with compatibility, performance, and configurability in mind.
+Installation information
+=======
 
-## 🎯 Features
-✅ Gain upgrade points from killing mobs
+This template repository can be directly cloned to get you started with a new
+mod. Simply create a new repository cloned from this one, by following the
+instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
 
-🛠️ Manually allocate points to any supported attribute
+Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
 
-⚙️ Configure which mobs give points and their drop chances
+If at any point you are missing libraries in your IDE, or you've run into problems you can
+run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
+{this does not affect your code} and then start the process again.
 
-🧠 Smart caching of config values for better performance
+Mapping Names:
+============
+By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
+in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
+license. For the latest license text, refer to the mapping file itself, or the reference copy here:
+https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
 
-🧪 Debug mode to help identify entity and attribute names
-
-🔁 Supports custom attributes (modded or vanilla)
-
-🧟 Customizable chance for bosses like the Wither, Ender Dragon, Warden, and more
-
-🚫 Ignore specific attributes from appearing in the UI
-
-🔧 Easy configuration via playerstats-common.toml
-
-## 🎮 How It Works
-Kill a mob (configured mob or boss) → chance to earn 1 upgrade point
-
-Points are saved per player
-
-Press your configured key (default: R) to open the upgrade screen
-
-Choose the attribute you want to improve — spending points and XP
-
-## 🔧 Example Config
-```toml
-[geral]
-debugMode = true
-highHealthAmount = 50
-customMobChances = ["entity.minecraft.chicken=0.15", "entity.mymod.bossmob=0.75"]
-customAttributeIncrement = ["attribute.name.generic.max_health=2.0"]
-ignoredAttributes = ["attribute.name.generic.armor"]
-```
-
-## ⚔️ Supported Entities
-Fully supports both vanilla and modded mobs
-
-Add your own mobs using customMobChances in the config
-
-Enable debugMode = true to print mob IDs to chat and logs when killed
-
-## 🧩 Modded Compatibility
-✅ Works with:
-
-Custom mobs (using standard EntityType)
-
-Custom attributes from other mods (e.g., Epic Fight, Iron’s Spells ‘n Spellbooks)
-
-All standard Forge-based server/client environments
-
-## 🧑‍💻 For Modpacks & Developers
-Mod ID: playerstats
-
-No mixins or coremod hacks
-
-Lightweight and runtime-friendly
-
-Easy to configure and extend
-
-📜 License
-This mod is licensed under the MIT License.
-You're free to use it in modpacks, forks, and redistribution — just credit the original project.
+Additional Resources: 
+==========
+Community Documentation: https://docs.neoforged.net/  
+NeoForged Discord: https://discord.neoforged.net/

@@ -1,30 +1,30 @@
 package com.playerstats.network;
 
-
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.function.Supplier;
+public record UpdatePointsPacket(int points) implements CustomPacketPayload {
 
-public class UpdatePointsPacket {
-    private final int points;
+    public static final ResourceLocation ID =
+            ResourceLocation.fromNamespaceAndPath("playerstats", "update_points");
 
-    public UpdatePointsPacket(int points) {
-        this.points = points;
+    public static final Type<UpdatePointsPacket> TYPE = new Type<>(ID);
+
+    public static final StreamCodec<FriendlyByteBuf, UpdatePointsPacket> CODEC =
+            StreamCodec.of(UpdatePointsPacket::encode, UpdatePointsPacket::decode);
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public static void encode(UpdatePointsPacket msg, FriendlyByteBuf buf) {
-        buf.writeInt(msg.points);
+    private static void encode(FriendlyByteBuf buf, UpdatePointsPacket msg) {
+        buf.writeInt(msg.points());
     }
 
-    public static UpdatePointsPacket decode(FriendlyByteBuf buf) {
+    private static UpdatePointsPacket decode(FriendlyByteBuf buf) {
         return new UpdatePointsPacket(buf.readInt());
-    }
-
-    public static void handle(UpdatePointsPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            com.playerstats.client.ClientAttributeCache.setPoints(msg.points);
-        });
-        ctx.get().setPacketHandled(true);
     }
 }

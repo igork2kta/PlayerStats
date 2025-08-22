@@ -100,12 +100,22 @@ public class StatsScreen extends Screen {
         rebuildButtons();
     }
 
+    //Sem isso o background fica desfocado
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        //this.renderBlurredBackground(partialTick);
+        super.renderMenuBackground(guiGraphics);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ScreenEvent.BackgroundRendered(this, guiGraphics));
+    }
+
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         RenderSystem.setShaderTexture(0, BACKGROUND);
         guiGraphics.blit(BACKGROUND, leftPos, topPos, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
+
+        super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTicks);
 
@@ -127,6 +137,7 @@ public class StatsScreen extends Screen {
 
         for (Attribute attr : filteredAttributes) {
             AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+
             String name = AttributeUtils.getAttributeName(attr);
 
             if (y + 15 <= clipTop) {
@@ -139,7 +150,23 @@ public class StatsScreen extends Screen {
 
             // Parte base (nome + valor normal)
             String baseText = name + ": " + value;
+
             guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
+
+            if(Config.DEBUG_MODE.get()){
+
+                // Verifica se o mouse está sobre o texto
+                int textWidth = this.font.width(baseText);
+                int textHeight = this.font.lineHeight;
+
+                if (mouseX >= pos && mouseX < pos + textWidth &&
+                        mouseY >= y && mouseY < y + textHeight) {
+                    // Mostra o hover/tooltip
+                    guiGraphics.renderTooltip(this.font,
+                            Component.literal(attr.getDescriptionId()),
+                            mouseX, mouseY);
+                }
+            }
 
             // Parte do boost (somente se existir)
             ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
@@ -163,9 +190,6 @@ public class StatsScreen extends Screen {
 
             guiGraphics.renderTooltip(font, text, mouseX, mouseY);
         }
-
-        super.render(guiGraphics, mouseX, mouseY, partialTicks);
-
     }
 
 
@@ -225,8 +249,8 @@ public class StatsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        scrollOffset -= delta * SCROLL_STEP;
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        scrollOffset -= scrollY * SCROLL_STEP;
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
         rebuildButtons();
         return true;

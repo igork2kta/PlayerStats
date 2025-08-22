@@ -1,87 +1,116 @@
 package com.playerstats.network;
 
-import com.playerstats.PlayerStats;
+import com.playerstats.event.PlayerAttributePersistence;
+import com.playerstats.util.AttributeUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
-
-import java.util.Optional;
-
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.LivingEntity;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public class PacketHandler {
-    private static final String PROTOCOL_VERSION = "1.0";
 
-    private static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(PlayerStats.MODID, "main"),
-            () -> PROTOCOL_VERSION,
-            PROTOCOL_VERSION::equals,
-            PROTOCOL_VERSION::equals
-    );
+    public static void register(IEventBus modEventBus) {
+        // Escuta o evento de registro de pacotes
+        modEventBus.addListener(PacketHandler::onRegisterPayloads);
+    }
 
-    public static void register() {
+    private static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
+        var registrar = event.registrar("1.0"); // versão do protocolo (pode ser "1.0")
 
-        int id = 0;
-
-        INSTANCE.registerMessage(id++,
-                ModifyAttributePacket_OLD.class,
-                ModifyAttributePacket_OLD::encode,
-                ModifyAttributePacket_OLD::decode,
-                ModifyAttributePacket_OLD::handle);
-
-        INSTANCE.registerMessage(id++,
-                UpdatePointsPacket.class,
-                UpdatePointsPacket::encode,
-                UpdatePointsPacket::decode,
-                UpdatePointsPacket::handle);
-
-        INSTANCE.registerMessage( id++,
-                ResetAttributesPacket_OLD.class,
-                ResetAttributesPacket_OLD::toBytes,
-                ResetAttributesPacket_OLD::new,
-                ResetAttributesPacket_OLD::handle
+        // Cliente → Servidor
+        registrar.playToServer(
+                ModifyAttributePacket.TYPE,
+                ModifyAttributePacket.CODEC,
+                PacketHandler::handleModifyAttribute
         );
 
-        INSTANCE.registerMessage(id++,
-                ResetAttributesPacket.class,
-                ResetAttributesPacket::encode,
-                ResetAttributesPacket::decode,
-                ResetAttributesPacket::handle);
-
-        INSTANCE.registerMessage(id++,
-                UpdateUpgradeCountPacket.class,
-                UpdateUpgradeCountPacket::encode,
-                UpdateUpgradeCountPacket::decode,
-                UpdateUpgradeCountPacket::handle
+        // Cliente <- Servidor
+        registrar.playToClient(
+                UpdatePointsPacket.TYPE,
+                UpdatePointsPacket.CODEC,
+                PacketHandler::handleUpdatePoints
         );
 
-        INSTANCE.registerMessage(id++, BoostsSyncPacket.class,
-                BoostsSyncPacket::encode,
-                BoostsSyncPacket::decode,
-                BoostsSyncPacket::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT)
+        // Servidor → Cliente
+        registrar.playToClient(
+                UpdateUpgradeCountPacket.TYPE,
+                UpdateUpgradeCountPacket.CODEC,
+                PacketHandler::handleUpdateUpgradeCount
         );
 
-        INSTANCE.registerMessage(id++, ModifyAttributePacket.class,
-                ModifyAttributePacket::encode,
-                ModifyAttributePacket::decode,
-                ModifyAttributePacket::handle);
+        // Cliente → Servidor
+        registrar.playToServer(
+                ResetAttributesPacket.TYPE,
+                ResetAttributesPacket.CODEC,
+                PacketHandler::handleResetAttributes
+        );
+        // Exemplo: se UpdatePointsPacket também for C->S:
+        // registrar.playToServer(UpdatePointsPacket.TYPE, UpdatePointsPacket.CODEC, PacketHandler::handleUpdatePoints);
 
-
+        // Servidor → Cliente
+        // registrar.playToClient(BoostsSyncPacket.TYPE, BoostsSyncPacket.CODEC, PacketHandler::handleBoostsSync);
     }
 
 
-    public static <MSG> void sendToClient(MSG message, net.minecraft.server.level.ServerPlayer player) {
-        INSTANCE.sendTo(message, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+
+    // Helpers de envio
+    public static void sendToClient(CustomPacketPayload packet, ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player, packet);
     }
 
-    public static void sendToClient(ServerPlayer player, Object packet) {
-        INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    public static void sendToServer(CustomPacketPayload packet) {
+        PacketDistributor.sendToServer(packet);
     }
 
-    public static <MSG> void sendToServer(MSG message) {
-        INSTANCE.sendToServer(message);
+    private static void handleModifyAttribute(ModifyAttributePacket msg, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                var level = player.level();
+                var entity = level.getEntity(msg.entityId());
+
+                if (entity instanceof LivingEntity living) {
+                    var attribute = BuiltInRegistries.ATTRIBUTE.get(ResourceLocation.tryParse(msg.attributeId()));
+                    if (attribute != null) {
+                        var instance = AttributeUtils.getAttributeInstance(living, attribute);
+                        if (instance != null) {
+
+                            PlayerAttributePersistence.upgradeAttribute(living, player, msg.attributeId());
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private static void handleUpdatePoints(UpdatePointsPacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            // estamos no lado cliente aqui
+            com.playerstats.client.ClientAttributeCache.setPoints(packet.points());
+        });
+    }
+
+    private static void handleUpdateUpgradeCount(UpdateUpgradeCountPacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            // Estamos no lado cliente
+            com.playerstats.client.ClientAttributeCache.setUpgradeCount(packet.upgradeCount());
+        });
+    }
+
+    private static void handleResetAttributes(ResetAttributesPacket msg, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                var level = player.level();
+                var entity = level.getEntity(msg.entityId());
+                if (entity instanceof LivingEntity living) {
+                    PlayerAttributePersistence.resetAttributes(living, player, false);
+                }
+            }
+        });
     }
 }

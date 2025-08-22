@@ -9,8 +9,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -25,20 +28,26 @@ public class AttributeUtils {
         return switch (descriptionId) {
             case "attribute.name.generic.luck" -> 1;
             case "attribute.name.generic.max_health"-> 2;
-            //case "Max Mana", "Weight" -> 10;
             case "attribute.name.generic.movement_speed"-> 0.01;
-            //case "Mana Regeneration" -> 0.01;
-            case "forge.entity_reach", "forge.block_reach" -> 0.3;
+            case "attribute.name.player.entity_interaction_range", "attribute.name.player.block_interaction_range" -> 0.3;
+            case "attribute.name.generic.burning_time" -> - 0.1;
+            case "attribute.name.generic.jump_strength" -> 0.07;
+            case "attribute.name.generic.safe_fall_distance" -> 0.5;
             default -> 0.1;
         };
     }
 
-    public static final Set<String> IGNORED_ATTRIBUTES = Set.of(
+    public static final List<String> IGNORED_ATTRIBUTES = List.of(
             "attribute.name.generic.armor",
-            "forge.name_tag_distance",
-            "forge.entity.gravity",
-            "forge.step_height",
-            "attribute.name.generic.armor_toughness");
+            "attribute.name.forge.name_tag_distance",
+            "attribute.name.generic.gravity",
+            "attribute.name.generic.step_height",
+            "attribute.name.generic.armor_toughness",
+            "neoforge.creative_flight",
+            "attribute.name.generic.max_absorption",
+            "neoforge.name_tag_distance",
+            "attribute.name.generic.scale",
+            "attribute.name.generic.movement_efficiency");
 
 
     public static String getAttributeName(Attribute attr) {
@@ -49,9 +58,11 @@ public class AttributeUtils {
     public static List<Attribute> getAttributes(LivingEntity player, String searchText){
         return BuiltInRegistries.ATTRIBUTE.stream()
                 .filter(attr -> {
-                    AttributeInstance instance = player.getAttributes().getInstance(attr);
+
+                    AttributeInstance instance = getAttributeInstance(player, attr);
                     //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
-                    if (instance == null || !instance.getAttribute().isClientSyncable()) return false;
+                    if (!attr.isClientSyncable()) return false;
+                    if (instance == null) return false;
                     //Aqui, removemos os que não queremos que apareça
                     if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
                     if (!searchText.isEmpty()) {
@@ -63,7 +74,27 @@ public class AttributeUtils {
     }
 
     public static AttributeInstance getAttributeInstance(LivingEntity entity, Attribute attribute){
-        return entity.getAttributes().getInstance(attribute);
+
+        // Converte Attribute para Holder<Attribute>
+        ResourceLocation attrId = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
+        if (attrId == null) return null;
+
+
+        var optionalHolder = BuiltInRegistries.ATTRIBUTE.getHolder(attrId);
+        if (optionalHolder.isEmpty()) return null;
+
+
+        Holder<Attribute> holder = optionalHolder.get();
+
+        return entity.getAttribute(holder);
+    }
+
+    public static Attribute getAttributeFromId(String attributeId) {
+        ResourceLocation id = ResourceLocation.tryParse(attributeId);
+        if (id == null) {
+            return null;
+        }
+        return BuiltInRegistries.ATTRIBUTE.get(id);
     }
 
 }

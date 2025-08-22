@@ -1,21 +1,27 @@
 package com.playerstats.items;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModItems {
 
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, "playerstats");
+    // Cria o DeferredRegister para itens
+    public static final DeferredRegister<Item> ITEMS =
+            DeferredRegister.create(BuiltInRegistries.ITEM, "playerstats");
 
-    public static final RegistryObject<Item> UPGRADE_RUNE = ITEMS.register("upgrade_rune",
-            () -> new UpgradeRuneItem(new Item.Properties().rarity(Rarity.RARE).stacksTo(16)));
-
-    public static final RegistryObject<Item> ATTRIBUTE_BOOST_SCROLL = ITEMS.register("attribute_boost_scroll",
-            () -> new AttributeBoostScrollItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
+    public static final DeferredHolder<Item, Item> UPGRADE_RUNE = ITEMS.register("upgrade_rune",
+            () -> new UpgradeRuneItem(new Item.Properties()
+                    .rarity(Rarity.RARE)
+                    .stacksTo(16)));
+/*
+    public static final DeferredHolder<Item, Item> ATTRIBUTE_BOOST_SCROLL = ITEMS.register("attribute_boost_scroll",
+            () -> new UpgradeRuneItem(new Item.Properties()
+                    .rarity(Rarity.UNCOMMON)
+                    .stacksTo(1)));*/
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

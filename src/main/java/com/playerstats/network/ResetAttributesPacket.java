@@ -1,41 +1,30 @@
 package com.playerstats.network;
 
-import com.playerstats.event.PlayerAttributePersistence;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.horse.Horse;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.function.Supplier;
+public record ResetAttributesPacket(int entityId) implements CustomPacketPayload {
 
-public class ResetAttributesPacket {
-    private final int entityId;
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("playerstats", "reset_attribute");
 
-    public ResetAttributesPacket(int entityId) {
-        this.entityId = entityId;
+    public static final Type<ResetAttributesPacket> TYPE = new Type<>(ID);
+
+    // Codec para serializar/deserializar
+    public static final StreamCodec<FriendlyByteBuf, ResetAttributesPacket> CODEC =
+            StreamCodec.of(ResetAttributesPacket::encode, ResetAttributesPacket::decode);
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public static void encode(ResetAttributesPacket msg, FriendlyByteBuf buf) {
+    private static void encode(FriendlyByteBuf buf, ResetAttributesPacket msg) {
         buf.writeInt(msg.entityId);
     }
 
-    public static ResetAttributesPacket decode(FriendlyByteBuf buf) {
+    private static ResetAttributesPacket decode(FriendlyByteBuf buf) {
         return new ResetAttributesPacket(buf.readInt());
-    }
-
-    public static void handle(ResetAttributesPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
-            if (player != null) {
-                var level = player.level();
-                var entity = level.getEntity(msg.entityId);
-
-                if (entity instanceof LivingEntity living) {
-                    PlayerAttributePersistence.resetAttributes(living, player, false);
-                }
-            }
-        });
-        ctx.get().setPacketHandled(true);
     }
 }
