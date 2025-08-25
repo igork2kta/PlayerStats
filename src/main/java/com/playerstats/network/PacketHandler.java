@@ -15,7 +15,7 @@ public class PacketHandler {
     private static final String PROTOCOL_VERSION = "1.0";
 
     private static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(PlayerStats.MODID, "main"),
+            ResourceLocation.fromNamespaceAndPath(PlayerStats.MODID, "main"),
             () -> PROTOCOL_VERSION,
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
@@ -25,11 +25,11 @@ public class PacketHandler {
 
         int id = 0;
 
-        INSTANCE.registerMessage(id++,
-                ModifyAttributePacket_OLD.class,
-                ModifyAttributePacket_OLD::encode,
-                ModifyAttributePacket_OLD::decode,
-                ModifyAttributePacket_OLD::handle);
+//        INSTANCE.registerMessage(id++,
+//                ModifyAttributePacket_OLD.class,
+//                ModifyAttributePacket_OLD::encode,
+//                ModifyAttributePacket_OLD::decode,
+//                ModifyAttributePacket_OLD::handle);
 
         INSTANCE.registerMessage(id++,
                 UpdatePointsPacket.class,
@@ -37,12 +37,12 @@ public class PacketHandler {
                 UpdatePointsPacket::decode,
                 UpdatePointsPacket::handle);
 
-        INSTANCE.registerMessage( id++,
-                ResetAttributesPacket_OLD.class,
-                ResetAttributesPacket_OLD::toBytes,
-                ResetAttributesPacket_OLD::new,
-                ResetAttributesPacket_OLD::handle
-        );
+//        INSTANCE.registerMessage( id++,
+//                ResetAttributesPacket_OLD.class,
+//                ResetAttributesPacket_OLD::toBytes,
+//                ResetAttributesPacket_OLD::new,
+//                ResetAttributesPacket_OLD::handle
+//        );
 
         INSTANCE.registerMessage(id++,
                 ResetAttributesPacket.class,

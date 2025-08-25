@@ -92,7 +92,7 @@ public class AttributeBoostScrollItem extends Item {
             else {
                 String attrKey = tag.getString("DefinedAttribute");
                 Attribute attribute = BuiltInRegistries.ATTRIBUTE
-                        .getOptional(new ResourceLocation(attrKey))
+                        .getOptional(ResourceLocation.tryParse(attrKey))
                         .orElse(null);
 
                 if (attribute != null) {
@@ -146,7 +146,7 @@ public class AttributeBoostScrollItem extends Item {
         CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains("DefinedAttribute")) {
             Attribute attribute = BuiltInRegistries.ATTRIBUTE
-                    .getOptional(new ResourceLocation(tag.getString("DefinedAttribute")))
+                    .getOptional(ResourceLocation.tryParse(tag.getString("DefinedAttribute")))
                     .orElse(null);
             if (attribute != null) {
                 double amount = tag.getDouble("BoostAmount");
@@ -236,7 +236,7 @@ public class AttributeBoostScrollItem extends Item {
             UUID modId = boostTag.getUUID("ModifierId");
             int ticks = boostTag.getInt("TicksRemaining");
 
-            Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(new ResourceLocation(attrKey)).orElse(null);
+            Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(ResourceLocation.tryParse(attrKey)).orElse(null);
             if (attribute != null) {
                 // reaplica o boost
                 double amount = boostTag.getDouble("Amount");

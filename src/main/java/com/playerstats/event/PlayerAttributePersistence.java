@@ -49,9 +49,9 @@ public class PlayerAttributePersistence {
                 setPoints(player, getPoints(event.getOriginal()));
                 CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
                 for (String key : upgradesTag.getAllKeys()) {
-                    ResourceLocation id = new ResourceLocation(key);
+                    ResourceLocation id = ResourceLocation.tryParse(key);
                     Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-                    AttributeInstance instance = player.getAttribute(attr);
+                    AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
 
                     if (attr != null && instance != null) {
                         int upgradeCount = upgradesTag.getInt(key);
@@ -86,10 +86,10 @@ public class PlayerAttributePersistence {
 
         CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
         for (String key : upgradesTag.getAllKeys()) {
-            ResourceLocation id = new ResourceLocation(key);
+            ResourceLocation id = ResourceLocation.tryParse(key);
             Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-            AttributeInstance instance = player.getAttribute(attr);
-
+            AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr)
+;
             if (attr != null && instance != null) {
                 int upgradeCount = upgradesTag.getInt(key);
                 double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
@@ -105,18 +105,14 @@ public class PlayerAttributePersistence {
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
     }
 
-    public static void upgradeAttribute(LivingEntity entity, String attributeId) {
-        if(entity instanceof ServerPlayer player)
-            upgradeAttribute(entity, player, attributeId);
-    }
     public static void upgradeAttribute(LivingEntity entity, ServerPlayer player, String attributeId){
 
-        ResourceLocation id = new ResourceLocation(attributeId);
+        ResourceLocation id = ResourceLocation.tryParse(attributeId);
         Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
 
         if (attr != null) {
 
-            AttributeInstance instance = entity.getAttribute(attr);
+            AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
             int playerPoints = getPoints(player);
             int playerXpLevel = player.experienceLevel;
             int playerUpgrades = getUpgradeCount(entity);
@@ -153,7 +149,7 @@ public class PlayerAttributePersistence {
 
     public static boolean setAttribute(ServerPlayer player, String attributeId, double value){
 
-        ResourceLocation id = new ResourceLocation(attributeId);
+        ResourceLocation id = ResourceLocation.tryParse(attributeId);
         Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
 
         if (attr != null) {
@@ -181,7 +177,7 @@ public class PlayerAttributePersistence {
         upgrades.putInt(key.toString(), currentUpgrades);
         player.getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, upgrades);
 
-        AttributeInstance instance = player.getAttribute(attr);
+        AttributeInstance instance = AttributeUtils.getAttributeInstance(player,attr);
         if (instance != null) {
             double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
             applyModifier(instance, attr.getDescriptionId(), increment * currentUpgrades);
@@ -214,13 +210,12 @@ public class PlayerAttributePersistence {
         int refundedPoints = 0;
 
         for (String key : upgrades.getAllKeys()) {
-            ResourceLocation id = new ResourceLocation(key);
+            ResourceLocation id = ResourceLocation.tryParse(key);
             Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-            AttributeInstance instance = entity.getAttribute(attr);
+            AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
             if (attr != null && instance != null) {
                 int upgradesApplied = upgrades.getInt(key);
                 //double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-                //instance.setBaseValue(instance.getBaseValue() - (upgradesApplied * increment));
                 // Remove o modificador
                 instance.getModifiers().stream()
                         .filter(mod -> mod.getName().equals("playerstats:" + attr.getDescriptionId()))
@@ -283,7 +278,6 @@ public class PlayerAttributePersistence {
                 .forEach(instance::removeModifier);
 
         AttributeModifier modifier = new AttributeModifier(
-                UUID.randomUUID(),
                 "playerstats:" + attrId,
                 value,
                 AttributeModifier.Operation.ADDITION

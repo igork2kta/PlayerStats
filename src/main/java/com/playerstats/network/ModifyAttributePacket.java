@@ -1,6 +1,7 @@
 package com.playerstats.network;
 
 import com.playerstats.event.PlayerAttributePersistence;
+import com.playerstats.util.AttributeUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -36,10 +37,9 @@ public class ModifyAttributePacket {
                 var entity = level.getEntity(msg.entityId);
 
                 if (entity instanceof LivingEntity living) {
-                    // Aqui você faz a alteração de atributo
-                    var attribute = BuiltInRegistries.ATTRIBUTE.get(new ResourceLocation(msg.attributeId));
+                    var attribute = BuiltInRegistries.ATTRIBUTE.get(ResourceLocation.tryParse(msg.attributeId));
                     if (attribute != null) {
-                        var instance = living.getAttribute(attribute);
+                        var instance = AttributeUtils.getAttributeInstance(living, attribute);
                         if (instance != null) {
 
                                 PlayerAttributePersistence.upgradeAttribute(living, player, msg.attributeId);

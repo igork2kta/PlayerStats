@@ -53,6 +53,7 @@ public class StatsScreen extends Screen {
     private final int requiredXpforReset = Config.REQUIRED_XP_FOR_RESET.get();
     private final int xpIncrement = Config.XP_COST_INCREMENT.get();
 
+
     public StatsScreen() {
         super(Component.literal("Player Stats"));
     }
@@ -98,6 +99,8 @@ public class StatsScreen extends Screen {
         );
 
         rebuildButtons();
+
+
     }
 
     @Override

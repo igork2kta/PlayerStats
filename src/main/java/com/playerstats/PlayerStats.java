@@ -4,7 +4,7 @@ import com.playerstats.client.KeyBindings;
 import com.playerstats.command.PlayerStatsCommands;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
-import com.playerstats.sounds.ModSounds;
+//import com.playerstats.sounds.ModSounds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -46,7 +46,7 @@ public class PlayerStats {
         PacketHandler.register();
         // Registrar os itens
         ModItems.register(modEventBus);
-        ModSounds.register(modEventBus);
+        //ModSounds.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
 
