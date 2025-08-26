@@ -2,6 +2,7 @@ package com.playerstats;
 
 import com.playerstats.client.KeyBindings;
 import com.playerstats.command.PlayerStatsCommands;
+import com.playerstats.entity.ModEntities;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
 //import com.playerstats.sounds.ModSounds;
@@ -47,6 +48,9 @@ public class PlayerStats {
         // Registrar os itens
         ModItems.register(modEventBus);
         //ModSounds.register(modEventBus);
+
+        ModEntities.ENTITIES.register(modEventBus);
+
 
         modEventBus.addListener(this::addCreative);
 
@@ -101,6 +105,7 @@ public class PlayerStats {
         if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES){
             event.accept(ModItems.UPGRADE_RUNE);
             event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL);
+            event.accept(ModItems.DOUBLE_SADDLE);
         }
     }
 
