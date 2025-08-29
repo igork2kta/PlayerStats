@@ -2,6 +2,7 @@ package com.playerstats;
 
 import com.playerstats.client.KeyBindings;
 import com.playerstats.command.PlayerStatsCommands;
+import com.playerstats.entity.ModEntities;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
 //import com.playerstats.sounds.ModSounds;
@@ -47,6 +48,8 @@ public class PlayerStats {
         // Registrar os itens
         ModItems.register(modEventBus);
         //ModSounds.register(modEventBus);
+        // registra as entidades
+        ModEntities.ENTITY_TYPES.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
 

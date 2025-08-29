@@ -1,0 +1,64 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.horse.kick": {
+			"loop": true,
+			"animation_length": 0.4167,
+			"bones": {
+				"head": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [20, 0, 0]
+						},
+						"0.4167": {
+							"vector": [0, 0, 0]
+						}
+					}
+				},
+				"body": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [20, 0, 0]
+						},
+						"0.4167": {
+							"vector": [0, 0, 0]
+						}
+					}
+				},
+				"back_left_leg": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [90, 0, 0]
+						},
+						"0.4167": {
+							"vector": [0, 0, 0]
+						}
+					}
+				},
+				"back_right_leg": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [90, 0, 0]
+						},
+						"0.4167": {
+							"vector": [0, 0, 0]
+						}
+					}
+				}
+			}
+		}
+	},
+	"geckolib_format_version": 2
+}
