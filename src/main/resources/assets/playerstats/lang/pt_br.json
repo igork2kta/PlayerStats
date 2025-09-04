@@ -10,7 +10,11 @@
   "gui.playerstats.cant_reset": "Você precisa de %s níveis de XP para resetar",
   "gui.playerstats.xp_cost": "Custo de XP: %s",
   "gui.playerstats.search_placeholder": "Pesquisar...",
+  "gui.playerstats.obtained_active": " (Adquirida) (Ativa)",
+  "gui.playerstats.obtained_inactive": " (Adquirida) (Inativa)",
+  "gui.playerstats.teleport_locked" : "Você precisa liberar a habilidade \"Seguir Dono\" antes de liberar essa hailidade",
   "event.playerstats.point_given": "§aVocê ganhou +1 ponto de atributo! Pressione %s para utilizar.",
+  "event.playerstats.ability_point_given": "§aVocê ganhou +1 ponto de Habilidade! Pressione %s para utilizar.",
   "gui.playerstats.added_points": "Pontos adicionados. Total: %s",
   "gui.playerstats.removed_points": "Pontos removidos. Total: %s",
   "gui.playerstats.reloaded_configs": "Configurações recarregadas",
@@ -32,6 +36,10 @@
   "item.playerstats.attribute_boost_scroll": "Pergaminho do Boost de Atributo",
   "item.playerstats.attribute_boost_scroll.hover_text": "Clique com o botão direito para desvendar o poder do pergaminho.",
   "item.playerstats.attribute_boost_scroll.hover_text_values": "+%.2f por %d segundos",
-  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Concede temporariamente um aprimoramento a: %s."
+  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Concede temporariamente um aprimoramento a: %s.",
+
+  "attribute.playerstats.life_regen": "Regeneração de Vida",
+  "attribute.playerstats.follow_owner": "Seguir Dono",
+  "attribute.playerstats.teleport_to_owner": "Teletransportar para o Dono"
 
 }

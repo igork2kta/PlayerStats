@@ -1,12 +1,8 @@
 package com.playerstats.items;
 
-import com.playerstats.client.KeyMappings;
 import com.playerstats.event.PlayerAttributePersistence;
-import com.playerstats.network.PacketHandler;
-import com.playerstats.network.UpdatePointsPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -44,9 +40,7 @@ public class UpgradeRuneItem extends Item {
             level.playSound(null, player.getOnPos(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS,1.0F, 1.0F);
 
             PlayerAttributePersistence.addPoints(player, 1);
-            int newPoints = PlayerAttributePersistence.getPoints(player);
-            PacketHandler.sendToClient(new UpdatePointsPacket(newPoints),(ServerPlayer) player);
-            player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+
         }
 
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());

@@ -46,12 +46,14 @@ public class AttributeUtils {
     }
 
 
-    public static List<Attribute> getAttributes(LivingEntity player, String searchText){
+    public static List<Attribute> getAttributes(LivingEntity entity, String searchText){
         return BuiltInRegistries.ATTRIBUTE.stream()
                 .filter(attr -> {
-                    AttributeInstance instance = player.getAttributes().getInstance(attr);
+                    AttributeInstance instance = entity.getAttributes().getInstance(attr);
                     //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
                     if (instance == null || !instance.getAttribute().isClientSyncable()) return false;
+                    //Aqui removemos os atributos do mod, vai aparecer em outra aba com tratamneto diferente
+                    if (attr.getDescriptionId().contains("playerstats")) return false;
                     //Aqui, removemos os que não queremos que apareça
                     if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
                     if (!searchText.isEmpty()) {
@@ -64,6 +66,25 @@ public class AttributeUtils {
 
     public static AttributeInstance getAttributeInstance(LivingEntity entity, Attribute attribute){
         return entity.getAttributes().getInstance(attribute);
+    }
+
+    public static List<AttributeInstance> getCustomAttributes(LivingEntity entity, String searchText){
+
+        return entity.getAttributes().getSyncableAttributes().stream().filter(attr -> {
+            // Só pega os atributos do seu mod
+            if (attr.getAttribute().getDescriptionId().contains("playerstats")) {
+                if (!searchText.isEmpty()) {
+                    String name = AttributeUtils.getAttributeName(attr.getAttribute()).toLowerCase();
+                    return name.contains(searchText);
+                }
+                return true;
+            }
+            return false;
+        }).toList();
+
+
+
+
     }
 
 
