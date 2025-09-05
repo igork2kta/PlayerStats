@@ -2,8 +2,10 @@ package com.playerstats.event;
 
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
+import com.playerstats.client.KeyMappings;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,6 +26,14 @@ public class PlayerPointHandler {
     @SubscribeEvent
     public static void onMobKilled(LivingDeathEvent event) {
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) return;
+
+        int totalKills = player.getStats().getValue(Stats.CUSTOM.get(Stats.MOB_KILLS));
+
+        if(totalKills >0 && (totalKills == 100 || totalKills%1000 == 0)) {
+            player.sendSystemMessage(Component.translatable("event.playerstats.mobs_killed", totalKills));
+            givePoints(player, 1);
+        }
+
         LivingEntity mob = event.getEntity();
 
         double baseChance = 0.0;
@@ -83,6 +93,8 @@ public class PlayerPointHandler {
         }
 
         processChance(player, baseChance);
+
+
     }
 
     private static void processChance(ServerPlayer player, double baseChance) {
@@ -110,10 +122,8 @@ public class PlayerPointHandler {
         // Marca como já recebido hoje
         lastDayPointGiven.put(uuid, currentDay);
 
-        //PlayerAttributePersistence.addPoints(player, amount);
-        //int newPoints = PlayerAttributePersistence.getPoints(player);
-        //PacketHandler.sendToClient(new UpdatePointsPacket(newPoints), player);
-        //player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappingsRegistrar.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+        PlayerAttributePersistence.addPoints(player, amount);
+
     }
 /*
     public static boolean isProgressiveBossesInstalled(){

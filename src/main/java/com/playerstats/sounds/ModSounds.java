@@ -16,8 +16,8 @@
 //    public static final RegistryObject<SoundEvent> UPGRADE_RUNE_SOUND = registerSoundEvent("upgrade_rune_sound");
 //
 //    private static RegistryObject<SoundEvent> registerSoundEvent(String name){
-//        ResourceLocation id = new ResourceLocation(PlayerStats.MODID, name);
-//        return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(PlayerStats.MODID, name)));
+//        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(PlayerStats.MODID, name);
+//        return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(PlayerStats.MODID, name)));
 //    }
 //    public static void register(IEventBus eventBus){
 //        SOUND_EVENTS.register(eventBus);

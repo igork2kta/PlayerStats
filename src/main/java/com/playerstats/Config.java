@@ -30,9 +30,12 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> IGNORED_ATTRIBUTES;
 
     // SERVER config - Experiência
+
     public static final ModConfigSpec.BooleanValue CONSUME_XP;
     public static final ModConfigSpec.IntValue XP_COST_INCREMENT;
     public static final ModConfigSpec.IntValue REQUIRED_XP_FOR_RESET;
+    public static final ForgeConfigSpec.IntValue REQUIRED_XP_FOR_ABILITY;
+
 
     // SERVER config - Boost de atributos
     public static final ModConfigSpec.IntValue BOOST_AMOUNT_MIN_MULTIPLIER;
@@ -134,6 +137,10 @@ public class Config {
         CONSUME_XP = serverBuilder
                 .comment("Consume experience on upgrade?")
                 .define("consumeExperience", true);
+
+        REQUIRED_XP_FOR_ABILITY = serverBuilder
+                .comment("The cost of experience that will be required to by an ability")
+                .defineInRange("requiredXpForAbility", 30, 1, 999);
 
         serverBuilder.pop();
 

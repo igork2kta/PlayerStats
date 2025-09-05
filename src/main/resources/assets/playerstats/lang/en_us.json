@@ -10,10 +10,15 @@
   "gui.playerstats.cant_reset": "You need %s XP levels to reset",
   "gui.playerstats.xp_cost": "XP cost: %s",
   "gui.playerstats.search_placeholder": "Search...",
-  "event.playerstats.point_given":"§aYou earned +1 attribute point! Press %s to use it.",
   "gui.playerstats.added_points": "Added points. Total: %s",
   "gui.playerstats.removed_points": "Removed points. Total: %s",
   "gui.playerstats.reloaded_configs": "Configurations reloaded",
+  "gui.playerstats.obtained_active": " (Obtained) (Active)",
+  "gui.playerstats.obtained_inactive": " (Obtained) (Inactive)",
+  "gui.playerstats.teleport_locked": "You need to unlock the \"Follow Owner\" ability before unlocking this ability.",
+  "event.playerstats.ability_point_given":"§aYou earned +1 ability point! Press %s §ato use it.",
+  "event.playerstats.point_given": "§aYou gained +1 attribute point! Press %s §ato use",
+  "event.playerstats.mobs_killed": "§aCongratulations! By killing %d §amobs, you gained a lot of experience!",
   "config.playerstats.debug_mode": "Enables the mod's debug mode",
   "config.playerstats.high_health": "Amount of health considered high",
   "config.playerstats.wither_chance": "Chance to gain points when killing Wither",
@@ -31,6 +36,14 @@
   "item.playerstats.attribute_boost_scroll": "Attribute Boost Scroll",
   "item.playerstats.attribute_boost_scroll.hover_text": "Right-click to unveil the scroll's power.",
   "item.playerstats.attribute_boost_scroll.hover_text_values": "+%.2f for %d seconds",
-  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Temporarily grants a boost to: %s."
+  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Temporarily grants a boost to: %s.",
+
+  "item.playerstats.ability_crystal": "Ability Crystal",
+  "item.playerstats.ability_crystal.hoverText": "A crystal imbued with an unknown power, it can be used to learn or teach unique abilities!",
+  "item.playerstats.ability_crystal.message": "You feel powerful enough to unlock a new skill!",
+
+  "attribute.playerstats.life_regen": "Life Regen",
+  "attribute.playerstats.follow_owner": "Follow Owner",
+  "attribute.playerstats.teleport_to_owner": "Teleport to Owner"
 
 }

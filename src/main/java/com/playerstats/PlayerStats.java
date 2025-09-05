@@ -9,6 +9,7 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
+
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -69,7 +70,11 @@ public class PlayerStats {
 
         PlayerAttributePersistence.register(modEventBus);
 
+
         NeoForge.EVENT_BUS.register(this);
+
+        //ModSounds.register(modEventBus);
+        ModAttributes.ATTRIBUTES.register(FMLJavaModLoadingContext.get().getModEventBus());
 
         //Atalhos de teclado
         modEventBus.addListener(KeyMappings::registerBindings);
@@ -112,9 +117,51 @@ public class PlayerStats {
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         // Do something when the server starts
         LOGGER.info("HELLO from server starting");
     }
+
+    public static void onLootTableLoad(LootTableLoadEvent event) {
+        ResourceLocation name = event.getName();
+
+        // Verifica se o loot é de estrutura (todos estão no namespace "minecraft:chests/")
+        if (name != null && name.getNamespace().equals("minecraft") && name.getPath().startsWith("chests/")) {
+            // Pool 1: concorrem entre si
+            LootPool pool1 = LootPool.lootPool()
+                    .name("upgrade_or_crystal_pool")
+                    .setRolls(ConstantValue.exactly(1)) // rola apenas 1 vez
+                    .add(LootItem.lootTableItem(ModItems.UPGRADE_RUNE.get())
+                            .when(LootItemRandomChanceCondition.randomChance(0.07f)) // 7%
+                            .setWeight(1)
+                            .setQuality(1))
+                    .add(LootItem.lootTableItem(ModItems.ABILITY_CRYSTAL.get())
+                            .when(LootItemRandomChanceCondition.randomChance(0.05f)) // 5%
+                            .setWeight(1)
+                            .setQuality(1))
+                    .build();
+
+            // Pool 2: ATTRIBUTE_BOOST_SCROLL independente
+            LootPool pool2 = LootPool.lootPool()
+                    .name("attribute_boost_scroll_pool")
+                    .setRolls(ConstantValue.exactly(1))
+                    .add(LootItem.lootTableItem(ModItems.ATTRIBUTE_BOOST_SCROLL.get())
+                            .when(LootItemRandomChanceCondition.randomChance(0.12f)) // 12%
+                            .setWeight(1)
+                            .setQuality(1))
+                    .build();
+            event.getTable().addPool(pool1);
+            event.getTable().addPool(pool2);
+        }
+    }
+
+    private void addCreative(BuildCreativeModeTabContentsEvent event){
+        if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES){
+            event.accept(ModItems.UPGRADE_RUNE);
+            event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL);
+            event.accept(ModItems.ABILITY_CRYSTAL);
+        }
+    }
+
+
 }

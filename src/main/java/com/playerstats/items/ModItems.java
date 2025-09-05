@@ -23,6 +23,9 @@ public class ModItems {
                     .rarity(Rarity.UNCOMMON)
                     .stacksTo(1)));*/
 
+    public static final RegistryObject<Item> ABILITY_CRYSTAL = ITEMS.register("ability_crystal",
+            () -> new AbilityCrystalItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

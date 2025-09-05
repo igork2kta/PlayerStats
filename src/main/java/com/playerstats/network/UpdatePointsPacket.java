@@ -26,5 +26,6 @@ public record UpdatePointsPacket(int points) implements CustomPacketPayload {
 
     private static UpdatePointsPacket decode(FriendlyByteBuf buf) {
         return new UpdatePointsPacket(buf.readInt());
+
     }
 }

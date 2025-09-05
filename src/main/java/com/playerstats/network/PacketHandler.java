@@ -19,6 +19,7 @@ public class PacketHandler {
         modEventBus.addListener(PacketHandler::onRegisterPayloads);
     }
 
+
     private static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1.0"); // versão do protocolo (pode ser "1.0")
 
@@ -34,6 +35,7 @@ public class PacketHandler {
                 UpdatePointsPacket.TYPE,
                 UpdatePointsPacket.CODEC,
                 PacketHandler::handleUpdatePoints
+
         );
 
         // Servidor → Cliente
@@ -52,6 +54,7 @@ public class PacketHandler {
         // Exemplo: se UpdatePointsPacket também for C->S:
         // registrar.playToServer(UpdatePointsPacket.TYPE, UpdatePointsPacket.CODEC, PacketHandler::handleUpdatePoints);
 
+
         // Servidor → Cliente
         // registrar.playToClient(BoostsSyncPacket.TYPE, BoostsSyncPacket.CODEC, PacketHandler::handleBoostsSync);
     }
@@ -61,6 +64,7 @@ public class PacketHandler {
     // Helpers de envio
     public static void sendToClient(CustomPacketPayload packet, ServerPlayer player) {
         PacketDistributor.sendToPlayer(player, packet);
+
     }
 
     public static void sendToServer(CustomPacketPayload packet) {

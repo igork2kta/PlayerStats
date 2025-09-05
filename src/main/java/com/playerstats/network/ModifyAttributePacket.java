@@ -1,5 +1,9 @@
 package com.playerstats.network;
 
+
+import com.playerstats.event.PlayerAttributePersistence;
+import com.playerstats.util.AttributeUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -28,4 +32,5 @@ public record ModifyAttributePacket(int entityId, String attributeId) implements
     private static ModifyAttributePacket decode(FriendlyByteBuf buf) {
         return new ModifyAttributePacket(buf.readInt(), buf.readUtf());
     }
+
 }

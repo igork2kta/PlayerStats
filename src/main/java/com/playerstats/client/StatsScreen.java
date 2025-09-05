@@ -40,7 +40,7 @@ public class StatsScreen extends Screen {
     private int clipTop;
     private int clipBottom;
 
-    private Button resetButton;
+    private Button resetButton, attributesButton, uniqueAbilitiesButton;
     private EditBox searchBox;
     private String searchText = "";
 
@@ -52,6 +52,8 @@ public class StatsScreen extends Screen {
     private final boolean consumeXp = Config.CONSUME_XP.get();
     private final int requiredXpforReset = Config.REQUIRED_XP_FOR_RESET.get();
     private final int xpIncrement = Config.XP_COST_INCREMENT.get();
+
+    private boolean showAttributes = true;
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
@@ -70,14 +72,14 @@ public class StatsScreen extends Screen {
         this.topPos = (this.height - BG_HEIGHT) / 2;
 
         //Posição de corrte do SCROLL
-        this.clipTop = topPos + 110;
+        this.clipTop = topPos + 115;
         this.clipBottom = topPos + BG_HEIGHT - 60;
 
         //Se não tiver entidade, é o proprio player
         player = Minecraft.getInstance().player;
         if (entity == null) entity = player;
 
-        this.searchBox = new CustomSearchBox(this.font, leftPos + 25, topPos + 80, 260, 19);
+        this.searchBox = new CustomSearchBox(this.font, leftPos + 25, topPos + 95, 260, 19);
 
         //Toda vez que o usuario digita algo, muda para minusculo, reseta a barra de rolagem e redesenha os botões
         this.searchBox.setResponder(text -> {
@@ -86,6 +88,26 @@ public class StatsScreen extends Screen {
             rebuildButtons();
 
         });
+
+        attributesButton = new CustomButton(
+                leftPos + (BG_WIDTH / 4) - 25,   // X
+                topPos + 65,         // Y
+                70,                              // largura
+                20,                              // altura
+                Component.literal("Attributes"),
+                ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
+                btn -> {showAttributes = true; rebuildButtons();}
+        );
+
+        uniqueAbilitiesButton = new CustomButton(
+                leftPos + (BG_WIDTH / 2) + 25,   // X
+                topPos + 65,         // Y
+                85,                              // largura
+                20,                              // altura
+                Component.literal("Unique Abilities"),
+                ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
+                btn -> {showAttributes = false; rebuildButtons();}
+        );
 
         resetButton = new CustomButton(
                 leftPos + (BG_WIDTH / 2) - 35,   // X
@@ -98,6 +120,8 @@ public class StatsScreen extends Screen {
         );
 
         rebuildButtons();
+
+
     }
 
     //Sem isso o background fica desfocado
@@ -119,83 +143,116 @@ public class StatsScreen extends Screen {
 
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-        int points = ClientAttributeCache.getPoints();
-        int color = points > 0 ? 0x00CC66 : 0xFF5555;
-        guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 100, topPos + 29, color);
-
-        if(consumeXp){
-            int upgradeCount = ClientAttributeCache.getUpgradeCount();
-            int xpCost = (upgradeCount + 1) * xpIncrement;
-            boolean hasXpForUpgrade = player.experienceLevel > xpCost;
-            color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
-            guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 115, topPos + 41, color);
-        }
-        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
 
 
-        int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
+        if(showAttributes){
 
-        for (Attribute attr : filteredAttributes) {
-            AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+            int points = ClientAttributeCache.getPoints();
+            int color = points > 0 ? 0x00CC66 : 0xFF5555;
+            guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 100, topPos + 29, color);
 
-            String name = AttributeUtils.getAttributeName(attr);
-
-            if (y + 15 <= clipTop) {
-                y += LINE_HEIGHT;
-                continue;
+            if(consumeXp){
+                int upgradeCount = ClientAttributeCache.getUpgradeCount();
+                int xpCost = (upgradeCount + 1) * xpIncrement;
+                boolean hasXpForUpgrade = player.experienceLevel > xpCost;
+                color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
+                guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 115, topPos + 41, color);
             }
+            List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
 
-            String value = String.format("%.2f", instance.getValue());
-            int pos = leftPos + 40;
 
-            // Parte base (nome + valor normal)
-            String baseText = name + ": " + value;
+            int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
 
-            guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
+            for (Attribute attr : filteredAttributes) {
+                AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+                String name = AttributeUtils.getAttributeName(attr);
 
-            if(Config.DEBUG_MODE.get()){
-
-                // Verifica se o mouse está sobre o texto
-                int textWidth = this.font.width(baseText);
-                int textHeight = this.font.lineHeight;
-
-                if (mouseX >= pos && mouseX < pos + textWidth &&
-                        mouseY >= y && mouseY < y + textHeight) {
-                    // Mostra o hover/tooltip
-                    guiGraphics.renderTooltip(this.font,
-                            Component.literal(attr.getDescriptionId()),
-                            mouseX, mouseY);
+                if (y + 15 <= clipTop) {
+                    y += LINE_HEIGHT;
+                    continue;
                 }
+
+                String value = String.format("%.2f", instance.getValue());
+                int pos = leftPos + 40;
+
+                // Parte base (nome + valor normal)
+                String baseText = name + ": " + value;
+                guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
+
+                // Parte do boost (somente se existir)
+                ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
+                if (boost != null) {
+                    String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
+                    int boostX = pos + font.width(baseText); // começa logo após o valor
+                    guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+                }
+
+                y += LINE_HEIGHT;
+                if (y >= clipBottom) break;
             }
 
-            // Parte do boost (somente se existir)
-            ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
-            if (boost != null) {
-                String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
-                int boostX = pos + font.width(baseText); // começa logo após o valor
-                guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+
+            if (resetButton != null && resetButton.isHovered()) {
+                boolean hasXp = player.experienceLevel >= requiredXpforReset && consumeXp;
+                MutableComponent text = hasXp
+                        ? Component.translatable("gui.playerstats.can_reset", requiredXpforReset).withStyle(s -> s.withColor(0x00FF00))
+                        : Component.translatable("gui.playerstats.cant_reset", requiredXpforReset).withStyle(s -> s.withColor(0xFF5555));
+
+
+                guiGraphics.renderTooltip(font, text, mouseX, mouseY);
+            }
+        }
+
+        else{
+
+            int points = ClientAttributeCache.getAbilityPoints();
+            int color = points > 0 ? 0x00CC66 : 0xFF5555;
+            guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 100, topPos + 29, color);
+
+            if(consumeXp){
+                int xpCost = Config.REQUIRED_XP_FOR_ABILITY.get();
+                boolean hasXpForUpgrade = player.experienceLevel > xpCost;
+                color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
+                guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 115, topPos + 41, color);
             }
 
-            y += LINE_HEIGHT;
-            if (y >= clipBottom) break;
+            List<AttributeInstance> filteredAbilities = AttributeUtils.getCustomAttributes(entity, searchText);
+
+            int y = clipTop - scrollOffset + 3; //2 para alinhamento do texto com os botões
+
+            for (AttributeInstance instance: filteredAbilities) {
+
+                String name = AttributeUtils.getAttributeName(instance.getAttribute());
+
+                if (y + 15 <= clipTop) {
+                    y += LINE_HEIGHT;
+                    continue;
+                }
+
+                int pos = leftPos + 40;
+                if(instance.getValue() == -1)
+                    guiGraphics.drawString(font,name, pos, y, 0X291d13, false);
+                else if(instance.getValue() == 1)
+                    guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
+                else
+                    guiGraphics.drawString(font,Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X291d13, false);
+
+                y += LINE_HEIGHT;
+                if (y >= clipBottom) break;
+            }
         }
+        super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-
-        if (resetButton != null && resetButton.isHovered()) {
-            boolean hasXp = player.experienceLevel >= requiredXpforReset && consumeXp;
-            MutableComponent text = hasXp
-                    ? Component.translatable("gui.playerstats.can_reset", requiredXpforReset).withStyle(s -> s.withColor(0x00FF00))
-                    : Component.translatable("gui.playerstats.cant_reset", requiredXpforReset).withStyle(s -> s.withColor(0xFF5555));
-
-
-            guiGraphics.renderTooltip(font, text, mouseX, mouseY);
-        }
     }
 
 
     private void rebuildButtons() {
         this.clearWidgets();
-        this.addRenderableWidget(this.searchBox);
+        addRenderableWidget(attributesButton);
+        addRenderableWidget(uniqueAbilitiesButton);
+        addRenderableWidget(searchBox);
+
+        if(showAttributes){
 
         List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
 
@@ -206,36 +263,68 @@ public class StatsScreen extends Screen {
 
         for (Attribute attr : filteredAttributes) {
 
-            if (y + 17 <= clipTop) {
+                if (y + 17 <= clipTop) {
+                    y += LINE_HEIGHT;
+                    continue;
+                }
+                if (y + 4 >= clipBottom) break;
+
+                if (Config.DEBUG_MODE.get()) {
+                    double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+                    PlayerStats.LOGGER.info("Configurando atributo: {} Incremento: {}", attr.getDescriptionId(), increment);
+                }
+
+                this.addRenderableWidget(new CustomButton(
+                        leftPos + 20, // X
+                        y,  // Y
+                        14, // Largura
+                        14, // Altura
+                        Component.empty(),
+                        PLUS_BUTTON_TEXTURE,
+                        button -> {
+                            sendAttributeChange(attr);
+                        }
+                ));
+
                 y += LINE_HEIGHT;
-                continue;
             }
-            if (y + 4 >= clipBottom) break;
+            addRenderableWidget(resetButton);
+        }
+        else{
 
-            if (Config.DEBUG_MODE.get()) {
-                double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-                PlayerStats.LOGGER.info("Configurando atributo: {} Incremento: {}", attr.getDescriptionId(), increment);
+            List<AttributeInstance> filteredAbilities = AttributeUtils.getCustomAttributes(entity, searchText);
+
+            int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
+            maxScroll = Math.max(0, (filteredAbilities.size() - visibleLines) * LINE_HEIGHT);
+
+            int y = clipTop - scrollOffset;
+
+            for (AttributeInstance instance: filteredAbilities) {
+
+                if (y + 17 <= clipTop) {
+                    y += LINE_HEIGHT;
+                    continue;
+                }
+                if (y + 4 >= clipBottom) break;
+
+
+                this.addRenderableWidget(new CustomButton(
+                        leftPos + 20, // X
+                        y,  // Y
+                        14, // Largura
+                        14, // Altura
+                        Component.empty(),
+                        PLUS_BUTTON_TEXTURE,
+                        button -> {
+                            sendAttributeChange(instance.getAttribute());
+                        }
+                ));
+
+                y += LINE_HEIGHT;
             }
-            /*
-            addRenderableWidget(Button.builder(Component.literal("+"), btn ->
-                    sendAttributeChange(attr)).bounds(leftPos + 20, y, 12, 12).build());
-            */
-            this.addRenderableWidget(new CustomButton(
-                    leftPos + 20, // X
-                    y,  // Y
-                    14, // Largura
-                    14, // Altura
-                    Component.empty(),
-                    PLUS_BUTTON_TEXTURE,
-                    button -> {
-                        sendAttributeChange(attr);
-                    }
-            ));
-
-            y += LINE_HEIGHT;
         }
 
-        addRenderableWidget(resetButton);
+
     }
 
     private void sendAttributeChange(Attribute attribute) {
@@ -247,6 +336,7 @@ public class StatsScreen extends Screen {
             System.out.println("Atributo sem ResourceLocation válido!");
         }
     }
+
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
