@@ -80,21 +80,31 @@ public class PlayerStats {
 
         // Verifica se o loot é de estrutura (todos estão no namespace "minecraft:chests/")
         if (name != null && name.getNamespace().equals("minecraft") && name.getPath().startsWith("chests/")) {
-            LootPool pool = LootPool.lootPool()
-                    .name("upgrade_rune_pool")
-                    .setRolls(ConstantValue.exactly(1)) // tenta adicionar um item
+            // Pool 1: concorrem entre si
+            LootPool pool1 = LootPool.lootPool()
+                    .name("upgrade_or_crystal_pool")
+                    .setRolls(ConstantValue.exactly(1)) // rola apenas 1 vez
                     .add(LootItem.lootTableItem(ModItems.UPGRADE_RUNE.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.07f)) // 7% de chance
+                            .when(LootItemRandomChanceCondition.randomChance(0.07f)) // 7%
                             .setWeight(1)
                             .setQuality(1))
-                    // Attribute Boost Scroll
-                    .add(LootItem.lootTableItem(ModItems.ATTRIBUTE_BOOST_SCROLL.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.12f))
+                    .add(LootItem.lootTableItem(ModItems.ABILITY_CRYSTAL.get())
+                            .when(LootItemRandomChanceCondition.randomChance(0.05f)) // 5%
                             .setWeight(1)
                             .setQuality(1))
                     .build();
 
-            event.getTable().addPool(pool);
+            // Pool 2: ATTRIBUTE_BOOST_SCROLL independente
+            LootPool pool2 = LootPool.lootPool()
+                    .name("attribute_boost_scroll_pool")
+                    .setRolls(ConstantValue.exactly(1))
+                    .add(LootItem.lootTableItem(ModItems.ATTRIBUTE_BOOST_SCROLL.get())
+                            .when(LootItemRandomChanceCondition.randomChance(0.12f)) // 12%
+                            .setWeight(1)
+                            .setQuality(1))
+                    .build();
+            event.getTable().addPool(pool1);
+            event.getTable().addPool(pool2);
         }
     }
 
@@ -102,6 +112,7 @@ public class PlayerStats {
         if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES){
             event.accept(ModItems.UPGRADE_RUNE);
             event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL);
+            event.accept(ModItems.ABILITY_CRYSTAL);
         }
     }
 

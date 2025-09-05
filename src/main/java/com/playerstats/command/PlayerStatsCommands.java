@@ -14,7 +14,7 @@ public class PlayerStatsCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("playerstats")
                 .requires(source -> source.hasPermission(2)) // apenas operadores por padrão
-                .then(Commands.literal("addpoints")
+                .then(Commands.literal("addattributepoints")
                         .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                 .executes(ctx -> {
                                     ServerPlayer player = ctx.getSource().getPlayerOrException();
@@ -29,7 +29,7 @@ public class PlayerStatsCommands {
                                 })
                         )
                 )
-                .then(Commands.literal("removepoints")
+                .then(Commands.literal("removeattributepoints")
                         .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                 .executes(ctx -> {
                                     ServerPlayer player = ctx.getSource().getPlayerOrException();

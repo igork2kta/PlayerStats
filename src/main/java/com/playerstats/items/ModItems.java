@@ -17,6 +17,9 @@ public class ModItems {
     public static final RegistryObject<Item> ATTRIBUTE_BOOST_SCROLL = ITEMS.register("attribute_boost_scroll",
             () -> new AttributeBoostScrollItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
 
+    public static final RegistryObject<Item> ABILITY_CRYSTAL = ITEMS.register("ability_crystal",
+            () -> new AbilityCrystalItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

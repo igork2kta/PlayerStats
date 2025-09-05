@@ -7,7 +7,6 @@ import com.playerstats.client.widget.CustomSearchBox;
 import com.playerstats.client.widget.CustomButton;
 import com.playerstats.network.*;
 import com.playerstats.util.AttributeUtils;
-import com.playerstats.util.UniqueAbilitiesUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -23,7 +22,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
-import java.util.Map;
 
 public class StatsScreen extends Screen {
 
@@ -201,6 +199,12 @@ public class StatsScreen extends Screen {
             int color = points > 0 ? 0x00CC66 : 0xFF5555;
             guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 100, topPos + 29, color);
 
+            if(consumeXp){
+                int xpCost = Config.REQUIRED_XP_FOR_ABILITY.get();
+                boolean hasXpForUpgrade = player.experienceLevel > xpCost;
+                color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
+                guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 115, topPos + 41, color);
+            }
 
             List<AttributeInstance> filteredAbilities = AttributeUtils.getCustomAttributes(entity, searchText);
 
@@ -218,7 +222,7 @@ public class StatsScreen extends Screen {
                 int pos = leftPos + 40;
                 if(instance.getValue() == -1)
                     guiGraphics.drawString(font,name, pos, y, 0X291d13, false);
-                else if(instance.getValue() == 0)
+                else if(instance.getValue() == 1)
                     guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
                 else
                     guiGraphics.drawString(font,Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X291d13, false);

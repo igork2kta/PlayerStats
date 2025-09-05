@@ -299,8 +299,6 @@ public class AttributeBoostScrollItem extends Item {
 
         PacketHandler.sendToClient(new BoostsSyncPacket(map), (ServerPlayer) player);
     }
-
-
 }
 
 

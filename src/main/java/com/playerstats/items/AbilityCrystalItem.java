@@ -16,21 +16,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class UpgradeRuneItem extends Item {
-    public UpgradeRuneItem(Properties properties) {
+public class AbilityCrystalItem extends Item {
+    public AbilityCrystalItem(Properties properties) {
         super(properties);
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
 
-
         ItemStack stack = player.getItemInHand(hand);
 
         // Apenas no lado do servidor
         if (!level.isClientSide) {
             // Exemplo: envia uma mensagem e remove 1 item da mão
-            player.sendSystemMessage(Component.translatable("item.playerstats.upgrade_rune.message").withStyle(ChatFormatting.YELLOW));
+            player.sendSystemMessage(Component.translatable("item.playerstats.ability_crystal.message").withStyle(ChatFormatting.YELLOW));
 
             // Consumir o item (1 unidade)
             if (!player.isCreative()) {
@@ -39,7 +38,7 @@ public class UpgradeRuneItem extends Item {
 
             level.playSound(null, player.getOnPos(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS,1.0F, 1.0F);
 
-            PlayerAttributePersistence.addPoints(player, 1);
+            PlayerAttributePersistence.addAbilityPoints(player, 1);
 
         }
 
@@ -49,9 +48,12 @@ public class UpgradeRuneItem extends Item {
     @Override
     public void appendHoverText(ItemStack itemStack, @Nullable Level level, List<Component> components, TooltipFlag tooltipFlag) {
 
-        components.add(Component.translatable("item.playerstats.upgrade_rune.hoverText").withStyle(ChatFormatting.AQUA));
+        components.add(Component.translatable("item.playerstats.ability_crystal.hoverText").withStyle(ChatFormatting.AQUA));
         super.appendHoverText(itemStack, level, components, tooltipFlag);
     }
 
+    @Override
+    public boolean isFoil(ItemStack stack) {
+        return true; // faz efeito brilhante tipo encantamento
+    }
 }
-
