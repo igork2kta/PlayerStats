@@ -1,33 +1,40 @@
 package com.playerstats.client;
 
+import com.playerstats.PlayerStats;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+
+import static com.playerstats.client.KeyMappings.OPEN_ENTITY_STATS_KEY;
+import static com.playerstats.client.KeyMappings.OPEN_STATS_KEY;
+import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
 public class KeyBindings {
 
+
     public static void register() {
-        MinecraftForge.EVENT_BUS.register(KeyBindings.class);
+        EVENT_BUS.register(KeyBindings.class);
     }
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.END &&
-                KeyMappings.OPEN_STATS_KEY.consumeClick()) {
+    public static void onClientTick(ClientTickEvent.Post event) {
+        while (OPEN_STATS_KEY.get().consumeClick()) {
             Minecraft.getInstance().setScreen(new StatsScreen());
         }
-        // Executa no final do tick
-        if (event.phase == TickEvent.Phase.END && KeyMappings.OPEN_ENTITY_STATS_KEY.consumeClick()) {
+        while (OPEN_ENTITY_STATS_KEY.get().consumeClick()) {
+            PlayerStats.LOGGER.info("Atalho pressionado");
             Minecraft mc = Minecraft.getInstance();
-            HitResult hit = mc.hitResult;
-
-            if (hit instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity entity) {
-                Minecraft.getInstance().setScreen(new StatsScreen(entity));
+            if (mc.player != null) {
+                // Raycast para pegar a entidade que o player está mirando
+                HitResult hit = mc.hitResult;
+                if (hit instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity entity) {
+                    Minecraft.getInstance().setScreen(new StatsScreen(entity));
+                }
             }
         }
+
     }
 }

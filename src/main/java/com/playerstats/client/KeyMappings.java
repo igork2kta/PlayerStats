@@ -1,39 +1,34 @@
 package com.playerstats.client;
 
-
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.jarjar.nio.util.Lazy;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
 
-@OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(
-        modid = "playerstats",
-        bus = Mod.EventBusSubscriber.Bus.MOD,
-        value = Dist.CLIENT // <-- ESSENCIAL para evitar carregamento no servidor
-)
+
 public class KeyMappings {
 
-    public static final KeyMapping OPEN_STATS_KEY = new KeyMapping(
-            "key.playerstats.open_stats",
-            GLFW.GLFW_KEY_R,
+    public static final Lazy<KeyMapping> OPEN_STATS_KEY = Lazy.of(() -> new KeyMapping(
+            "key.playerstats.open_stats_screen", // Will be localized using this translation key
+            InputConstants.Type.KEYSYM, // Default mapping is on the keyboard
+            GLFW.GLFW_KEY_R, // Default key is P
             "key.categories.playerstats"
-    );
+    ));
 
-    public static final KeyMapping OPEN_ENTITY_STATS_KEY = new KeyMapping(
-            "key.playerstats.open_entity_stats", // chave de tradução
-            GLFW.GLFW_KEY_H,                // tecla H
-            "key.categories.playerstats"    // categoria
-    );
+    public static final Lazy<KeyMapping> OPEN_ENTITY_STATS_KEY = Lazy.of(() -> new KeyMapping(
+            "key.playerstats.open_entity_stats", // Will be localized using this translation key
+            InputConstants.Type.KEYSYM, // Default mapping is on the keyboard
+            GLFW.GLFW_KEY_H, // Default key is H
+            "key.categories.playerstats"
+    ));
 
-
-    //Aqui o atalho é registrado nos controles do jogo, permitindo alterar, o padrão é R
-    @SubscribeEvent
-    public static void onKeyMappingRegister(RegisterKeyMappingsEvent event) {
-        event.register(OPEN_STATS_KEY);
-        event.register(OPEN_ENTITY_STATS_KEY);
+    @SubscribeEvent // on the mod event bus only on the physical client
+    public static void registerBindings(RegisterKeyMappingsEvent event) {
+        event.register(OPEN_STATS_KEY.get());
+        event.register(OPEN_ENTITY_STATS_KEY.get());
     }
+
+
 }

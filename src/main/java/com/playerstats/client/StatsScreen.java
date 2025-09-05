@@ -124,12 +124,22 @@ public class StatsScreen extends Screen {
 
     }
 
+    //Sem isso o background fica desfocado
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        //this.renderBlurredBackground(partialTick);
+        super.renderMenuBackground(guiGraphics);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ScreenEvent.BackgroundRendered(this, guiGraphics));
+    }
+
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         RenderSystem.setShaderTexture(0, BACKGROUND);
         guiGraphics.blit(BACKGROUND, leftPos, topPos, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
+
+        super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTicks);
 
@@ -329,8 +339,8 @@ public class StatsScreen extends Screen {
 
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        scrollOffset -= delta * SCROLL_STEP;
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        scrollOffset -= scrollY * SCROLL_STEP;
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
         rebuildButtons();
         return true;

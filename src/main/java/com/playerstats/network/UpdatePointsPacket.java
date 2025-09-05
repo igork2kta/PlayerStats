@@ -1,35 +1,31 @@
 package com.playerstats.network;
 
-
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.function.Supplier;
+public record UpdatePointsPacket(int points) implements CustomPacketPayload {
 
-public class UpdatePointsPacket {
-    private final int points;
-    private final String pointsType;
-    public UpdatePointsPacket(int points, String pointsType) {
-        this.points = points;
-        this.pointsType = pointsType;
+    public static final ResourceLocation ID =
+            ResourceLocation.fromNamespaceAndPath("playerstats", "update_points");
+
+    public static final Type<UpdatePointsPacket> TYPE = new Type<>(ID);
+
+    public static final StreamCodec<FriendlyByteBuf, UpdatePointsPacket> CODEC =
+            StreamCodec.of(UpdatePointsPacket::encode, UpdatePointsPacket::decode);
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public static void encode(UpdatePointsPacket msg, FriendlyByteBuf buf) {
-        buf.writeInt(msg.points);
-        buf.writeUtf(msg.pointsType);
+    private static void encode(FriendlyByteBuf buf, UpdatePointsPacket msg) {
+        buf.writeInt(msg.points());
     }
 
-    public static UpdatePointsPacket decode(FriendlyByteBuf buf) {
-        return new UpdatePointsPacket(buf.readInt(),  buf.readUtf());
-    }
+    private static UpdatePointsPacket decode(FriendlyByteBuf buf) {
+        return new UpdatePointsPacket(buf.readInt());
 
-    public static void handle(UpdatePointsPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if(msg.pointsType.equals("attribute"))
-                com.playerstats.client.ClientAttributeCache.setPoints(msg.points);
-            else if(msg.pointsType.equals("ability"))
-                com.playerstats.client.ClientAttributeCache.setAbilityPoints(msg.points);
-        });
-        ctx.get().setPacketHandled(true);
     }
 }

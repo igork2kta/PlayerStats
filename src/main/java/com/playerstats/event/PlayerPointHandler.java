@@ -8,21 +8,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
-
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 
 
-@Mod.EventBusSubscriber(modid = "playerstats")
+//@Mod.EventBusSubscriber(modid = "playerstats")
 public class PlayerPointHandler {
 
     private static final Map<UUID, Long> lastDayPointGiven = new HashMap<>();
@@ -43,7 +38,7 @@ public class PlayerPointHandler {
 
         double baseChance = 0.0;
 
-
+/*
         if (isProgressiveBossesInstalled()) {
             if (String.valueOf(mob.getType()).contains("wither") && !String.valueOf(mob.getType()).contains("skeleton")) {
                 if (Config.DEBUG_MODE.get()) {
@@ -55,7 +50,7 @@ public class PlayerPointHandler {
                 return;
             }
         }
-
+*/
         // Lógica padrão (sem Progressive Bosses)
         if (mob.getType() == EntityType.WITHER || mob.getType() == EntityType.ENDER_DRAGON) {
             if (Config.DEBUG_MODE.get()) {
@@ -75,15 +70,7 @@ public class PlayerPointHandler {
             }
             baseChance = 0.3;
         }
-        /*
-        else if (String.valueOf(mob.getType()).contains("cerberus")) {
-            if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Cerberus morto!");
-            }
-            baseChance = 0.15;
-        }
 
-         */
         else if (mob.getMaxHealth() > 200.0f) {
             if (Config.DEBUG_MODE.get()) {
                 PlayerStats.LOGGER.info("Mob com mais de 200 de vida morto: {}", mob.getType());
@@ -136,8 +123,9 @@ public class PlayerPointHandler {
         lastDayPointGiven.put(uuid, currentDay);
 
         PlayerAttributePersistence.addPoints(player, amount);
-    }
 
+    }
+/*
     public static boolean isProgressiveBossesInstalled(){
         if (ModList.get().isLoaded("progressivebosses")){
             if (Config.DEBUG_MODE.get()) {
@@ -146,26 +134,8 @@ public class PlayerPointHandler {
             return true;
         }
         else return false;
-    }
-
-    public static boolean isBloodMoon(Level world) {
-        if (ModList.get().isLoaded("majruszsdifficulty")) {
-            try {
-                Class<?> helperClass = Class.forName("com.majruszsdifficulty.events.BloodMoonHelper");
-                Method method = helperClass.getDeclaredMethod("isBloodMoon", Level.class);
-                return (boolean) method.invoke(null, world);
-            } catch (Exception ignored) {}
-        }
-        return false;
+    }*/
 
 
-        /*
-        // Se for Blood Moon e o mod estiver presente, aumenta em 20%
-        if (isBloodMoon(player.level())) {
-            player.sendSystemMessage(Component.literal("Blood moon man!"));
-            baseChance *= 1.20;
-        }
-*/
-    }
 }
 

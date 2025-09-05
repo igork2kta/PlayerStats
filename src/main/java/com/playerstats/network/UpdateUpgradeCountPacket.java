@@ -1,31 +1,30 @@
 package com.playerstats.network;
 
-import com.playerstats.client.ClientAttributeCache;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.function.Supplier;
+public record UpdateUpgradeCountPacket(int upgradeCount) implements CustomPacketPayload {
 
-public class UpdateUpgradeCountPacket {
-    private final int upgradeCount;
+    public static final ResourceLocation ID =
+            ResourceLocation.fromNamespaceAndPath("playerstats", "update_upgrade_count");
 
-    public UpdateUpgradeCountPacket(int upgradeCount) {
-        this.upgradeCount = upgradeCount;
+    public static final Type<UpdateUpgradeCountPacket> TYPE = new Type<>(ID);
+
+    public static final StreamCodec<FriendlyByteBuf, UpdateUpgradeCountPacket> CODEC =
+            StreamCodec.of(UpdateUpgradeCountPacket::encode, UpdateUpgradeCountPacket::decode);
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public static void encode(UpdateUpgradeCountPacket msg, FriendlyByteBuf buf) {
-        buf.writeInt(msg.upgradeCount);
+    private static void encode(FriendlyByteBuf buf, UpdateUpgradeCountPacket msg) {
+        buf.writeInt(msg.upgradeCount());
     }
 
-    public static UpdateUpgradeCountPacket decode(FriendlyByteBuf buf) {
+    private static UpdateUpgradeCountPacket decode(FriendlyByteBuf buf) {
         return new UpdateUpgradeCountPacket(buf.readInt());
     }
-
-    public static void handle(UpdateUpgradeCountPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ClientAttributeCache.setUpgradeCount(msg.upgradeCount);
-        });
-        ctx.get().setPacketHandled(true);
-    }
 }
-
