@@ -1,20 +1,21 @@
 package com.playerstats.event;
 
 import com.playerstats.ModAttributes;
+import com.playerstats.client.KeyBindings;
 import com.playerstats.entities.goals.HorseFollowOwnerGoal;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.AnimalTameEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.AnimalTameEvent;
 
-@Mod.EventBusSubscriber(modid = "playerstats")
+import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
+
+
 public class ModEvents {
 
-
+    public static void register() {
+        EVENT_BUS.register(KeyBindings.class);
+    }
 
     @SubscribeEvent
     public static void onHorseTamed(AnimalTameEvent event){

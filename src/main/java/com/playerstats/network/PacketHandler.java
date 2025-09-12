@@ -92,10 +92,13 @@ public class PacketHandler {
         });
     }
 
-    private static void handleUpdatePoints(UpdatePointsPacket packet, IPayloadContext context) {
+    private static void handleUpdatePoints(UpdatePointsPacket msg, IPayloadContext context) {
         context.enqueueWork(() -> {
             // estamos no lado cliente aqui
-            com.playerstats.client.ClientAttributeCache.setPoints(packet.points());
+            if(msg.pointsType().equals("attribute"))
+                com.playerstats.client.ClientAttributeCache.setPoints(msg.points());
+            else if(msg.pointsType().equals("ability"))
+                com.playerstats.client.ClientAttributeCache.setAbilityPoints(msg.points());
         });
     }
 

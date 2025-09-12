@@ -62,7 +62,7 @@ public class PlayerStatsCommands {
                                 .executes(ctx -> {
                                     ServerPlayer player = ctx.getSource().getPlayerOrException();
                                     int amount = IntegerArgumentType.getInteger(ctx, "amount");
-                                    int current = PlayerAttributePersistence.getPoints(player);
+                                    int current = PlayerAttributePersistence.getAbilityPoints(player);
 
                                     PlayerAttributePersistence.addAbilityPoints(player, -amount);
                                     ctx.getSource().sendSuccess(() ->

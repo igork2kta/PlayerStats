@@ -222,7 +222,7 @@ public class StatsScreen extends Screen {
 
             for (AttributeInstance instance: filteredAbilities) {
 
-                String name = AttributeUtils.getAttributeName(instance.getAttribute());
+                String name = AttributeUtils.getAttributeName(instance.getAttribute().value());
 
                 if (y + 15 <= clipTop) {
                     y += LINE_HEIGHT;
@@ -241,7 +241,7 @@ public class StatsScreen extends Screen {
                 if (y >= clipBottom) break;
             }
         }
-        super.render(guiGraphics, mouseX, mouseY, partialTicks);
+
 
     }
 
@@ -316,7 +316,7 @@ public class StatsScreen extends Screen {
                         Component.empty(),
                         PLUS_BUTTON_TEXTURE,
                         button -> {
-                            sendAttributeChange(instance.getAttribute());
+                            sendAttributeChange(instance.getAttribute().value());
                         }
                 ));
 

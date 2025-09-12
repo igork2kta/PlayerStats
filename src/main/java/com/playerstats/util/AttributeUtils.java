@@ -59,7 +59,7 @@ public class AttributeUtils {
         return BuiltInRegistries.ATTRIBUTE.stream()
                 .filter(attr -> {
 
-                    AttributeInstance instance = getAttributeInstance(player, attr);
+                    AttributeInstance instance = getAttributeInstance(entity, attr);
                     //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
                     if (!attr.isClientSyncable()) return false;
                     if (instance == null) return false;
@@ -102,9 +102,9 @@ public class AttributeUtils {
 
         return entity.getAttributes().getSyncableAttributes().stream().filter(attr -> {
             // Só pega os atributos do seu mod
-            if (attr.getAttribute().getDescriptionId().contains("playerstats")) {
+            if (attr.getAttribute().value().getDescriptionId().contains("playerstats")) {
                 if (!searchText.isEmpty()) {
-                    String name = AttributeUtils.getAttributeName(attr.getAttribute()).toLowerCase();
+                    String name = AttributeUtils.getAttributeName(attr.getAttribute().value()).toLowerCase();
                     return name.contains(searchText);
                 }
                 return true;

@@ -34,7 +34,7 @@ public class Config {
     public static final ModConfigSpec.BooleanValue CONSUME_XP;
     public static final ModConfigSpec.IntValue XP_COST_INCREMENT;
     public static final ModConfigSpec.IntValue REQUIRED_XP_FOR_RESET;
-    public static final ForgeConfigSpec.IntValue REQUIRED_XP_FOR_ABILITY;
+    public static final ModConfigSpec.IntValue REQUIRED_XP_FOR_ABILITY;
 
 
     // SERVER config - Boost de atributos

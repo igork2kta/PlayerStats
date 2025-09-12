@@ -5,7 +5,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record UpdatePointsPacket(int points) implements CustomPacketPayload {
+public record UpdatePointsPacket(int points, String pointsType) implements CustomPacketPayload {
 
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath("playerstats", "update_points");
@@ -22,10 +22,11 @@ public record UpdatePointsPacket(int points) implements CustomPacketPayload {
 
     private static void encode(FriendlyByteBuf buf, UpdatePointsPacket msg) {
         buf.writeInt(msg.points());
+        buf.writeUtf(msg.pointsType);
     }
 
     private static UpdatePointsPacket decode(FriendlyByteBuf buf) {
-        return new UpdatePointsPacket(buf.readInt());
+        return new UpdatePointsPacket(buf.readInt(),  buf.readUtf());
 
     }
 }

@@ -56,5 +56,3 @@ public class UpgradeRuneItem extends Item {
 
 }
 
-
-}

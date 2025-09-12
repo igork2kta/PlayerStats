@@ -2,11 +2,21 @@ package com.playerstats;
 
 import com.playerstats.client.KeyBindings;
 import com.playerstats.client.KeyMappings;
+import com.playerstats.command.PlayerStatsCommands;
+import com.playerstats.event.ModEvents;
 import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
+import com.playerstats.util.ModDataComponents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.event.LootTableLoadEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -60,21 +70,25 @@ public class PlayerStats {
     public PlayerStats(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::addCreative);
 
         // Registrar os itens
         ModItems.register(modEventBus);
-        modEventBus.addListener(this::addCreative);
+
+        ModDataComponents.register(modEventBus);
 
         //Registrar pacores
         PacketHandler.register(modEventBus);
 
-        PlayerAttributePersistence.register(modEventBus);
+        PlayerAttributePersistence.register();
 
 
         NeoForge.EVENT_BUS.register(this);
 
-        //ModSounds.register(modEventBus);
-        ModAttributes.ATTRIBUTES.register(FMLJavaModLoadingContext.get().getModEventBus());
+        // 🔹 Registra os atributos
+        ModAttributes.ATTRIBUTES.register(modEventBus);
+        // 🔹 Registra o listener do evento
+        modEventBus.addListener(ModAttributes::onEntityAttributeModification);
 
         //Atalhos de teclado
         modEventBus.addListener(KeyMappings::registerBindings);
@@ -83,7 +97,8 @@ public class PlayerStats {
         modEventBus.addListener(this::onConfigReload);
         //NeoForge.EVENT_BUS.addListener(KeyBindings::onClientTick); pode ser feito assim ou da forma abaixo. Porque preciso ter keymappings e keybindings?
         KeyBindings.register();
-
+        ModEvents.register();
+        NeoForge.EVENT_BUS.register(ModEvents.class);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON);
@@ -96,20 +111,26 @@ public class PlayerStats {
         LOGGER.info("HELLO FROM COMMON SETUP");
 
     }
+
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        PlayerStatsCommands.register(event.getDispatcher());
+    }
 /*
     private void onClientSetup(FMLClientSetupEvent event) {
         KeyBindings.register();
     }
 */
+    /*
     // Add the example block item to the building blocks tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
 
         if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES){
             event.accept(ModItems.UPGRADE_RUNE.get());
-            //event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL.get());
+            event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL.get());
         }
     }
-
+*/
     private void onConfigReload(ModConfigEvent event) {
         if (event.getConfig().getSpec() == Config.SERVER) {
             Config.reloadCustomMobChances();
@@ -157,9 +178,9 @@ public class PlayerStats {
 
     private void addCreative(BuildCreativeModeTabContentsEvent event){
         if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES){
-            event.accept(ModItems.UPGRADE_RUNE);
-            event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL);
-            event.accept(ModItems.ABILITY_CRYSTAL);
+            event.accept(ModItems.UPGRADE_RUNE.get());
+            event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL.get());
+            event.accept(ModItems.ABILITY_CRYSTAL.get());
         }
     }
 

@@ -19,14 +19,13 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
-
 
 
 public class PlayerAttributePersistence {
@@ -36,7 +35,7 @@ public class PlayerAttributePersistence {
     private static final String UPGRADE_COUNT_TAG = "PlayerStatsUpgradeCount";
     private static final String ABILITY_POINTS_TAG = "PlayerAbilityPoints";
 
-    public static void register(IEventBus modEventBus) {
+    public static void register() {
         // Escuta o evento de registro de pacotes
         EVENT_BUS.register(PlayerAttributePersistence.class);
 
@@ -47,38 +46,36 @@ public class PlayerAttributePersistence {
         CompoundTag originalNBT = event.getOriginal().getPersistentData();
         Player player = event.getEntity();
 
-            ClientAttributeCache.clean();
-            CompoundTag root = player.getPersistentData();
-            root.put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
+        ClientAttributeCache.clean();
+        CompoundTag root = player.getPersistentData();
+        root.put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
 
-            if(Config.RESET_ON_DEATH.get()){
-                resetAttributes(player, (ServerPlayer) player,true);
-            }
-            else{
-                setPoints(player, getPoints(event.getOriginal()));
-                setAbilityPoints(player, getPoints(event.getOriginal()));
-                CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
+        if(Config.RESET_ON_DEATH.get()){
+            resetAttributes(player, (ServerPlayer) player,true);
+        }
+        else{
+            setPoints(player, getPoints(event.getOriginal()));
+            setAbilityPoints(player, getPoints(event.getOriginal()));
+            CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
 
-                for (String key : upgradesTag.getAllKeys()) {
-                    ResourceLocation id = ResourceLocation.tryParse(key);
-                    Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-                    AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
+            for (String key : upgradesTag.getAllKeys()) {
+                ResourceLocation id = ResourceLocation.tryParse(key);
+                Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+                AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
 
-                    if (attr != null && instance != null) {
-                        int upgradeCount = upgradesTag.getInt(key);
-                        double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+                if (attr != null && instance != null) {
+                    int upgradeCount = upgradesTag.getInt(key);
+                    double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
 
-                        PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
-                        double totalIncrement = upgradeCount * increment;
-                        applyModifier(instance, attr.getDescriptionId(), totalIncrement);
-                    }
-
+                    PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
+                    double totalIncrement = upgradeCount * increment;
+                    applyModifier(instance, attr.getDescriptionId(), totalIncrement);
                 }
             }
         }
 
-            PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
-        }
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
+    }
 
 
     @SubscribeEvent
@@ -123,7 +120,6 @@ public class PlayerAttributePersistence {
         if (attr != null) {
 
             AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
-
 
             if(!attributeId.startsWith("playerstats:")) {
                 int playerPoints = getPoints(player);
@@ -198,7 +194,6 @@ public class PlayerAttributePersistence {
 
     }
 
-   
 
     public static void applyUpgrade(LivingEntity player, Attribute attr) {
         ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
@@ -233,7 +228,6 @@ public class PlayerAttributePersistence {
             AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
             if (attr != null && instance != null) {
                 int upgradesApplied = upgrades.getInt(key);
-
                 // Remove o modificador
                 instance.getModifiers().stream()
                         .filter(mod -> mod.id().getNamespace().equals("playerstats") && mod.id().getPath().equals(attr.getDescriptionId()))
@@ -276,7 +270,7 @@ public class PlayerAttributePersistence {
         CompoundTag tag = player.getPersistentData();
         if (!tag.contains(POINTS_TAG)) {
             if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Configuring player points");
+                    PlayerStats.LOGGER.info("Configuring player points");
 
             }
             setPoints(player, 0);
@@ -332,7 +326,7 @@ public class PlayerAttributePersistence {
         tag.putInt(POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "attribute"), (ServerPlayer) player);
 
-        player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+        player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.get().getKey().getDisplayName()));
     }
 
     public static void addAbilityPoints(Player player, int points) {
@@ -341,7 +335,7 @@ public class PlayerAttributePersistence {
         tag.putInt(ABILITY_POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "ability"), (ServerPlayer) player);
 
-        player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+        player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.get().getKey().getDisplayName()));
 
     }
 
