@@ -9,6 +9,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 
 
-//@Mod.EventBusSubscriber(modid = "playerstats")
+@EventBusSubscriber(modid = "playerstats")
 public class PlayerPointHandler {
 
     private static final Map<UUID, Long> lastDayPointGiven = new HashMap<>();

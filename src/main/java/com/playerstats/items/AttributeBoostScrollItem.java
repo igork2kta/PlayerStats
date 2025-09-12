@@ -30,7 +30,6 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
 public class AttributeBoostScrollItem extends Item {
 
