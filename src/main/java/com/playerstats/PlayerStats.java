@@ -5,6 +5,7 @@ import com.playerstats.client.KeyMappings;
 import com.playerstats.command.PlayerStatsCommands;
 import com.playerstats.event.ModEvents;
 import com.playerstats.event.PlayerAttributePersistence;
+import com.playerstats.items.AttributeBoostScrollItem;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.util.ModDataComponents;
@@ -14,7 +15,6 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.neoforged.fml.event.config.ModConfigEvent;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.slf4j.Logger;
@@ -82,6 +82,7 @@ public class PlayerStats {
 
         PlayerAttributePersistence.register();
 
+        NeoForge.EVENT_BUS.register(AttributeBoostScrollItem.class);
 
         NeoForge.EVENT_BUS.register(this);
 

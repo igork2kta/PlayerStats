@@ -1,5 +1,6 @@
 package com.playerstats.network;
 
+import com.playerstats.client.ClientBoostCache;
 import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.util.AttributeUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -7,10 +8,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class PacketHandler {
 
@@ -50,6 +55,13 @@ public class PacketHandler {
                 ResetAttributesPacket.TYPE,
                 ResetAttributesPacket.CODEC,
                 PacketHandler::handleResetAttributes
+        );
+
+        // Servidor → Cliente
+        registrar.playToClient(
+                BoostsSyncPacket.TYPE,
+                BoostsSyncPacket.CODEC,
+                PacketHandler::sendBoostsToClient
         );
         // Exemplo: se UpdatePointsPacket também for C->S:
         // registrar.playToServer(UpdatePointsPacket.TYPE, UpdatePointsPacket.CODEC, PacketHandler::handleUpdatePoints);
@@ -116,6 +128,23 @@ public class PacketHandler {
                 var entity = level.getEntity(msg.entityId());
                 if (entity instanceof LivingEntity living) {
                     PlayerAttributePersistence.resetAttributes(living, player, false);
+                }
+            }
+        });
+    }
+
+    // Lida com o pacote no lado do cliente
+    public static void sendBoostsToClient(BoostsSyncPacket pkt, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            // Limpa cache atual
+            ClientBoostCache.activeBoosts.clear();
+
+            for (Map.Entry<ResourceLocation, BoostsSyncPacket.BoostData> entry : pkt.boosts.entrySet()) {
+                Attribute attribute = BuiltInRegistries.ATTRIBUTE.get(entry.getKey());
+                if (attribute != null) {
+                    BoostsSyncPacket.BoostData bd = entry.getValue();
+                    ClientBoostCache.activeBoosts.put(attribute,
+                            new ClientBoostCache.BoostInfo(bd.amount, bd.secondsRemaining));
                 }
             }
         });

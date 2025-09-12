@@ -2,15 +2,14 @@
 package com.playerstats.items;
 
 import com.playerstats.Config;
+import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.util.AttributeUtils;
+import com.playerstats.util.ModDataComponents;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.component.PatchedDataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -31,11 +30,12 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
+
 public class AttributeBoostScrollItem extends Item {
 
 
-
-    private static final Map<UUID, List<BoostInstance>> activeBoosts = new HashMap<>();
+    public static final Map<UUID, List<BoostInstance>> activeBoosts = new HashMap<>();
 
     public AttributeBoostScrollItem(Properties properties) {
         super(properties);
@@ -43,11 +43,11 @@ public class AttributeBoostScrollItem extends Item {
 
     public static class BoostInstance {
         public final Attribute attribute;
-        public final UUID modifierId;
+        public final ResourceLocation modifierId;
         public int ticksRemaining;
         public double amount;
 
-        public BoostInstance(Attribute attribute, UUID modifierId, int ticksRemaining, double amount) {
+        public BoostInstance(Attribute attribute, ResourceLocation modifierId, int ticksRemaining, double amount) {
             this.attribute = attribute;
             this.modifierId = modifierId;
             this.ticksRemaining = ticksRemaining;
@@ -62,23 +62,14 @@ public class AttributeBoostScrollItem extends Item {
         if (!level.isClientSide) {
             Random random = new Random();
 
-            // Criar ou obter o componente de dados personalizado
-            PatchedDataComponentMap components = stack.getComponents();
-            components.set(DEFINED_ATTRIBUTE, "example_attribute");
-            components.set(BOOST_AMOUNT, 10.0);
-            components.set(BOOST_DURATION, 600);
 
-             DataComponentType<Integer> MANA =
-                    DataComponentType.<Integer>builder()
-                            .persistent(Codecs.) // como será salvo em NBT
-                            .networkSynchronized(ByteBufCodecs.VAR_INT) // como vai para rede
-                            .build();
-
-            if (!tag.contains("DefinedAttribute")) {
+            if (stack.get(ModDataComponents.DEFINED_ATTRIBUTE) == null) {
                 List<Attribute> filteredAttributes = AttributeUtils.getAttributes(player, "");
                 if (!filteredAttributes.isEmpty()) {
                     Attribute selected = filteredAttributes.get(random.nextInt(filteredAttributes.size()));
-                    tag.putString("DefinedAttribute", BuiltInRegistries.ATTRIBUTE.getKey(selected).toString());
+
+                    stack.set(ModDataComponents.DEFINED_ATTRIBUTE, BuiltInRegistries.ATTRIBUTE.getKey(selected).toString());
+                    //tag.putString("DefinedAttribute", BuiltInRegistries.ATTRIBUTE.getKey(selected).toString());
 
                     int minMultiplier = Config.BOOST_AMOUNT_MIN_MULTIPLIER.get();
                     int maxMultiplier = Config.BOOST_AMOUNT_MAX_MULTIPLIER.get();
@@ -92,19 +83,22 @@ public class AttributeBoostScrollItem extends Item {
                     int maxTicks = maxMinutes * 60 * 20;
                     int duration = minTicks + random.nextInt(maxTicks - minTicks + 1);
 
-                    tag.putDouble("BoostAmount", amount);
-                    tag.putInt("BoostDuration", duration);
+                    stack.set(ModDataComponents.BOOST_AMOUNT, amount);
+                    stack.set(ModDataComponents.BOOST_DURATION, duration);
+
                 }
             } else {
-                String attrKey = tag.getString("DefinedAttribute");
+                String attrKey = stack.get(ModDataComponents.DEFINED_ATTRIBUTE);
                 Attribute attribute = BuiltInRegistries.ATTRIBUTE
                         .getOptional(ResourceLocation.tryParse(attrKey))
                         .orElse(null);
 
                 if (attribute != null) {
-                    UUID modifierId = UUID.randomUUID();
-                    double amount = tag.getDouble("BoostAmount");
-                    int duration = tag.getInt("BoostDuration");
+
+
+                    ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", attribute.getDescriptionId());
+                    double amount = stack.get(ModDataComponents.BOOST_AMOUNT);
+                    int duration = stack.get(ModDataComponents.BOOST_DURATION);
                     applyBoost(player, attribute, modifierId, amount, duration);
                 }
 
@@ -115,7 +109,7 @@ public class AttributeBoostScrollItem extends Item {
         return InteractionResultHolder.success(stack);
     }
 
-    private void applyBoost(Player player, Attribute attribute, UUID id, double amount, int duration) {
+    private void applyBoost(Player player, Attribute attribute, ResourceLocation id, double amount, int duration) {
         AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attribute);
         if (instance == null) return;
 
@@ -126,6 +120,7 @@ public class AttributeBoostScrollItem extends Item {
             if (existing.attribute.equals(attribute)) {
                 existing.ticksRemaining = duration;
                 existing.amount = amount;
+                sendBoostsToClient(player);
                 return;
             }
         }
@@ -145,19 +140,20 @@ public class AttributeBoostScrollItem extends Item {
 
         instance.addTransientModifier(modifier);
         boosts.add(new BoostInstance(attribute, id, duration, amount));
+        sendBoostsToClient(player);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
 
-        CompoundTag tag = stack.getTags();
-        if (tag != null && tag.contains("DefinedAttribute")) {
+
+        if (stack.get(ModDataComponents.DEFINED_ATTRIBUTE) != null) {
             Attribute attribute = BuiltInRegistries.ATTRIBUTE
-                    .getOptional(ResourceLocation.tryParse(tag.getString("DefinedAttribute")))
+                    .getOptional(ResourceLocation.tryParse(stack.get(ModDataComponents.DEFINED_ATTRIBUTE)))
                     .orElse(null);
             if (attribute != null) {
-                double amount = tag.getDouble("BoostAmount");
-                int durationSec = tag.getInt("BoostDuration") / 20;
+                double amount = stack.get(ModDataComponents.BOOST_AMOUNT);
+                int durationSec = stack.get(ModDataComponents.BOOST_DURATION) / 20;
 
                 tooltip.add(Component.translatable(
                         "item.playerstats.attribute_boost_scroll.hover_text_unveiled",
@@ -177,44 +173,47 @@ public class AttributeBoostScrollItem extends Item {
     }
 
     @SubscribeEvent
-    public static void onPlayerTick(PlayerTickEvent event) {
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
 
         if (event.getEntity().level().isClientSide) return;
 
         UUID playerId = event.getEntity().getUUID();
-        List<BoostInstance> boosts = activeBoosts.get(playerId);
+        List<AttributeBoostScrollItem.BoostInstance> boosts = AttributeBoostScrollItem.activeBoosts.get(playerId);
         if (boosts == null || boosts.isEmpty()) return;
 
-        Iterator<BoostInstance> iterator = boosts.iterator();
+        Iterator<AttributeBoostScrollItem.BoostInstance> iterator = boosts.iterator();
         while (iterator.hasNext()) {
-            BoostInstance boost = iterator.next();
+            AttributeBoostScrollItem.BoostInstance boost = iterator.next();
             boost.ticksRemaining--;
             if (boost.ticksRemaining <= 0) {
-                AttributeInstance instance = event.getEntity().getAttribute(boost.attribute);
+                AttributeInstance instance = AttributeUtils.getAttributeInstance(event.getEntity(), boost.attribute);
                 if (instance != null) instance.removeModifier(boost.modifierId);
                 iterator.remove();
-                sendBoostsToClient(event.player);
+                AttributeBoostScrollItem.sendBoostsToClient(event.getEntity());
             }
         }
 
-        if (boosts.isEmpty()) activeBoosts.remove(playerId);
+        if (boosts.isEmpty()) AttributeBoostScrollItem.activeBoosts.remove(playerId);
+        else AttributeBoostScrollItem.sendBoostsToClient(event.getEntity());
     }
+
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        saveBoostsToPlayer(event.getEntity());
+        AttributeBoostScrollItem.saveBoostsToPlayer(event.getEntity());
     }
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        loadBoostsFromPlayer(event.getEntity());
+        AttributeBoostScrollItem.loadBoostsFromPlayer(event.getEntity());
     }
 
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         player.getPersistentData().remove("PlayerStatsBoosts");
-        activeBoosts.remove(player.getUUID());
+        AttributeBoostScrollItem.activeBoosts.remove(player.getUUID());
+        AttributeBoostScrollItem.sendBoostsToClient(player);
     }
 
     public static void sendBoostsToClient(Player player) {
@@ -244,13 +243,15 @@ public class AttributeBoostScrollItem extends Item {
             BoostInstance boost = boosts.get(i);
             var boostTag = new CompoundTag();
             boostTag.putString("Attribute", BuiltInRegistries.ATTRIBUTE.getKey(boost.attribute).toString());
-            boostTag.putUUID("ModifierId", boost.modifierId);
+            boostTag.putString("ModifierId", boost.modifierId.getNamespace());
             boostTag.putInt("TicksRemaining", boost.ticksRemaining);
             boostTag.putDouble("Amount", boost.amount);
             tag.put("Boost" + i, boostTag);
         }
 
         player.getPersistentData().put("PlayerStatsBoosts", tag);
+
+        sendBoostsToClient(player);
     }
 
     public static void loadBoostsFromPlayer(Player player) {
@@ -264,21 +265,26 @@ public class AttributeBoostScrollItem extends Item {
         for (String key : tag.getAllKeys()) {
             var boostTag = tag.getCompound(key);
             String attrKey = boostTag.getString("Attribute");
-            UUID modId = boostTag.getUUID("ModifierId");
+            String modId = boostTag.getString("ModifierId");
             int ticks = boostTag.getInt("TicksRemaining");
             double amount = boostTag.getDouble("Amount");
 
-            Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(new ResourceLocation(attrKey)).orElse(null);
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath("playerstats", modId);
+
+            Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(ResourceLocation.tryParse(attrKey)).orElse(null);
             if (attribute != null) {
-                AttributeInstance instance = player.getAttribute(attribute);
+                AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attribute);
                 if (instance != null) {
-                    instance.addTransientModifier(new AttributeModifier(modId, "Scroll Boost", amount, AttributeModifier.Operation.ADD_VALUE));
-                    boosts.add(new BoostInstance(attribute, modId, ticks, amount));
+                    ResourceLocation modifierId =  ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost");
+                    instance.addTransientModifier(new AttributeModifier(modifierId, amount, AttributeModifier.Operation.ADD_VALUE));
+                    boosts.add(new BoostInstance(attribute, id, ticks, amount));
                 }
             }
         }
 
         if (!boosts.isEmpty()) activeBoosts.put(playerId, boosts);
+
+        sendBoostsToClient(player);
     }
 
 }
