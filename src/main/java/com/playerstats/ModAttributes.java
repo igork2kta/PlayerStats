@@ -31,6 +31,17 @@ public class ModAttributes {
                     () -> new RangedAttribute("attribute.playerstats.life_regen", -1.0D, -1.0D, 1.0D)
                             .setSyncable(true)); // precisa ser syncable para ir ao cliente
 
+    public static final RegistryObject<Attribute> FROST_WALKER =
+            ATTRIBUTES.register("frost_walker",
+                    () -> new RangedAttribute("attribute.playerstats.frost_walker", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true)); // precisa ser syncable para ir ao cliente
+
+
+    public static final RegistryObject<Attribute> DEFEND_OWNER =
+            ATTRIBUTES.register("defend_owner",
+                    () -> new RangedAttribute("attribute.playerstats.defend_owner", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true)); // precisa ser syncable para ir ao cliente
+
 
 
     //Aqui são atribuidos os atributos customizados às entidadess
@@ -50,6 +61,12 @@ public class ModAttributes {
             if(type == EntityType.HORSE || type == EntityType.DONKEY ||  type == EntityType.MULE){
                 event.add(type, ModAttributes.FOLLOW_OWNER.get());
                 event.add(type, ModAttributes.TELEPORT_TO_OWNER.get());
+                event.add(type, ModAttributes.FROST_WALKER.get());
+            }
+            if(type == EntityType.IRON_GOLEM){
+                event.add(type, ModAttributes.FOLLOW_OWNER.get());
+                event.add(type, ModAttributes.TELEPORT_TO_OWNER.get());
+                event.add(type, ModAttributes.DEFEND_OWNER.get());
             }
 
         }

@@ -1,6 +1,7 @@
 package com.playerstats.util;
 
 import com.playerstats.Config;
+import com.playerstats.ModAttributes;
 import com.playerstats.PlayerStats;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.List;
 import java.util.Set;
@@ -81,10 +83,10 @@ public class AttributeUtils {
             }
             return false;
         }).toList();
+    }
 
-
-
-
+    public static double getAttributeValue(LivingEntity entity, RegistryObject<Attribute> attribute){
+        return entity.getAttributes().getInstance(attribute.getHolder().get()).getValue();
     }
 
 

@@ -2,7 +2,6 @@ package com.playerstats.event;
 
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
-import com.playerstats.client.KeyMappings;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
@@ -34,7 +33,7 @@ public class PlayerPointHandler {
 
         int totalKills = player.getStats().getValue(Stats.CUSTOM.get(Stats.MOB_KILLS));
 
-        if(totalKills >0 && (totalKills == 100 || totalKills%1000 == 0)) {
+        if(totalKills > 0 && (totalKills == 100 || totalKills%1000 == 0)) {
             player.sendSystemMessage(Component.translatable("event.playerstats.mobs_killed", totalKills));
             givePoints(player, 1);
         }

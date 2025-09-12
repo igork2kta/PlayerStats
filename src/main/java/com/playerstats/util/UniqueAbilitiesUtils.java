@@ -1,5 +1,6 @@
 package com.playerstats.util;
 
+import com.playerstats.ModAttributes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -11,18 +12,14 @@ public class UniqueAbilitiesUtils {
 
     public static boolean enableDisableAbility(LivingEntity entity, Player player, String attributeId, boolean state){
 
-        if(attributeId.contains("follow_owner")){
-            if(state) entity.getPersistentData().putBoolean("follow_owner", true);
-            else entity.getPersistentData().putBoolean("follow_owner", false);
-
-
+        //Se ainda não tiver dono, seta o player atual como dono
+        if(attributeId.contains("follow_owner") || attributeId.contains("defend_owner")){
+            if(!entity.getPersistentData().contains("Owner"))
+                entity.getPersistentData().putUUID("Owner", player.getUUID());
         }
         else if(attributeId.contains("teleport_to_owner")) {
-            if(entity.getPersistentData().contains("follow_owner")){
-                if(state) entity.getPersistentData().putBoolean("teleport_to_owner", true);
-                else entity.getPersistentData().putBoolean("teleport_to_owner", false);
-            }
-            else{
+            //Não permite ativar se não tiver follow owner
+            if(AttributeUtils.getAttributeValue(entity, ModAttributes.FOLLOW_OWNER) == -1){
                 player.sendSystemMessage(Component.translatable("gui.playerstats.teleport_locked"));
                 return false;
             }
