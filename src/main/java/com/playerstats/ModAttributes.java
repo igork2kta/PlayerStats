@@ -31,6 +31,17 @@ public class ModAttributes {
                     () -> new RangedAttribute("attribute.playerstats.life_regen", -1.0D, -1.0D, 1.0D)
                             .setSyncable(true));
 
+    public static final DeferredHolder<Attribute, Attribute> FROST_WALKER =
+            ATTRIBUTES.register("frost_walker",
+                    () -> new RangedAttribute("attribute.playerstats.frost_walker", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true));
+
+    public static final DeferredHolder<Attribute, Attribute> DEFEND_OWNER =
+            ATTRIBUTES.register("defend_owner",
+                    () -> new RangedAttribute("attribute.playerstats.defend_owner", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true));
+
+
     @SubscribeEvent
     public static void onEntityAttributeModification(EntityAttributeModificationEvent event) {
         for (EntityType<? extends LivingEntity> type : event.getTypes()) {
@@ -42,6 +53,13 @@ public class ModAttributes {
             if (type == EntityType.HORSE || type == EntityType.DONKEY || type == EntityType.MULE) {
                 event.add(type, ModAttributes.FOLLOW_OWNER.getDelegate());
                 event.add(type, ModAttributes.TELEPORT_TO_OWNER.getDelegate());
+                event.add(type, ModAttributes.FROST_WALKER.getDelegate());
+            }
+
+            if(type == EntityType.IRON_GOLEM) {
+                event.add(type, ModAttributes.FOLLOW_OWNER.getDelegate());
+                event.add(type, ModAttributes.TELEPORT_TO_OWNER.getDelegate());
+                event.add(type, ModAttributes.DEFEND_OWNER.getDelegate());
             }
         }
     }

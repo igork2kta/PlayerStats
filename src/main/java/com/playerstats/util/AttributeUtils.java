@@ -1,7 +1,6 @@
 package com.playerstats.util;
 
 import com.playerstats.Config;
-import com.playerstats.PlayerStats;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -9,13 +8,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeMap;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class AttributeUtils {
 
@@ -111,10 +106,10 @@ public class AttributeUtils {
             }
             return false;
         }).toList();
+    }
 
-
-
-
+    public static double getAttributeValue(LivingEntity entity, DeferredHolder<Attribute, Attribute> attribute){
+        return entity.getAttributes().getInstance(attribute).getValue();
     }
 
 

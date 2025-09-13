@@ -21,8 +21,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
@@ -326,7 +328,8 @@ public class PlayerAttributePersistence {
         tag.putInt(POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "attribute"), (ServerPlayer) player);
 
-        player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.get().getKey().getDisplayName()));
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.get().getKey().getDisplayName()));
     }
 
     public static void addAbilityPoints(Player player, int points) {
@@ -334,12 +337,15 @@ public class PlayerAttributePersistence {
         int playerPoints = tag.getInt(ABILITY_POINTS_TAG) + points;
         tag.putInt(ABILITY_POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "ability"), (ServerPlayer) player);
-
-        player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.get().getKey().getDisplayName()));
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_ENTITY_STATS_KEY.get().getKey().getDisplayName()));
 
     }
 
     public static int getUpgradeCount(LivingEntity entity) {
         return entity.getPersistentData().getInt(UPGRADE_COUNT_TAG);
     }
+
+
+
 }

@@ -44,6 +44,8 @@
 
   "attribute.playerstats.life_regen": "Life Regen",
   "attribute.playerstats.follow_owner": "Follow Owner",
-  "attribute.playerstats.teleport_to_owner": "Teleport to Owner"
+  "attribute.playerstats.teleport_to_owner": "Teleport to Owner",
+  "attribute.playerstats.frost_walker": "Frost Walker",
+  "attribute.playerstats.defend_owner": "Defend Owner"
 
 }

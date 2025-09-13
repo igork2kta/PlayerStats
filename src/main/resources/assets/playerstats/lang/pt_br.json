@@ -45,6 +45,8 @@
 
   "attribute.playerstats.life_regen": "Regeneração de Vida",
   "attribute.playerstats.follow_owner": "Seguir Dono",
-  "attribute.playerstats.teleport_to_owner": "Teletransportar para o Dono"
+  "attribute.playerstats.teleport_to_owner": "Teletransportar para o Dono",
+  "attribute.playerstats.frost_walker": "Passos Gelados",
+  "attribute.playerstats.defend_owner": "Defender dono"
 
 }
