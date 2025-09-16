@@ -19,11 +19,13 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @Mod.EventBusSubscriber(modid = "playerstats")
 public class PlayerAttributePersistence {
@@ -332,8 +334,8 @@ public class PlayerAttributePersistence {
         int playerPoints = tag.getInt(POINTS_TAG) + points;
         tag.putInt(POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "attribute"), (ServerPlayer) player);
-
-        player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            player.sendSystemMessage(Component.translatable("event.playerstats.point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
     }
 
     public static void addAbilityPoints(Player player, int points) {
@@ -341,8 +343,8 @@ public class PlayerAttributePersistence {
         int playerPoints = tag.getInt(ABILITY_POINTS_TAG) + points;
         tag.putInt(ABILITY_POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "ability"), (ServerPlayer) player);
-
-        player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.getKey().getDisplayName().getString()));
 
     }
 
