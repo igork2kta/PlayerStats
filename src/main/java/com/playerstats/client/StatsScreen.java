@@ -143,20 +143,32 @@ public class StatsScreen extends Screen {
 
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTicks);
 
+        //Nome da entidade
+        String displayName = entity.getDisplayName().getString();
+        int textWidth = font.width(displayName);
 
+        // centraliza dentro do background
+        int textX = leftPos + (BG_WIDTH - textWidth) / 2;
+        guiGraphics.drawString(font, displayName, textX, topPos + 24, 0xA0A0A0, false);
 
         if(showAttributes){
 
             int points = ClientAttributeCache.getPoints();
             int color = points > 0 ? 0x00CC66 : 0xFF5555;
-            guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 100, topPos + 29, color);
+            Component attributepoints = Component.translatable("gui.playerstats.points", points);
+            textWidth = font.width(attributepoints);
+            textX = leftPos + (BG_WIDTH - textWidth) / 2;
+            guiGraphics.drawString(font, attributepoints, textX, topPos + 35, color);
 
             if(consumeXp){
                 int upgradeCount = ClientAttributeCache.getUpgradeCount();
                 int xpCost = (upgradeCount + 1) * xpIncrement;
                 boolean hasXpForUpgrade = player.experienceLevel > xpCost;
                 color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
-                guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 115, topPos + 41, color);
+                Component xp = Component.translatable("gui.playerstats.xp_cost", xpCost);
+                textWidth = font.width(xp);
+                textX = leftPos + (BG_WIDTH - textWidth) / 2;
+                guiGraphics.drawString(font, xp, textX, topPos + 46, color);
             }
             List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
 
@@ -207,13 +219,20 @@ public class StatsScreen extends Screen {
 
             int points = ClientAttributeCache.getAbilityPoints();
             int color = points > 0 ? 0x00CC66 : 0xFF5555;
-            guiGraphics.drawString(font, Component.translatable("gui.playerstats.points", points), leftPos + 100, topPos + 29, color);
+            Component abilityPoints = Component.translatable("gui.playerstats.points", points);
+            textWidth = font.width(abilityPoints);
+            textX = leftPos + (BG_WIDTH - textWidth) / 2;
+            guiGraphics.drawString(font, abilityPoints, textX, topPos + 35, color);
+
 
             if(consumeXp){
                 int xpCost = Config.REQUIRED_XP_FOR_ABILITY.get();
                 boolean hasXpForUpgrade = player.experienceLevel > xpCost;
                 color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
-                guiGraphics.drawString(font, Component.translatable("gui.playerstats.xp_cost", xpCost), leftPos + 115, topPos + 41, color);
+                Component xp = Component.translatable("gui.playerstats.xp_cost", xpCost);
+                textWidth = font.width(xp);
+                textX = leftPos + (BG_WIDTH - textWidth) / 2;
+                guiGraphics.drawString(font, xp, textX, topPos + 46, color);
             }
 
             List<AttributeInstance> filteredAbilities = AttributeUtils.getCustomAttributes(entity, searchText);

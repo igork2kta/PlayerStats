@@ -338,7 +338,7 @@ public class PlayerAttributePersistence {
         tag.putInt(ABILITY_POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "ability"), (ServerPlayer) player);
         if (FMLEnvironment.dist == Dist.CLIENT)
-            player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_ENTITY_STATS_KEY.get().getKey().getDisplayName()));
+            player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.get().getKey().getDisplayName()));
 
     }
 
