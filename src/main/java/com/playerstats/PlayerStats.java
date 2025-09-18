@@ -105,6 +105,26 @@ public class PlayerStats {
                     .build();
             event.getTable().addPool(pool1);
             event.getTable().addPool(pool2);
+
+            // Pool 3: SOUL_STONE apenas em The End, Bastions e Ancient City
+            boolean isTargetChest =
+                    name.getPath().equals("chests/end_city_treasure") ||
+                            name.getPath().startsWith("chests/bastion_") ||
+                            name.getPath().equals("chests/ancient_city") ||
+                            name.getPath().equals("chests/ancient_city_ice_box");
+
+            if (isTargetChest) {
+                LootPool pool3 = LootPool.lootPool()
+                        .name("soul_stone_pool")
+                        .setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(ModItems.SOUL_STONE.get())
+                                .when(LootItemRandomChanceCondition.randomChance(0.08f)) // 8%
+                                .setWeight(1)
+                                .setQuality(1))
+                        .build();
+                event.getTable().addPool(pool3);
+            }
+
         }
     }
 
@@ -113,6 +133,8 @@ public class PlayerStats {
             event.accept(ModItems.UPGRADE_RUNE);
             event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL);
             event.accept(ModItems.ABILITY_CRYSTAL);
+            event.accept(ModItems.SOUL_FRAGMENT);
+            event.accept(ModItems.SOUL_STONE);
         }
     }
 

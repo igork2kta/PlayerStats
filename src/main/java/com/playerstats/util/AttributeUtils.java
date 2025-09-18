@@ -75,6 +75,11 @@ public class AttributeUtils {
         return entity.getAttributes().getSyncableAttributes().stream().filter(attr -> {
             // Só pega os atributos do seu mod
             if (attr.getAttribute().getDescriptionId().contains("playerstats")) {
+                if(entity instanceof  Player player){
+                    //Não permite rebirth para player se não for Hardcore
+                    if(attr.getAttribute().getDescriptionId().contains("rebirth") && !player.level().getLevelData().isHardcore()) return false;
+                }
+
                 if (!searchText.isEmpty()) {
                     String name = AttributeUtils.getAttributeName(attr.getAttribute()).toLowerCase();
                     return name.contains(searchText);

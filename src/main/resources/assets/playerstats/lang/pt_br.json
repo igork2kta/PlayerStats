@@ -43,10 +43,22 @@
   "item.playerstats.ability_crystal.hoverText": "Um cristal imbuido com um poder desconhecido, pode ser utilizado para aprender ou ensinar habilidades únicas!",
   "item.playerstats.ability_crystal.message": "Você se sente poderoso suficiente para desbloquear uma nova habilidade!",
 
+  "item.playerstats.soul_fragment": "Fragmento de Alma",
+  "item.playerstats.soul_fragment.hoverText": "Pode ser utilizado para reviver %s.",
+
+  "item.playerstats.soul_stone": "Pedra da Alma",
+  "item.playerstats.soul_stone.hoverText": "§6Usado em um ritual de renascimento§r\n§7- Jogue junto com um Fragmento de Alma\n- Sobre uma Âncora de Renascimento carregada\n- Com um mob de oferenda do mesmo tipo\n\n§c⚠ O ritual consome a energia vital de quem o executa, deixando-o à beira da morte.§r",
+
+
+
   "attribute.playerstats.life_regen": "Regeneração de Vida",
   "attribute.playerstats.follow_owner": "Seguir Dono",
   "attribute.playerstats.teleport_to_owner": "Teletransportar para o Dono",
   "attribute.playerstats.frost_walker": "Passos Gelados",
-  "attribute.playerstats.defend_owner": "Defender dono"
+  "attribute.playerstats.defend_owner": "Defender dono",
+  "attribute.playerstats.rebirth": "Renascimento",
+  "attribute.playerstats.taunt": "Provocação",
+  "attribute.playerstats.scout_vision": "Visão de Patrulha",
+  "attribute.playerstats.howl_buff": "Buff do Uivo"
 
 }

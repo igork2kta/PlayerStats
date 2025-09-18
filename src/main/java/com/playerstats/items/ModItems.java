@@ -20,6 +20,13 @@ public class ModItems {
     public static final RegistryObject<Item> ABILITY_CRYSTAL = ITEMS.register("ability_crystal",
             () -> new AbilityCrystalItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
 
+    public static final RegistryObject<Item> SOUL_FRAGMENT = ITEMS.register("soul_fragment",
+            () -> new SoulFragmentItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+
+    public static final RegistryObject<Item> SOUL_STONE = ITEMS.register("soul_stone",
+            () -> new SoulStoneItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

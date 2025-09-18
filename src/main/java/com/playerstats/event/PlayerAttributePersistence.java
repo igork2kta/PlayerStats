@@ -61,7 +61,7 @@ public class PlayerAttributePersistence {
                         int upgradeCount = upgradesTag.getInt(key);
                         double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
 
-                        PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
+                        PlayerStats.LOGGER.info("Configurando atributo:{} valor atual: {} upgrade count: {} increment: {}", attr.getDescriptionId(), instance.getBaseValue(), upgradeCount, increment);
                         double totalIncrement = upgradeCount * increment;
                         applyModifier(instance, attr.getDescriptionId(), totalIncrement);
                     }
@@ -171,13 +171,13 @@ public class PlayerAttributePersistence {
                 //Possui, ativando
                 else if(instance.getValue() == 0.0D){
                     //Base value = -1 + 2 = 1 = active
-                    UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, true);
+                    if(!UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, true)) return;
                     applyModifier(instance, attr.getDescriptionId(), 2);
                 }
                 //Possui, desativando
                 else if(instance.getValue() == 1.0D){
                     //Base value = -1 + 1 = 0 = inactive
-                    UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, false);
+                    if(!UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, false)) return;
                     applyModifier(instance, attr.getDescriptionId(), 1);
                 }
             }
@@ -186,25 +186,6 @@ public class PlayerAttributePersistence {
             System.err.println("Unknown attribute ID: " + id);
         }
 
-    }
-
-    public static boolean setAttribute(ServerPlayer player, String attributeId, double value){
-        ResourceLocation id = ResourceLocation.tryParse(attributeId);
-        Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-
-        if (attr != null) {
-
-            AttributeInstance instance = player.getAttribute(attr);
-
-            //applyUpgrade(player, attr);
-
-            //Increment attribute value to player
-            instance.setBaseValue(value);
-            return true;
-        } else {
-            System.err.println("AttributeInstance is null for: " + id);
-            return false;
-        }
     }
 
     public static void applyUpgrade(LivingEntity player, Attribute attr) {
