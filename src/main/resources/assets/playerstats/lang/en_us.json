@@ -42,10 +42,23 @@
   "item.playerstats.ability_crystal.hoverText": "A crystal imbued with an unknown power, it can be used to learn or teach unique abilities!",
   "item.playerstats.ability_crystal.message": "You feel powerful enough to unlock a new skill!",
 
+  "item.playerstats.soul_fragment": "Soul Fragment",
+  "item.playerstats.soul_fragment.hoverText": "Can be used to revive %s.",
+
+  "item.playerstats.soul_stone": "Soul Stone",
+  "item.playerstats.soul_stone.hoverText": "§6Used in a ritual of rebirth§r\n§7- Drop together with a Soul Fragment\n- On top of a charged Respawn Anchor\n- Alongside a sacrifice mob of the same type\n\n§c⚠ The ritual consumes the vital energy of the caster, leaving them near death.§r",
+
+
+
+
   "attribute.playerstats.life_regen": "Life Regen",
   "attribute.playerstats.follow_owner": "Follow Owner",
   "attribute.playerstats.teleport_to_owner": "Teleport to Owner",
   "attribute.playerstats.frost_walker": "Frost Walker",
-  "attribute.playerstats.defend_owner": "Defend Owner"
+  "attribute.playerstats.defend_owner": "Defend Owner",
+  "attribute.playerstats.rebirth": "Rebirth",
+  "attribute.playerstats.taunt": "Taunt",
+  "attribute.playerstats.scout_vision": "Scout Vision",
+  "attribute.playerstats.howl_buff": "Howl Buff"
 
 }

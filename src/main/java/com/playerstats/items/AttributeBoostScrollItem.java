@@ -2,7 +2,6 @@
 package com.playerstats.items;
 
 import com.playerstats.Config;
-import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.util.AttributeUtils;
 import com.playerstats.util.ModDataComponents;

@@ -31,7 +31,7 @@ public class PlayerPointHandler {
 
         if(totalKills > 0 && (totalKills == 100 || totalKills%1000 == 0)) {
             player.sendSystemMessage(Component.translatable("event.playerstats.mobs_killed", totalKills));
-            givePoints(player, 1);
+            givePoint(player);
         }
 
         LivingEntity mob = event.getEntity();
@@ -103,11 +103,11 @@ public class PlayerPointHandler {
         }
 
         if (player.level().random.nextDouble() < baseChance) {
-            givePoints(player, 1);
+            givePoint(player);
         }
     }
 
-    private static void givePoints(ServerPlayer player, int amount) {
+    private static void givePoint(ServerPlayer player) {
         long currentDay = player.level().getDayTime() / 24000L;
         UUID uuid = player.getUUID();
 
@@ -122,8 +122,7 @@ public class PlayerPointHandler {
         // Marca como já recebido hoje
         lastDayPointGiven.put(uuid, currentDay);
 
-        PlayerAttributePersistence.addPoints(player, amount);
-
+        PlayerAttributePersistence.addPoints(player, 1);
     }
 /*
     public static boolean isProgressiveBossesInstalled(){
@@ -135,7 +134,6 @@ public class PlayerPointHandler {
         }
         else return false;
     }*/
-
 
 }
 

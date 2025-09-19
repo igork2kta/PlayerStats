@@ -37,6 +37,9 @@ public class UniqueAbilitiesUtils {
                     entity.removeEffect(MobEffects.REGENERATION);
 
         }
+        //Não permite desligar o renascimento
+        else return !attributeId.contains("rebirth") || state;
+
         return true;
     }
 }

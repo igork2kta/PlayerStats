@@ -1,6 +1,8 @@
 package com.playerstats.util;
 
 import com.playerstats.Config;
+import com.playerstats.ModAttributes;
+import com.playerstats.PlayerStats;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -8,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import java.util.List;
@@ -98,6 +101,11 @@ public class AttributeUtils {
         return entity.getAttributes().getSyncableAttributes().stream().filter(attr -> {
             // Só pega os atributos do seu mod
             if (attr.getAttribute().value().getDescriptionId().contains("playerstats")) {
+                if(entity instanceof  Player player){
+                    //Não permite rebirth para player se não for Hardcore
+                    if(attr.getAttribute().value().getDescriptionId().contains("rebirth") && !player.level().getLevelData().isHardcore()) return false;
+                }
+
                 if (!searchText.isEmpty()) {
                     String name = AttributeUtils.getAttributeName(attr.getAttribute().value()).toLowerCase();
                     return name.contains(searchText);

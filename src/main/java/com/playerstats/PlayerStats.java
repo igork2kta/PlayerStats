@@ -9,6 +9,7 @@ import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.util.ModDataComponents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
@@ -33,11 +34,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(PlayerStats.MODID)
 
 public class PlayerStats {
-    // Define mod id in a common place for everything to reference
     public static final String MODID = "playerstats";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
@@ -74,6 +73,8 @@ public class PlayerStats {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::addCreative);
 
+        // Registrar pacotes de rede
+        //PacketHandler.register(modEventBus);
         // Registrar os itens
         ModItems.register(modEventBus);
 
@@ -183,6 +184,26 @@ public class PlayerStats {
                     .build();
             event.getTable().addPool(pool1);
             event.getTable().addPool(pool2);
+
+            // Pool 3: SOUL_STONE apenas em The End, Bastions e Ancient City
+            boolean isTargetChest =
+                    name.getPath().equals("chests/end_city_treasure") ||
+                            name.getPath().startsWith("chests/bastion_") ||
+                            name.getPath().equals("chests/ancient_city") ||
+                            name.getPath().equals("chests/ancient_city_ice_box");
+
+            if (isTargetChest) {
+                LootPool pool3 = LootPool.lootPool()
+                        .name("soul_stone_pool")
+                        .setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(ModItems.SOUL_STONE.get())
+                                .when(LootItemRandomChanceCondition.randomChance(0.08f)) // 8%
+                                .setWeight(1)
+                                .setQuality(1))
+                        .build();
+                event.getTable().addPool(pool3);
+            }
+
         }
     }
 
@@ -191,8 +212,12 @@ public class PlayerStats {
             event.accept(ModItems.UPGRADE_RUNE.get());
             event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL.get());
             event.accept(ModItems.ABILITY_CRYSTAL.get());
+            event.accept(ModItems.SOUL_FRAGMENT.get());
+            event.accept(ModItems.SOUL_STONE.get());
         }
     }
 
 
 }
+
+

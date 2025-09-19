@@ -3,6 +3,7 @@ package com.playerstats.util;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.Registries;
@@ -15,11 +16,12 @@ import java.util.function.UnaryOperator;
 public class ModDataComponents {
     public static final String MODID = "playerstats";
 
+
     // Criar o registry
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES =
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MODID);
 
-
+    //region AttributeBoostScrool
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> DEFINED_ATTRIBUTE =
             register("defined_attribute",
                     builder -> builder.persistent(Codec.STRING));
@@ -31,6 +33,16 @@ public class ModDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> BOOST_DURATION =
             register("boost_duration",
                     builder -> builder.persistent(Codec.INT));
+
+    //endregion
+
+
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> STORED_ENTITY =
+            register("stored_entity",
+                    builder -> builder.persistent(CompoundTag.CODEC));
+
+
 
 
     // Definir os componentes

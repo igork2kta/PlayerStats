@@ -69,15 +69,15 @@ public class PlayerAttributePersistence {
                     int upgradeCount = upgradesTag.getInt(key);
                     double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
 
-                    PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
-                    double totalIncrement = upgradeCount * increment;
-                    applyModifier(instance, attr.getDescriptionId(), totalIncrement);
+                        PlayerStats.LOGGER.info("Configurando atributo:{} valor atual: {} upgrade count: {} increment: {}", attr.getDescriptionId(), instance.getBaseValue(), upgradeCount, increment);
+                        double totalIncrement = upgradeCount * increment;
+                        applyModifier(instance, attr.getDescriptionId(), totalIncrement);
+                    }
                 }
             }
-        }
 
-        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
-    }
+            PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
+        }
 
 
     @SubscribeEvent
@@ -195,7 +195,6 @@ public class PlayerAttributePersistence {
         }
 
     }
-
 
     public static void applyUpgrade(LivingEntity player, Attribute attr) {
         ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
@@ -327,7 +326,6 @@ public class PlayerAttributePersistence {
         int playerPoints = tag.getInt(POINTS_TAG) + points;
         tag.putInt(POINTS_TAG, playerPoints);
         PacketHandler.sendToClient(new UpdatePointsPacket(playerPoints, "attribute"), (ServerPlayer) player);
-
         if (FMLEnvironment.dist == Dist.CLIENT)
             player.sendSystemMessage(Component.translatable("event.playerstats.ability_point_given", KeyMappings.OPEN_STATS_KEY.get().getKey().getDisplayName()));
     }
@@ -345,7 +343,4 @@ public class PlayerAttributePersistence {
     public static int getUpgradeCount(LivingEntity entity) {
         return entity.getPersistentData().getInt(UPGRADE_COUNT_TAG);
     }
-
-
-
 }
