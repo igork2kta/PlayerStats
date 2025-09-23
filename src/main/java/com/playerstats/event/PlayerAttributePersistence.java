@@ -185,21 +185,21 @@ public class PlayerAttributePersistence {
         else {
             System.err.println("Unknown attribute ID: " + id);
         }
-
     }
 
-    public static void applyUpgrade(LivingEntity player, Attribute attr) {
+    public static void applyUpgrade(LivingEntity entity, Attribute attr) {
         ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
-        CompoundTag upgrades = player.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
+        CompoundTag upgrades = entity.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
 
         int currentUpgrades = upgrades.getInt(key.toString()) +1;
         upgrades.putInt(key.toString(), currentUpgrades);
-        player.getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, upgrades);
+        entity.getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, upgrades);
 
-        AttributeInstance instance = AttributeUtils.getAttributeInstance(player,attr);
+        AttributeInstance instance = AttributeUtils.getAttributeInstance(entity,attr);
         if (instance != null) {
             double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
             applyModifier(instance, attr.getDescriptionId(), increment * currentUpgrades);
+            incrementUpgradeCount(entity);
         }
     }
 
@@ -331,5 +331,11 @@ public class PlayerAttributePersistence {
 
     public static int getUpgradeCount(LivingEntity entity) {
         return entity.getPersistentData().getInt(UPGRADE_COUNT_TAG);
+    }
+
+    public static void incrementUpgradeCount(LivingEntity entity) {
+        CompoundTag tag = entity.getPersistentData();
+        int count = tag.getInt(UPGRADE_COUNT_TAG);
+        tag.putInt(UPGRADE_COUNT_TAG, count + 1);
     }
 }
