@@ -3,22 +3,20 @@ package com.playerstats.event;
 import com.playerstats.ModAttributes;
 import com.playerstats.entities.goals.DefendOwnerTargetGoal;
 import com.playerstats.entities.goals.FollowOwnerGoal;
+import com.playerstats.entities.goals.PatrolGoal;
 import com.playerstats.items.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.animal.Parrot;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -26,8 +24,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.FrostWalkerEnchantment;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.AnimalTameEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
@@ -58,6 +54,8 @@ public class ModAbilityEvents {
         if (event.getEntity() instanceof IronGolem golem) {
             golem.targetSelector.addGoal(1, new DefendOwnerTargetGoal(golem)); //maior prioridade
             golem.targetSelector.addGoal(3, new FollowOwnerGoal(golem)); //menor prioridade
+            golem.goalSelector.addGoal(5, new PatrolGoal(golem, 1.0D, 16.0D));
+
         }
     }
 
@@ -82,8 +80,6 @@ public class ModAbilityEvents {
                 int frostLevel = 1; // pode ser fixo ou dinâmico
                 FrostWalkerEnchantment.onEntityMoved(horse, level, pos, frostLevel);
             }
-        
-
     }
 
     //REBIRTH (droppar fragmento)
@@ -121,58 +117,6 @@ public class ModAbilityEvents {
         }
     }
 
-
-    //TAUNT
-    @SubscribeEvent
-    public static void onTargetChange(LivingChangeTargetEvent event) {
-        LivingEntity attacker = event.getEntity();
-        LivingEntity originalTarget = event.getOriginalTarget();
-
-        // só vale se for hostil mirando em um player
-        if (!(originalTarget instanceof ServerPlayer player)) return;
-
-        Level level = attacker.level();
-
-        // procura Iron Golem próximo com atributo TAUNT ativo
-        List<IronGolem> golems = level.getEntitiesOfClass(IronGolem.class,
-                attacker.getBoundingBox().inflate(16.0D),
-                g -> g.getAttribute(ModAttributes.TAUNT.get()) != null
-                        && g.getAttribute(ModAttributes.TAUNT.get()).getValue() == 1.0D
-                        && g.isAlive());
-
-        if (!golems.isEmpty()) {
-            IronGolem golem = golems.get(0); // escolhe o primeiro, ou pode pegar o mais próximo
-            event.setNewTarget(golem);
-            golem.setTarget(attacker);
-
-            // Partículas visuais sobre o Golem
-            if (level instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-                        golem.getX(), golem.getY() + 1.0, golem.getZ(),
-                        10, 0.5, 0.5, 0.5, 0.05);
-            }
-        }
-
-        // procura lobos hostis/neutros próximos para redirecionar
-        List<LivingEntity> wolves = level.getEntitiesOfClass(LivingEntity.class,
-                attacker.getBoundingBox().inflate(16.0D),
-                w -> w.isAlive() && w.getType() == EntityType.WOLF && w.getAttribute(ModAttributes.TAUNT.get()) != null
-                        && w.getAttribute(ModAttributes.TAUNT.get()).getValue() == 1.0D);
-
-        if (!wolves.isEmpty()) {
-            Wolf wolf = (Wolf) wolves.get(0);
-
-            event.setNewTarget(wolf); // redireciona o ataque para o lobo
-            wolf.setTarget(attacker);
-
-            if (level instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-                        wolf.getX(), wolf.getY() + 0.5, wolf.getZ(),
-                        10, 0.3, 0.3, 0.3, 0.05);
-            }
-        }
-    }
-
     //HOWL_BUFF
     private static final Map<UUID, Long> howlCooldowns = new HashMap<>();
     private static final long HOWL_COOLDOWN_TICKS = 20 * 60 * 5; // 5 minutos
@@ -180,6 +124,7 @@ public class ModAbilityEvents {
     @SubscribeEvent
     public static void onWolfTargetChange(LivingChangeTargetEvent event) {
         if (!(event.getEntity() instanceof Wolf wolf)) return;
+        if (wolf.getOwner() == null) return;
         if(event.getNewTarget() == null) return;
         // Checa cooldown
         long lastHowl = howlCooldowns.getOrDefault(wolf.getUUID(), 0L);

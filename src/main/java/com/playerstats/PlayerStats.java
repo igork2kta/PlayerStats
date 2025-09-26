@@ -85,11 +85,11 @@ public class PlayerStats {
                     .name("upgrade_or_crystal_pool")
                     .setRolls(ConstantValue.exactly(1)) // rola apenas 1 vez
                     .add(LootItem.lootTableItem(ModItems.UPGRADE_RUNE.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.07f)) // 7%
+                            .when(LootItemRandomChanceCondition.randomChance(0.10f)) // 7%
                             .setWeight(1)
                             .setQuality(1))
                     .add(LootItem.lootTableItem(ModItems.ABILITY_CRYSTAL.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.05f)) // 5%
+                            .when(LootItemRandomChanceCondition.randomChance(0.7f)) // 5%
                             .setWeight(1)
                             .setQuality(1))
                     .build();

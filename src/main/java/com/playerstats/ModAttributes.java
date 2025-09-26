@@ -66,6 +66,12 @@ public class ModAttributes {
                     () -> new RangedAttribute("attribute.playerstats.howl_buff", -1.0D, -1.0D, 1.0D)
                             .setSyncable(true));
 
+    //Atrair atenção de mobs hostis
+    public static final RegistryObject<Attribute> PATROL  =
+            ATTRIBUTES.register("patrol",
+                    () -> new RangedAttribute("attribute.playerstats.patrol", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true));
+
 
 
     //Aqui são atribuidos os atributos customizados às entidadess
@@ -96,11 +102,13 @@ public class ModAttributes {
                 event.add(type, ModAttributes.TELEPORT_TO_OWNER.get());
                 event.add(type, ModAttributes.DEFEND_OWNER.get());
                 event.add(type, ModAttributes.TAUNT.get());
+                event.add(type, ModAttributes.PATROL.get());
             }
 
             if(type == EntityType.WOLF){
                 event.add(type, ModAttributes.TAUNT.get());
                 event.add(type, ModAttributes.HOWL_BUFF.get());
+                event.add(type, ModAttributes.PATROL.get());
             }
 
             if(type == EntityType.PARROT){

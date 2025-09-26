@@ -26,6 +26,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.registries.ForgeRegistries;
 
 @Mod.EventBusSubscriber(modid = "playerstats")
 public class PlayerAttributePersistence {
@@ -137,7 +138,7 @@ public class PlayerAttributePersistence {
                     applyUpgrade(entity, attr);
                     setPoints(player, playerPoints - 1);
 
-                    PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
+                    //PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
 
                     int count = PlayerAttributePersistence.getUpgradeCount(entity);
                     PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
@@ -161,7 +162,7 @@ public class PlayerAttributePersistence {
                     if(playerPoints > 0 && (player.experienceLevel >= xpCost || !consumeXp)) {
 
                         //Base value = -1 + 2 = 1 = active
-                        if(!UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, true))return;
+                        if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true))return;
 
                         applyModifier(instance, attr.getDescriptionId(), 2);
                         setAbilityPoints(player, playerPoints - 1);
@@ -171,13 +172,13 @@ public class PlayerAttributePersistence {
                 //Possui, ativando
                 else if(instance.getValue() == 0.0D){
                     //Base value = -1 + 2 = 1 = active
-                    if(!UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, true)) return;
+                    if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
                     applyModifier(instance, attr.getDescriptionId(), 2);
                 }
                 //Possui, desativando
                 else if(instance.getValue() == 1.0D){
                     //Base value = -1 + 1 = 0 = inactive
-                    if(!UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, false)) return;
+                    if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
                     applyModifier(instance, attr.getDescriptionId(), 1);
                 }
             }
@@ -185,6 +186,7 @@ public class PlayerAttributePersistence {
         else {
             System.err.println("Unknown attribute ID: " + id);
         }
+
     }
 
     public static void applyUpgrade(LivingEntity entity, Attribute attr) {
@@ -275,7 +277,7 @@ public class PlayerAttributePersistence {
     }
 */
 
-    private static void applyModifier(AttributeInstance instance, String attrId, double value) {
+    public static void applyModifier(AttributeInstance instance, String attrId, double value) {
         // Remover qualquer modificador antigo com o mesmo nome
         instance.getModifiers().stream()
                 .filter(mod -> mod.getName().equals("playerstats:" + attrId))
