@@ -1,9 +1,9 @@
 package com.playerstats.event;
 
-import com.mojang.authlib.GameProfile;
 import com.playerstats.items.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -26,7 +26,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +39,6 @@ public class SoulReviveHandler {
 
     @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
 
         Level level = event.level;
         if (level.isClientSide()) return;
@@ -106,7 +104,7 @@ public class SoulReviveHandler {
                     candidates = level.getEntitiesOfClass(LivingEntity.class,
                             new AABB(pos).inflate(1.5),
                             e -> {
-                                ResourceLocation key = ForgeRegistries.ENTITY_TYPES.getKey(e.getType());
+                                ResourceLocation key = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType());
                                 return key != null && entityId.equals(key.toString());
                             });
                 }
@@ -116,6 +114,7 @@ public class SoulReviveHandler {
                 LivingEntity sacrifice = candidates.get(0);
 
                 ServerLevel server = (ServerLevel) level;
+                Entity created = null;
 
                 //Revival de player, valido para hardcore
                 if (entityId.equals("minecraft:player")) {
@@ -127,47 +126,14 @@ public class SoulReviveHandler {
 
                         //Não deixa reviver se o player estiver na tela de respawn, pois buga
                         if (revivedPlayer == null || revivedPlayer.gameMode.getGameModeForPlayer() != GameType.SPECTATOR ) continue;
-
-                        // Restaura os dados persistentes
-                        revivedPlayer.load(storedEntityTag);
-
-                        // Teleporta para o ritual
-                        revivedPlayer.teleportTo(server,
-                                pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
-                                level.random.nextFloat() * 360f, 0f);
-
-                        revivedPlayer.setHealth(1);
-                        revivedPlayer.getFoodData().setFoodLevel(3);
-                        revivedPlayer.getFoodData().setSaturation(0.0F);
-                        //revivedPlayer.setRemoved(Entity.RemovalReason.UNLOADED_TO_CHUNK); // limpa estado morto
-                        revivedPlayer.setGameMode(GameType.SURVIVAL);
-
-                        int duration = 10 * 60 * 20; // 10 minutos
-                        revivedPlayer.addEffect(new MobEffectInstance(MobEffects.HUNGER, duration, 1));
-                        revivedPlayer.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, duration, 1));
-                        revivedPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, duration, 1));
-                        revivedPlayer.playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
                     }
-
-
-
                 }
                 // revival normal de mobs
                 else {
 
-                    EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(entityId));
-                    if (type == null) continue;
-
-                    Entity created = type.create(level);
-                    if (!(created instanceof LivingEntity revived)) continue;
-
-                    revived.load(storedEntityTag);
-                    revived.moveTo(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
-                            level.random.nextFloat() * 360f, 0f);
-                    revived.setHealth(1);
-                    level.addFreshEntity(revived);
-                    revived.playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
-
+                    ResourceLocation id = ResourceLocation.tryParse(entityId);
+                    EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
+                    created = type.create(level);
                 }
 
                 //Efeitos dramáticos
@@ -187,6 +153,42 @@ public class SoulReviveHandler {
                     level.explode(null, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5,
                             2.0F, Level.ExplosionInteraction.BLOCK);
                 }
+
+
+                //Isso precisa estar depois da explosão, senão o defunto morre dnv
+                if ((created instanceof ServerPlayer revivedPlayer)) {
+                    // Restaura os dados persistentes
+                    revivedPlayer.load(storedEntityTag);
+                    revivedPlayer.getFoodData().setFoodLevel(3);
+                    revivedPlayer.getFoodData().setSaturation(0.0F);
+                    // Precisa passar para survival para reviver no hardcore
+                    revivedPlayer.setGameMode(GameType.SURVIVAL);
+
+                    // Teleporta para o ritual
+                    revivedPlayer.teleportTo(server,
+                            pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
+                            level.random.nextFloat() * 360f, 0f);
+
+                    int duration = 10 * 60 * 20; // 10 minutos
+                    revivedPlayer.addEffect(new MobEffectInstance(MobEffects.HUNGER, duration, 1));
+                    revivedPlayer.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, duration, 1));
+                    revivedPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, duration, 1));
+                    revivedPlayer.setHealth(1);
+                    revivedPlayer.playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
+                }
+                if((created instanceof LivingEntity revived)){
+
+                    // Restaura os dados persistentes
+                    revived.load(storedEntityTag);
+                    // Teleporta para o ritual
+                    revived.moveTo(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
+                            level.random.nextFloat() * 360f, 0f);
+                    revived.setHealth(1);
+                    level.addFreshEntity(revived);
+                    revived.playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
+
+                }
+
 
                 // consome fragment e stone e mata a oferenda
                 fragmentEntity.discard();

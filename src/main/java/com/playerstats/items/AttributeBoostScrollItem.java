@@ -84,7 +84,8 @@ public class AttributeBoostScrollItem extends Item {
                     int maxTicks = maxMinutes * 60 * 20;
                     int duration = minTicks + random.nextInt(maxTicks - minTicks + 1);
 
-                    tag.putDouble("BoostAmount", amount);
+                    //Limitar a 2 casas decimais
+                    tag.putDouble("BoostAmount", Math.round(amount * 100.0) / 100.0);
                     tag.putInt("BoostDuration", duration);
                 }
             }

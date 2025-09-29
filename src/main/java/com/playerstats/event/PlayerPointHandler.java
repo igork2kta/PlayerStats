@@ -45,10 +45,12 @@ public class PlayerPointHandler {
 
         if (isProgressiveBossesInstalled()) {
             if (String.valueOf(mob.getType()).contains("wither") && !String.valueOf(mob.getType()).contains("skeleton")) {
+
+                baseChance = Config.WITHER_CHANCE.get();
+
                 if (Config.DEBUG_MODE.get()) {
-                    PlayerStats.LOGGER.info("Wither morto via Progressive Bosses!");
+                    PlayerStats.LOGGER.info("Wither killed via Progressive Bosses!");
                 }
-                baseChance = 0.5;
 
                 processChance(player, baseChance);
                 return;
@@ -56,44 +58,56 @@ public class PlayerPointHandler {
         }
 
         // Lógica padrão (sem Progressive Bosses)
-        if (mob.getType() == EntityType.WITHER || mob.getType() == EntityType.ENDER_DRAGON) {
+        if (mob.getType() == EntityType.WITHER) {
+
+            baseChance = Config.WITHER_CHANCE.get();
+
             if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Wither/Ender dragon morto!");
+                PlayerStats.LOGGER.info("Wither killed!");
             }
-            baseChance = 0.5;
-        }
-        else if (mob.getType() == EntityType.WARDEN) {
-            if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Warden morto!");
-            }
-            baseChance = 0.3;
-        }
-        else if (mob.getType() == EntityType.ELDER_GUARDIAN) {
-            if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Elder guardian morto!");
-            }
-            baseChance = 0.3;
-        }
-        /*
-        else if (String.valueOf(mob.getType()).contains("cerberus")) {
-            if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Cerberus morto!");
-            }
-            baseChance = 0.15;
         }
 
-         */
-        else if (mob.getMaxHealth() > 200.0f) {
+        else if (mob.getType() == EntityType.ENDER_DRAGON) {
+
+            baseChance = Config.ENDER_DRAGON_CHANCE.get();
+
             if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Mob com mais de 200 de vida morto: {}", mob.getType());
+                PlayerStats.LOGGER.info("Ender dragon killed!");
             }
-            baseChance = 0.05;
+
+        }
+
+        else if (mob.getType() == EntityType.WARDEN) {
+            baseChance = Config.WARDEN_CHANCE.get();
+
+            if (Config.DEBUG_MODE.get()) {
+                PlayerStats.LOGGER.info("Warden killed!");
+            }
+        }
+
+        else if (mob.getType() == EntityType.ELDER_GUARDIAN) {
+            baseChance = Config.ELDER_GUARDIAN_CHANCE.get();
+
+            if (Config.DEBUG_MODE.get()) {
+                PlayerStats.LOGGER.info("Elder guardian killed!");
+            }
+
+        }
+
+        else if (mob.getMaxHealth() >= Config.HIGH_HEALTH.get()) {
+
+            baseChance = Config.HIGH_HEALTH_CHANCE.get();
+
+            if (Config.DEBUG_MODE.get()) {
+                PlayerStats.LOGGER.info("High health mob killed {}", mob.getType());
+            }
+
         }
 
         if (Config.cachedCustomMobChances.containsKey(mob.getType().getDescriptionId())) {
             baseChance = Config.cachedCustomMobChances.get(mob.getType().getDescriptionId());
             if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Mob customizado morto: {}, chance configurada: {}", mob.getType(), baseChance);
+                PlayerStats.LOGGER.info("Custom mob killed: {}", mob.getType());
             }
         }
 
@@ -110,8 +124,9 @@ public class PlayerPointHandler {
     }
 
     private static void processChance(ServerPlayer player, double baseChance) {
+
         if (Config.DEBUG_MODE.get()) {
-            PlayerStats.LOGGER.info("Chances de ponto: {}", baseChance);
+            PlayerStats.LOGGER.info("Point chance: {}", baseChance);
         }
 
         if (player.level().random.nextDouble() < baseChance) {
@@ -126,7 +141,7 @@ public class PlayerPointHandler {
         Long lastGiven = lastDayPointGiven.getOrDefault(uuid, -1L);
         if (lastGiven == currentDay) {
             if(Config.DEBUG_MODE.get()){
-                PlayerStats.LOGGER.info("Player {} já recebeu pontos hoje, ignorando.", player.getName());
+                PlayerStats.LOGGER.info("Player {} already received points today, ignoring.", player.getName().getString());
             }
             return; // Já ganhou ponto hoje
         }
@@ -140,31 +155,11 @@ public class PlayerPointHandler {
     public static boolean isProgressiveBossesInstalled(){
         if (ModList.get().isLoaded("progressivebosses")){
             if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Detectado mod Progressive Bosses!");
+                PlayerStats.LOGGER.info("Progressive Bosses mod detected!");
             }
             return true;
         }
         else return false;
-    }
-
-    public static boolean isBloodMoon(Level world) {
-        if (ModList.get().isLoaded("majruszsdifficulty")) {
-            try {
-                Class<?> helperClass = Class.forName("com.majruszsdifficulty.events.BloodMoonHelper");
-                Method method = helperClass.getDeclaredMethod("isBloodMoon", Level.class);
-                return (boolean) method.invoke(null, world);
-            } catch (Exception ignored) {}
-        }
-        return false;
-
-
-        /*
-        // Se for Blood Moon e o mod estiver presente, aumenta em 20%
-        if (isBloodMoon(player.level())) {
-            player.sendSystemMessage(Component.literal("Blood moon man!"));
-            baseChance *= 1.20;
-        }
-*/
     }
 }
 

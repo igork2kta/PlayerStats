@@ -189,6 +189,25 @@ public class StatsScreen extends Screen {
                     guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
                 }
 
+                // Tooltip em modo debug
+                if (Config.DEBUG_MODE.get()) {
+                    int mouseX1 = pos;
+                    int mouseX2 = pos +  font.width(name);;
+                    int mouseY1 = y;
+                    int mouseY2 = y + LINE_HEIGHT;
+
+                    if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
+                        double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+
+                        List<Component> tooltip = List.of(
+                                Component.literal("ID: " + attr.getDescriptionId()),
+                                Component.literal(String.format(java.util.Locale.ROOT, "Increment: %.2f", increment))
+                        );
+
+                        guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    }
+                }
+
                 y += LINE_HEIGHT;
                 if (y >= clipBottom) break;
             }
@@ -244,6 +263,25 @@ public class StatsScreen extends Screen {
                     guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
                 else
                     guiGraphics.drawString(font,Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X291d13, false);
+
+                // Tooltip em modo debug
+                if (Config.DEBUG_MODE.get()) {
+                    int mouseX1 = pos;
+                    int mouseX2 = pos +  font.width(name);;
+                    int mouseY1 = y;
+                    int mouseY2 = y + LINE_HEIGHT;
+
+                    if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
+                        double increment = AttributeUtils.getIncrement(instance.getAttribute().getDescriptionId());
+
+                        List<Component> tooltip = List.of(
+                                Component.literal("ID: " + instance.getAttribute().getDescriptionId()),
+                                Component.literal(String.format(java.util.Locale.ROOT, "increment: %.2f", increment))
+                        );
+
+                        guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    }
+                }
 
                 y += LINE_HEIGHT;
                 if (y >= clipBottom) break;
