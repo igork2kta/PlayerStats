@@ -50,6 +50,7 @@ public class PlayerPointHandler {
 
                 if (Config.DEBUG_MODE.get()) {
                     PlayerStats.LOGGER.info("Wither killed via Progressive Bosses!");
+                    player.sendSystemMessage(Component.literal("PlayerStatsDebug: Wither killed via Progressive Bosses!"));
                 }
 
                 processChance(player, baseChance);
@@ -64,6 +65,7 @@ public class PlayerPointHandler {
 
             if (Config.DEBUG_MODE.get()) {
                 PlayerStats.LOGGER.info("Wither killed!");
+                player.sendSystemMessage(Component.literal("PlayerStatsDebug: Wither killed!"));
             }
         }
 
@@ -73,6 +75,7 @@ public class PlayerPointHandler {
 
             if (Config.DEBUG_MODE.get()) {
                 PlayerStats.LOGGER.info("Ender dragon killed!");
+                player.sendSystemMessage(Component.literal("PlayerStatsDebug: Ender dragon killed!"));
             }
 
         }
@@ -82,6 +85,7 @@ public class PlayerPointHandler {
 
             if (Config.DEBUG_MODE.get()) {
                 PlayerStats.LOGGER.info("Warden killed!");
+                player.sendSystemMessage(Component.literal("PlayerStatsDebug: Warden killed!"));
             }
         }
 
@@ -90,6 +94,7 @@ public class PlayerPointHandler {
 
             if (Config.DEBUG_MODE.get()) {
                 PlayerStats.LOGGER.info("Elder guardian killed!");
+                player.sendSystemMessage(Component.literal("PlayerStatsDebug: Elder guardian killed!"));
             }
 
         }
@@ -100,6 +105,7 @@ public class PlayerPointHandler {
 
             if (Config.DEBUG_MODE.get()) {
                 PlayerStats.LOGGER.info("High health mob killed {}", mob.getType());
+                player.sendSystemMessage(Component.literal(String.format("PlayerStatsDebug: High health mob killed %s", mob.getType())));
             }
 
         }
@@ -108,12 +114,14 @@ public class PlayerPointHandler {
             baseChance = Config.cachedCustomMobChances.get(mob.getType().getDescriptionId());
             if (Config.DEBUG_MODE.get()) {
                 PlayerStats.LOGGER.info("Custom mob killed: {}", mob.getType());
+                player.sendSystemMessage(Component.literal(String.format("PlayerStatsDebug: Custom mob killed: %s", mob.getType())));
             }
         }
 
         if (baseChance == 0.0){
             if (Config.DEBUG_MODE.get()) {
-                PlayerStats.LOGGER.info("Mob morto sem chances de pontos: {}", mob.getType());
+                PlayerStats.LOGGER.info("Mob killed with no point chance: {}", mob.getType());
+                player.sendSystemMessage(Component.literal(String.format("PlayerStatsDebug: Mob killed with no point chance: %s", mob.getType())));
             }
             return;
         }
@@ -127,6 +135,7 @@ public class PlayerPointHandler {
 
         if (Config.DEBUG_MODE.get()) {
             PlayerStats.LOGGER.info("Point chance: {}", baseChance);
+            player.sendSystemMessage(Component.literal(String.format("PlayerStatsDebug: Point chance: %s", baseChance)));
         }
 
         if (player.level().random.nextDouble() < baseChance) {
@@ -142,6 +151,7 @@ public class PlayerPointHandler {
         if (lastGiven == currentDay) {
             if(Config.DEBUG_MODE.get()){
                 PlayerStats.LOGGER.info("Player {} already received points today, ignoring.", player.getName().getString());
+                player.sendSystemMessage(Component.literal(String.format("PlayerStatsDebug: Player %s already received points today, ignoring.", player.getName().getString())));
             }
             return; // Já ganhou ponto hoje
         }
