@@ -3,19 +3,18 @@ package com.playerstats.event;
 import com.playerstats.ModAttributes;
 import com.playerstats.entities.goals.DefendOwnerTargetGoal;
 import com.playerstats.entities.goals.FollowOwnerGoal;
+import com.playerstats.entities.goals.PatrolGoal;
 import com.playerstats.items.ModItems;
 import com.playerstats.util.ModDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -59,6 +58,8 @@ public class ModAbilityEvents {
         if (event.getEntity() instanceof IronGolem golem) {
             golem.targetSelector.addGoal(1, new DefendOwnerTargetGoal(golem)); //maior prioridade
             golem.targetSelector.addGoal(3, new FollowOwnerGoal(golem)); //menor prioridade
+            golem.goalSelector.addGoal(5, new PatrolGoal(golem, 1.0D, 16.0D));
+
         }
     }
 
@@ -177,6 +178,7 @@ public class ModAbilityEvents {
     public static void onWolfTargetChange(LivingChangeTargetEvent event) {
         if (!(event.getEntity() instanceof Wolf wolf)) return;
         if(event.getNewAboutToBeSetTarget() == null) return;
+        if (wolf.getOwner() == null) return;
         // Checa cooldown
         long lastHowl = howlCooldowns.getOrDefault(wolf.getUUID(), 0L);
         if (wolf.level().getGameTime() - lastHowl < HOWL_COOLDOWN_TICKS) return;
@@ -223,15 +225,15 @@ public class ModAbilityEvents {
 
 
 
-    public static void applyFrostWalker(Entity entity, Level level, BlockPos pos, int levelFrost) {
-        if (!entity.onGround()) return;
+    public static void applyFrostWalker(AbstractHorse horse, Level level, BlockPos pos, int levelFrost) {
+        if (!horse.onGround()) return;
 
         BlockState frostedIce = Blocks.FROSTED_ICE.defaultBlockState();
         float radius = Math.min(16, 2 + levelFrost);
 
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for (BlockPos blockpos : BlockPos.betweenClosed(pos.offset((int) -radius, -1, (int)-radius), pos.offset((int)radius, -1, (int)radius))) {
-            if (blockpos.closerToCenterThan(entity.position(), radius)) {
+            if (blockpos.closerToCenterThan(horse.position(), radius)) {
                 mutable.set(blockpos.getX(), blockpos.getY() + 1, blockpos.getZ());
                 if (level.getBlockState(mutable).isAir()) {
                     BlockState state = level.getBlockState(blockpos);
@@ -240,7 +242,7 @@ public class ModAbilityEvents {
                             && frostedIce.canSurvive(level, blockpos)
                             && level.isUnobstructed(frostedIce, blockpos, CollisionContext.empty())) {
                         level.setBlockAndUpdate(blockpos, frostedIce);
-                        level.scheduleTick(blockpos, Blocks.FROSTED_ICE, Mth.nextInt(entity.getRandom(), 60, 120));
+                        level.scheduleTick(blockpos, Blocks.FROSTED_ICE, Mth.nextInt(horse.getRandom(), 60, 120));
                     }
                 }
             }

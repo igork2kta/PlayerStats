@@ -83,7 +83,7 @@ public class PlayerStats {
         //Registrar pacores
         PacketHandler.register(modEventBus);
 
-        PlayerAttributePersistence.register();
+        //PlayerAttributePersistence.register();
 
         NeoForge.EVENT_BUS.register(AttributeBoostScrollItem.class);
 
@@ -154,7 +154,8 @@ public class PlayerStats {
         LOGGER.info("HELLO from server starting");
     }
 
-    public static void onLootTableLoad(LootTableLoadEvent event) {
+    @SubscribeEvent
+    public void onLootTableLoad(LootTableLoadEvent event) {
         ResourceLocation name = event.getName();
 
         // Verifica se o loot é de estrutura (todos estão no namespace "minecraft:chests/")
@@ -164,11 +165,11 @@ public class PlayerStats {
                     .name("upgrade_or_crystal_pool")
                     .setRolls(ConstantValue.exactly(1)) // rola apenas 1 vez
                     .add(LootItem.lootTableItem(ModItems.UPGRADE_RUNE.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.07f)) // 7%
+                            .when(LootItemRandomChanceCondition.randomChance(0.10f)) // 7%
                             .setWeight(1)
                             .setQuality(1))
                     .add(LootItem.lootTableItem(ModItems.ABILITY_CRYSTAL.get())
-                            .when(LootItemRandomChanceCondition.randomChance(0.05f)) // 5%
+                            .when(LootItemRandomChanceCondition.randomChance(0.7f)) // 5%
                             .setWeight(1)
                             .setQuality(1))
                     .build();

@@ -59,6 +59,7 @@
   "attribute.playerstats.rebirth": "Renascimento",
   "attribute.playerstats.taunt": "Provocação",
   "attribute.playerstats.scout_vision": "Visão de Patrulha",
-  "attribute.playerstats.howl_buff": "Buff do Uivo"
+  "attribute.playerstats.howl_buff": "Buff do Uivo",
+  "attribute.playerstats.patrol": "Patrulha"
 
 }

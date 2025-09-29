@@ -11,7 +11,6 @@ import java.util.UUID;
 
 public class DefendOwnerTargetGoal extends TargetGoal {
     private final IronGolem golem;
-    private Player owner;
 
     public DefendOwnerTargetGoal(IronGolem golem) {
         super(golem, false);
@@ -30,10 +29,12 @@ public class DefendOwnerTargetGoal extends TargetGoal {
 
         if(AttributeUtils.getAttributeValue(golem, ModAttributes.DEFEND_OWNER) < 1) return false;
 
-        owner = golem.level().getPlayerByUUID(ownerId);
+        Player owner = golem.level().getPlayerByUUID(ownerId);
         if (owner == null) return false;
 
         LivingEntity attacker = owner.getLastHurtByMob();
+        if (attacker == golem) return false;
+
         if (attacker != null && attacker.isAlive()) {
             this.targetMob = attacker;
             return true;

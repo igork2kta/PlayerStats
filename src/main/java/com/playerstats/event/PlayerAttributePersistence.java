@@ -24,24 +24,18 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
-import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
-
+@EventBusSubscriber(modid = "playerstats")
 public class PlayerAttributePersistence {
 
     private static final String ATTRIBUTE_UPGRADES_TAG = "PlayerStatsUpgrades";
     private static final String POINTS_TAG = "PlayerStatsPoints";
     private static final String UPGRADE_COUNT_TAG = "PlayerStatsUpgradeCount";
     private static final String ABILITY_POINTS_TAG = "PlayerAbilityPoints";
-
-    public static void register() {
-        // Escuta o evento de registro de pacotes
-        EVENT_BUS.register(PlayerAttributePersistence.class);
-
-    }
 
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
@@ -145,7 +139,7 @@ public class PlayerAttributePersistence {
                     applyUpgrade(entity, attr);
                     setPoints(player, playerPoints - 1);
 
-                    PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
+                    //PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
 
                     int count = PlayerAttributePersistence.getUpgradeCount(entity);
                     PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
@@ -169,7 +163,7 @@ public class PlayerAttributePersistence {
                     if(playerPoints > 0 && (player.experienceLevel >= xpCost || !consumeXp)) {
 
                         //Base value = -1 + 2 = 1 = active
-                        if(!UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, true))return;
+                        if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true))return;
 
                         applyModifier(instance, attr.getDescriptionId(), 2);
                         setAbilityPoints(player, playerPoints - 1);
@@ -179,13 +173,13 @@ public class PlayerAttributePersistence {
                 //Possui, ativando
                 else if(instance.getValue() == 0.0D){
                     //Base value = -1 + 2 = 1 = active
-                    UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, true);
+                    if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
                     applyModifier(instance, attr.getDescriptionId(), 2);
                 }
                 //Possui, desativando
                 else if(instance.getValue() == 1.0D){
                     //Base value = -1 + 1 = 0 = inactive
-                    UniqueAbilitiesUtils.enableDisableAbility(entity, player, attributeId, false);
+                    if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
                     applyModifier(instance, attr.getDescriptionId(), 1);
                 }
             }
@@ -193,6 +187,7 @@ public class PlayerAttributePersistence {
         else {
             System.err.println("Unknown attribute ID: " + id);
         }
+
     }
 
     public static void applyUpgrade(LivingEntity entity, Attribute attr) {
@@ -283,7 +278,7 @@ public class PlayerAttributePersistence {
     }
 */
 
-    private static void applyModifier(AttributeInstance instance, String attrId, double value) {
+    public static void applyModifier(AttributeInstance instance, String attrId, double value) {
         // Remover qualquer modificador antigo com o mesmo nome
         instance.getModifiers().stream()
                 .filter(mod -> mod.id().getNamespace().equals("playerstats") && mod.id().getPath().equals(attrId))

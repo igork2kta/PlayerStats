@@ -7,13 +7,13 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
-
+@EventBusSubscriber(modid = "playerstats")
 public class ModAttributes {
-
     public static final DeferredRegister<Attribute> ATTRIBUTES =
             DeferredRegister.create(Registries.ATTRIBUTE, "playerstats");
 
@@ -65,7 +65,15 @@ public class ModAttributes {
                     () -> new RangedAttribute("attribute.playerstats.howl_buff", -1.0D, -1.0D, 1.0D)
                             .setSyncable(true));
 
+    //Atrair atenção de mobs hostis
+    public static final DeferredHolder<Attribute, Attribute> PATROL  =
+            ATTRIBUTES.register("patrol",
+                    () -> new RangedAttribute("attribute.playerstats.patrol", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true));
 
+
+
+    //Aqui são atribuidos os atributos customizados às entidadess
     @SubscribeEvent
     public static void onEntityAttributeModification(EntityAttributeModificationEvent event) {
 
@@ -93,11 +101,13 @@ public class ModAttributes {
                 event.add(type, ModAttributes.TELEPORT_TO_OWNER.getDelegate());
                 event.add(type, ModAttributes.DEFEND_OWNER.getDelegate());
                 event.add(type, ModAttributes.TAUNT.getDelegate());
+                event.add(type, ModAttributes.PATROL.getDelegate());
             }
 
             if(type == EntityType.WOLF){
                 event.add(type, ModAttributes.TAUNT.getDelegate());
                 event.add(type, ModAttributes.HOWL_BUFF.getDelegate());
+                event.add(type, ModAttributes.PATROL.getDelegate());
             }
 
             if(type == EntityType.PARROT){
