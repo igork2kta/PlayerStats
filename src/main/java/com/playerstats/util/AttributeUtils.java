@@ -70,8 +70,6 @@ public class AttributeUtils {
                     }
                     return true;
                 }).toList();
-
-
     }
 
     public static AttributeInstance getAttributeInstance(LivingEntity entity, Attribute attribute){

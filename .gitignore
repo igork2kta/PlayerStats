@@ -1,3 +1,9 @@
+/run/
+/.gradle/
+/build/
+/.idea/
+/mcmodsrepo/
+
 # eclipse
 bin
 *.launch

@@ -4,7 +4,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,13 +32,13 @@ public class BoostsSyncPacket implements CustomPacketPayload{
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath("playerstats", "boost_sync");
 
-    public static final Type<BoostsSyncPacket> TYPE = new Type<>(ID);
+    public static final CustomPacketPayload.Type<BoostsSyncPacket> TYPE = new CustomPacketPayload.Type<>(ID);
 
     public static final StreamCodec<FriendlyByteBuf, BoostsSyncPacket> CODEC =
             StreamCodec.of(BoostsSyncPacket::encode, BoostsSyncPacket::decode);
 
 
-    public Type<? extends CustomPacketPayload> type() {
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 

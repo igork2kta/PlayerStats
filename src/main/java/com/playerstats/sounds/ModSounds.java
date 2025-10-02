@@ -1,4 +1,4 @@
-package com.playerstats.sounds;//package com.playerstats.sounds;
+//package com.playerstats.sounds;
 //
 //import com.playerstats.PlayerStats;
 //import net.minecraft.resources.ResourceLocation;

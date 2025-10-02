@@ -1,4 +1,3 @@
-
 package com.playerstats.items;
 
 import com.playerstats.Config;
@@ -181,12 +180,12 @@ public class AttributeBoostScrollItem extends Item {
         if (event.getEntity().level().isClientSide) return;
 
         UUID playerId = event.getEntity().getUUID();
-        List<BoostInstance> boosts = AttributeBoostScrollItem.activeBoosts.get(playerId);
+        List<AttributeBoostScrollItem.BoostInstance> boosts = AttributeBoostScrollItem.activeBoosts.get(playerId);
         if (boosts == null || boosts.isEmpty()) return;
 
-        Iterator<BoostInstance> iterator = boosts.iterator();
+        Iterator<AttributeBoostScrollItem.BoostInstance> iterator = boosts.iterator();
         while (iterator.hasNext()) {
-            BoostInstance boost = iterator.next();
+            AttributeBoostScrollItem.BoostInstance boost = iterator.next();
             boost.ticksRemaining--;
             if (boost.ticksRemaining <= 0) {
                 AttributeInstance instance = AttributeUtils.getAttributeInstance(event.getEntity(), boost.attribute);

@@ -9,17 +9,19 @@ import com.playerstats.network.UpdatePointsPacket;
 import com.playerstats.network.UpdateUpgradeCountPacket;
 import com.playerstats.util.AttributeUtils;
 import com.playerstats.util.UniqueAbilitiesUtils;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
+
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -77,28 +79,7 @@ public class PlayerAttributePersistence {
 
         Player player = event.getEntity();
 
-        //CompoundTag root = player.getPersistentData();
-
-        //ensurePointsInitialized(player);
-
         ClientAttributeCache.clean();
-
-        /*
-        CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
-        for (String key : upgradesTag.getAllKeys()) {
-            ResourceLocation id = ResourceLocation.tryParse(key);
-            Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-            AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
-
-            if (attr != null && instance != null) {
-                int upgradeCount = upgradesTag.getInt(key);
-                double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-
-                PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
-                double totalIncrement = upgradeCount * increment;
-                applyModifier(instance, attr.getDescriptionId(), totalIncrement);
-            }
-        }*/
 
         //Envia os dados para o cliente no login
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), (ServerPlayer) player);
@@ -133,11 +114,15 @@ public class PlayerAttributePersistence {
 
                 if (playerPoints > 0 && (player.experienceLevel >= xpCost || !consumeXp)) {
 
+                    if(attr == Attributes.FALL_DAMAGE_MULTIPLIER.value() && instance.getValue() <= 0.5 ){
+                        player.sendSystemMessage(Component.translatable("gui.playerstats.attribute.max_value_reached", AttributeUtils.getAttributeName(attr)));
+                        return;
+                    }
+
+
                     // Ao aplicar o upgrade
                     applyUpgrade(entity, attr);
                     setPoints(player, playerPoints - 1);
-
-                    //PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
 
                     int count = PlayerAttributePersistence.getUpgradeCount(entity);
                     PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);

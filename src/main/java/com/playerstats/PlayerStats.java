@@ -7,7 +7,6 @@ import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.util.ModDataComponents;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -31,8 +30,6 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
-
-import java.lang.reflect.Field;
 
 @Mod(PlayerStats.MODID)
 

@@ -72,7 +72,6 @@ public class ModAttributes {
                             .setSyncable(true));
 
 
-    
 
     //Aqui são atribuidos os atributos customizados às entidadess
     @SubscribeEvent
