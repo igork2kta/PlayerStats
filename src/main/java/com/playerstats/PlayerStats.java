@@ -6,6 +6,7 @@ import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
 //import com.playerstats.sounds.ModSounds;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -56,6 +57,8 @@ public class PlayerStats {
                 () -> FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup));
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onConfigReload);
+
+        makeAttributesSyncable();
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
@@ -136,6 +139,13 @@ public class PlayerStats {
             event.accept(ModItems.SOUL_FRAGMENT);
             event.accept(ModItems.SOUL_STONE);
         }
+    }
+
+    private void makeAttributesSyncable() {
+        Attributes.ATTACK_DAMAGE.setSyncable(true);
+        Attributes.ATTACK_KNOCKBACK.setSyncable(true);
+        Attributes.KNOCKBACK_RESISTANCE.setSyncable(true);
+
     }
 
 

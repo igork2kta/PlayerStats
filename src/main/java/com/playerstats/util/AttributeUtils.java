@@ -1,12 +1,8 @@
 package com.playerstats.util;
 
 import com.playerstats.Config;
-import com.playerstats.ModAttributes;
-import com.playerstats.PlayerStats;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -31,6 +27,8 @@ public class AttributeUtils {
             case "attribute.name.generic.movement_speed"-> 0.01;
             //case "Mana Regeneration" -> 0.01;
             case "forge.entity_reach", "forge.block_reach" -> 0.3;
+            case "attribute.name.generic.attack_damage", "attribute.name.generic.attack_knockback", "attribute.name.generic.knockback_resistance" -> 0.5;
+
             default -> 0.1;
         };
     }
