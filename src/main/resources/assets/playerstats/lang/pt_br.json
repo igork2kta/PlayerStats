@@ -1,0 +1,65 @@
+{
+  "key.categories.playerstats": "Status do Jogador",
+  "key.playerstats.open_stats": "Abrir Tela de Atributos",
+  "key.playerstats.open_entity_stats": "Abrir tela de atributos da entidade (entidade na mira)",
+  "gui.playerstats.title": "Atributos do Jogador",
+  "gui.playerstats.points": "Pontos Disponíveis: %s",
+  "gui.playerstats.reset": "Resetar",
+  "gui.playerstatss.points_reset": "Atributos resetados. Pontos devolvidos: %s",
+  "gui.playerstats.can_reset": "Você pode resetar os atributos (%s níveis de XP)",
+  "gui.playerstats.cant_reset": "Você precisa de %s níveis de XP para resetar",
+  "gui.playerstats.xp_cost": "Custo de XP: %s",
+  "gui.playerstats.search_placeholder": "Pesquisar...",
+  "gui.playerstats.obtained_active": " (Adquirida) (Ativa)",
+  "gui.playerstats.obtained_inactive": " (Adquirida) (Inativa)",
+  "gui.playerstats.teleport_locked" : "Você precisa liberar a habilidade \"Seguir Dono\" antes de liberar essa hailidade",
+  "event.playerstats.point_given": "§aVocê ganhou +1 ponto de atributo! Pressione %s §apara utilizar.",
+  "event.playerstats.mobs_killed": "§aCongratulations, by slaying %d §amobs, you have gained significant combat experience.",
+  "event.playerstats.ability_point_given": "§aVocê ganhou +1 ponto de Habilidade! Pressione %s §apara utilizar.",
+  "gui.playerstats.added_points": "Pontos adicionados. Total: %s",
+  "gui.playerstats.removed_points": "Pontos removidos. Total: %s",
+  "gui.playerstats.reloaded_configs": "Configurações recarregadas",
+  "config.playerstats.debug_mode": "Ativa o modo debug do mod",
+  "config.playerstats.high_health": "Quantidade de vida considerada como alta",
+  "config.playerstats.wither_chance": "Chance de ganhar pontos ao matar o Wither",
+  "config.playerstats.ender_dragon_chance": "Chance de ganhar pontos ao matar o Ender Dragon",
+  "config.playerstats.warden_chance": "Chance de ganhar pontos ao matar o Warden",
+  "config.playerstats.elder_guardian_chance": "Chance de ganhar pontos ao matar o Elder Guardian",
+  "config.playerstats.high_health_chance": "Chance de ganhar pontos ao matar mobs com vida alta",
+  "config.playerstats.custom_mob_chances": "Lista de chances de mobs customizados no formato id=chance (por exemplo: 'entity.minecraft.chicken', você pode ver o nome exato ativando o modo debug, habilitando o console de desenvolvedor e matando o mob desejado)",
+  "config.playerstats.custom_attribute_increment": "Lista de atributos personalizados (de mods ou vanilla) que aumentam ao evoluir, no formato id=incremento (ex: 'attribute.name.generic.max_health=2'). Você pode ver o nome exato ativando o modo debug, abrindo o console de desenvolvedor e abrindo a janela de status. O padrão é 0.1)",
+  "config.playerstats.ignored_attributes": "Lista de nomes de atributos a serem ignorados (ex: 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')",
+
+  "item.playerstats.upgrade_rune": "Runa do Aprimoramento",
+  "item.playerstats.upgrade_rune.hoverText": "Uma antiga runa pulsando com energia desconhecida. Dizem que ela desperta o verdadeiro potencial de quem a usa.",
+  "item.playerstats.upgrade_rune.message": "Você sente um poder crescendo dentro de si...",
+
+  "item.playerstats.attribute_boost_scroll": "Pergaminho do Boost de Atributo",
+  "item.playerstats.attribute_boost_scroll.hover_text": "Clique com o botão direito para desvendar o poder do pergaminho.",
+  "item.playerstats.attribute_boost_scroll.hover_text_values": "+%.2f por %d segundos",
+  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Concede temporariamente um aprimoramento a: %s.",
+
+  "item.playerstats.ability_crystal": "Crystal de Habilidade",
+  "item.playerstats.ability_crystal.hoverText": "Um cristal imbuido com um poder desconhecido, pode ser utilizado para aprender ou ensinar habilidades únicas!",
+  "item.playerstats.ability_crystal.message": "Você se sente poderoso suficiente para desbloquear uma nova habilidade!",
+
+  "item.playerstats.soul_fragment": "Fragmento de Alma",
+  "item.playerstats.soul_fragment.hoverText": "Pode ser utilizado para reviver %s.",
+
+  "item.playerstats.soul_stone": "Pedra da Alma",
+  "item.playerstats.soul_stone.hoverText": "§6Usado em um ritual de renascimento§r\n§7- Jogue junto com um Fragmento de Alma\n- Sobre uma Âncora de Renascimento carregada\n- Com um mob de oferenda do mesmo tipo\n\n§c⚠ O ritual consome a energia vital de quem o executa, deixando-o à beira da morte.§r",
+
+
+
+  "attribute.playerstats.life_regen": "Regeneração de Vida",
+  "attribute.playerstats.follow_owner": "Seguir Dono",
+  "attribute.playerstats.teleport_to_owner": "Teletransportar para o Dono",
+  "attribute.playerstats.frost_walker": "Passos Gelados",
+  "attribute.playerstats.defend_owner": "Defender dono",
+  "attribute.playerstats.rebirth": "Renascimento",
+  "attribute.playerstats.taunt": "Provocação",
+  "attribute.playerstats.scout_vision": "Visão de Patrulha",
+  "attribute.playerstats.howl_buff": "Buff do Uivo",
+  "attribute.playerstats.patrol": "Patrulha"
+
+}

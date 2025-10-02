@@ -1,0 +1,65 @@
+{
+  "key.categories.playerstats": "Player Stats",
+  "key.playerstats.open_stats": "Open Stats Screen",
+  "key.playerstats.open_entity_stats": "Open Entity stats screen (targeted entity)",
+  "gui.playerstats.title": "Player Stats",
+  "gui.playerstats.points": "Available Points: %s",
+  "gui.playerstats.reset": "Reset",
+  "gui.playerstatss.points_reset": "Attributes reset. Points refunded: %s",
+  "gui.playerstats.can_reset": "You can reset the attributes (%s XP levels)",
+  "gui.playerstats.cant_reset": "You need %s XP levels to reset",
+  "gui.playerstats.xp_cost": "XP cost: %s",
+  "gui.playerstats.search_placeholder": "Search...",
+  "gui.playerstats.added_points": "Added points. Total: %s",
+  "gui.playerstats.removed_points": "Removed points. Total: %s",
+  "gui.playerstats.reloaded_configs": "Configurations reloaded",
+  "gui.playerstats.obtained_active": " (Obtained) (Active)",
+  "gui.playerstats.obtained_inactive": " (Obtained) (Inactive)",
+  "gui.playerstats.teleport_locked": "You need to unlock the \"Follow Owner\" ability before unlocking this ability.",
+  "event.playerstats.ability_point_given":"§aYou earned +1 ability point! Press %s §ato use it.",
+  "event.playerstats.point_given": "§aYou gained +1 attribute point! Press %s §ato use",
+  "event.playerstats.mobs_killed": "§aCongratulations! By killing %d §amobs, you gained a lot of experience!",
+  "config.playerstats.debug_mode": "Enables the mod's debug mode",
+  "config.playerstats.high_health": "Amount of health considered high",
+  "config.playerstats.wither_chance": "Chance to gain points when killing Wither",
+  "config.playerstats.ender_dragon_chance": "Chance to gain points when killing Ender Dragon",
+  "config.playerstats.warden_chance": "Chance to gain points when killing Warden",
+  "config.playerstats.elder_guardian_chance": "Chance to gain points when killing Elder Guardian",
+  "config.playerstats.high_health_chance": "Chance to gain points when killing mobs with high health",
+  "config.playerstats.custom_mob_chances": "List of custom mob chances in the format id=chance (e.g. 'entity.minecraft.chicken', you can see the exact name by enabling debug mode, opening the developer console, and killing the desired mob.)",
+  "config.playerstats.ignored_attributes": "List of attribute names to ignore (e.g. 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')",
+
+  "item.playerstats.upgrade_rune": "Upgrade Rune",
+  "item.playerstats.upgrade_rune.hoverText": "An ancient rune pulsing with unknown energy. It is said to awaken the true potential of those who use it.",
+  "item.playerstats.upgrade_rune.message": "You feel a power growing within you...",
+
+  "item.playerstats.attribute_boost_scroll": "Attribute Boost Scroll",
+  "item.playerstats.attribute_boost_scroll.hover_text": "Right-click to unveil the scroll's power.",
+  "item.playerstats.attribute_boost_scroll.hover_text_values": "+%.2f for %d seconds",
+  "item.playerstats.attribute_boost_scroll.hover_text_unveiled": "Temporarily grants a boost to: %s.",
+
+  "item.playerstats.ability_crystal": "Ability Crystal",
+  "item.playerstats.ability_crystal.hoverText": "A crystal imbued with an unknown power, it can be used to learn or teach unique abilities!",
+  "item.playerstats.ability_crystal.message": "You feel powerful enough to unlock a new skill!",
+
+  "item.playerstats.soul_fragment": "Soul Fragment",
+  "item.playerstats.soul_fragment.hoverText": "Can be used to revive %s.",
+
+  "item.playerstats.soul_stone": "Soul Stone",
+  "item.playerstats.soul_stone.hoverText": "§6Used in a ritual of rebirth§r\n§7- Drop together with a Soul Fragment\n- On top of a charged Respawn Anchor\n- Alongside a sacrifice mob of the same type\n\n§c⚠ The ritual consumes the vital energy of the caster, leaving them near death.§r",
+
+
+
+
+  "attribute.playerstats.life_regen": "Life Regen",
+  "attribute.playerstats.follow_owner": "Follow Owner",
+  "attribute.playerstats.teleport_to_owner": "Teleport to Owner",
+  "attribute.playerstats.frost_walker": "Frost Walker",
+  "attribute.playerstats.defend_owner": "Defend Owner",
+  "attribute.playerstats.rebirth": "Rebirth",
+  "attribute.playerstats.taunt": "Taunt",
+  "attribute.playerstats.scout_vision": "Scout Vision",
+  "attribute.playerstats.howl_buff": "Howl Buff",
+  "attribute.playerstats.patrol": "Patrol"
+
+}
