@@ -96,7 +96,7 @@ public class StatsScreen extends Screen {
                 20,                              // altura
                 Component.literal("Attributes"),
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
-                btn -> {showAttributes = true; rebuildButtons();}
+                btn -> {showAttributes = true; scrollOffset = 0; rebuildButtons();}
         );
 
         uniqueAbilitiesButton = new CustomButton(
@@ -106,7 +106,7 @@ public class StatsScreen extends Screen {
                 20,                              // altura
                 Component.literal("Unique Abilities"),
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
-                btn -> {showAttributes = false; rebuildButtons();}
+                btn -> {showAttributes = false; scrollOffset = 0; rebuildButtons();}
         );
 
         resetButton = new CustomButton(
@@ -181,13 +181,16 @@ public class StatsScreen extends Screen {
                 String baseText = name + ": " + value;
                 guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
 
-                // Parte do boost (somente se existir)
-                ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
-                if (boost != null) {
-                    String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
-                    int boostX = pos + font.width(baseText); // começa logo após o valor
-                    guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+                if(entity.equals(player)){
+                    // Parte do boost (somente se existir)
+                    ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
+                    if (boost != null) {
+                        String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
+                        int boostX = pos + font.width(baseText); // começa logo após o valor
+                        guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+                    }
                 }
+
 
                 // Tooltip em modo debug
                 if (Config.DEBUG_MODE.get()) {
