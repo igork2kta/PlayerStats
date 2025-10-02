@@ -1,14 +1,13 @@
 package com.playerstats;
 
 import com.playerstats.client.KeyBindings;
-import com.playerstats.client.KeyMappings;
 import com.playerstats.command.PlayerStatsCommands;
-import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.items.AttributeBoostScrollItem;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
 import com.playerstats.util.ModDataComponents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -23,13 +22,11 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
-import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -70,7 +67,6 @@ public class PlayerStats {
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public PlayerStats(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::addCreative);
 
         // Registrar pacotes de rede
@@ -108,20 +104,14 @@ public class PlayerStats {
             modEventBus.addListener(this::onClientSetup);
         }
 
-        //ModEvents.register();
-        //NeoForge.EVENT_BUS.register(ModEvents.class);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON);
         modContainer.registerConfig(ModConfig.Type.SERVER, Config.SERVER);
 
+        makeAttributesSyncable();
     }
 
-    private void commonSetup(FMLCommonSetupEvent event) {
-        // Some common setup code
-        LOGGER.info("HELLO FROM COMMON SETUP");
-
-    }
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
@@ -216,6 +206,13 @@ public class PlayerStats {
             event.accept(ModItems.SOUL_FRAGMENT.get());
             event.accept(ModItems.SOUL_STONE.get());
         }
+    }
+
+    private void makeAttributesSyncable() {
+        Attributes.ATTACK_DAMAGE.value().setSyncable(true);
+        Attributes.ATTACK_KNOCKBACK.value().setSyncable(true);
+        Attributes.KNOCKBACK_RESISTANCE.value().setSyncable(true);
+
     }
 
 

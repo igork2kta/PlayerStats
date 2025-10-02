@@ -1,8 +1,6 @@
 package com.playerstats.util;
 
 import com.playerstats.Config;
-import com.playerstats.ModAttributes;
-import com.playerstats.PlayerStats;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -25,12 +23,13 @@ public class AttributeUtils {
 
         return switch (descriptionId) {
             case "attribute.name.generic.luck" -> 1;
-            case "attribute.name.generic.max_health"-> 2;
+            case "attribute.name.generic.max_health" -> 2;
             case "attribute.name.generic.movement_speed"-> 0.01;
             case "attribute.name.player.entity_interaction_range", "attribute.name.player.block_interaction_range" -> 0.3;
-            case "attribute.name.generic.burning_time" -> - 0.1;
+            case "attribute.name.generic.burning_time", "attribute.name.generic.fall_damage_multiplier" -> - 0.1;
             case "attribute.name.generic.jump_strength" -> 0.07;
-            case "attribute.name.generic.safe_fall_distance" -> 0.5;
+            case "attribute.name.generic.safe_fall_distance", "attribute.name.generic.attack_damage",
+                 "attribute.name.generic.attack_knockback", "attribute.name.generic.knockback_resistance" -> 0.5;
             default -> 0.1;
         };
     }
