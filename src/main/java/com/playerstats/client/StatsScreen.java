@@ -96,7 +96,7 @@ public class StatsScreen extends Screen {
                 20,                              // altura
                 Component.literal("Attributes"),
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
-                btn -> {showAttributes = true; rebuildButtons();}
+                btn -> {showAttributes = true; scrollOffset = 0; rebuildButtons();}
         );
 
         uniqueAbilitiesButton = new CustomButton(
@@ -106,7 +106,7 @@ public class StatsScreen extends Screen {
                 20,                              // altura
                 Component.literal("Unique Abilities"),
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
-                btn -> {showAttributes = false; rebuildButtons();}
+                btn -> {showAttributes = false; scrollOffset = 0; rebuildButtons(); }
         );
 
         resetButton = new CustomButton(
@@ -192,11 +192,33 @@ public class StatsScreen extends Screen {
                 guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
 
                 // Parte do boost (somente se existir)
-                ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
-                if (boost != null) {
-                    String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
-                    int boostX = pos + font.width(baseText); // começa logo após o valor
-                    guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+                if(entity.equals(player)){
+                    ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
+                    if (boost != null) {
+                        String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
+                        int boostX = pos + font.width(baseText); // começa logo após o valor
+                        guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+                    }
+                }
+
+
+                // Tooltip em modo debug
+                if (Config.DEBUG_MODE.get()) {
+                    int mouseX1 = pos;
+                    int mouseX2 = pos +  font.width(name);;
+                    int mouseY1 = y;
+                    int mouseY2 = y + LINE_HEIGHT;
+
+                    if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
+                        double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+
+                        List<Component> tooltip = List.of(
+                                Component.literal("ID: " + attr.getDescriptionId()),
+                                Component.literal(String.format(java.util.Locale.ROOT, "Increment: %.2f", increment))
+                        );
+
+                        guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    }
                 }
 
                 y += LINE_HEIGHT;
@@ -255,6 +277,25 @@ public class StatsScreen extends Screen {
                     guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
                 else
                     guiGraphics.drawString(font,Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X291d13, false);
+
+                // Tooltip em modo debug
+                if (Config.DEBUG_MODE.get()) {
+                    int mouseX1 = pos;
+                    int mouseX2 = pos +  font.width(name);;
+                    int mouseY1 = y;
+                    int mouseY2 = y + LINE_HEIGHT;
+
+                    if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
+                        double increment = AttributeUtils.getIncrement(instance.getAttribute().value().getDescriptionId());
+
+                        List<Component> tooltip = List.of(
+                                Component.literal("ID: " + instance.getAttribute().value().getDescriptionId()),
+                                Component.literal(String.format(java.util.Locale.ROOT, "increment: %.2f", increment))
+                        );
+
+                        guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    }
+                }
 
                 y += LINE_HEIGHT;
                 if (y >= clipBottom) break;

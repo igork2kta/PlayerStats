@@ -61,7 +61,8 @@ public class AttributeUtils {
                     //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
                     if (!attr.isClientSyncable()) return false;
                     if (instance == null) return false;
-
+                    //Aqui removemos os atributos do mod, vai aparecer em outra aba com tratamneto diferente
+                    if (attr.getDescriptionId().contains("playerstats")) return false;
                     //Aqui, removemos os que não queremos que apareça
                     if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
                     if (!searchText.isEmpty()) {

@@ -32,13 +32,14 @@ import java.util.stream.Collectors;
 
 public class AttributeBoostScrollItem extends Item {
 
-
-    public static final Map<UUID, List<BoostInstance>> activeBoosts = new HashMap<>();
+    // Mapeia jogador -> lista de boosts ativos
+    private static final Map<UUID, List<BoostInstance>> activeBoosts = new HashMap<>();
 
     public AttributeBoostScrollItem(Properties properties) {
         super(properties);
     }
 
+    // Classe interna para representar um boost
     public static class BoostInstance {
         public final Attribute attribute;
         public final ResourceLocation modifierId;
@@ -53,6 +54,7 @@ public class AttributeBoostScrollItem extends Item {
         }
     }
 
+
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -63,6 +65,7 @@ public class AttributeBoostScrollItem extends Item {
 
             if (stack.get(ModDataComponents.DEFINED_ATTRIBUTE) == null) {
                 List<Attribute> filteredAttributes = AttributeUtils.getAttributes(player, "");
+
                 if (!filteredAttributes.isEmpty()) {
                     Attribute selected = filteredAttributes.get(random.nextInt(filteredAttributes.size()));
 
@@ -81,7 +84,7 @@ public class AttributeBoostScrollItem extends Item {
                     int maxTicks = maxMinutes * 60 * 20;
                     int duration = minTicks + random.nextInt(maxTicks - minTicks + 1);
 
-                    stack.set(ModDataComponents.BOOST_AMOUNT, amount);
+                    stack.set(ModDataComponents.BOOST_AMOUNT, Math.round(amount * 100.0) / 100.0);
                     stack.set(ModDataComponents.BOOST_DURATION, duration);
 
                 }
@@ -114,8 +117,10 @@ public class AttributeBoostScrollItem extends Item {
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.computeIfAbsent(playerId, k -> new ArrayList<>());
 
+        // Verifica se já existe boost para o mesmo atributo
         for (BoostInstance existing : boosts) {
             if (existing.attribute.equals(attribute)) {
+                // Apenas renova o tempo
                 existing.ticksRemaining = duration;
                 existing.amount = amount;
                 sendBoostsToClient(player);
@@ -138,13 +143,12 @@ public class AttributeBoostScrollItem extends Item {
 
         instance.addTransientModifier(modifier);
         boosts.add(new BoostInstance(attribute, id, duration, amount));
+
         sendBoostsToClient(player);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-
-
         if (stack.get(ModDataComponents.DEFINED_ATTRIBUTE) != null) {
             Attribute attribute = BuiltInRegistries.ATTRIBUTE
                     .getOptional(ResourceLocation.tryParse(stack.get(ModDataComponents.DEFINED_ATTRIBUTE)))
@@ -169,6 +173,7 @@ public class AttributeBoostScrollItem extends Item {
                     .withStyle(ChatFormatting.GRAY));
         }
     }
+
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {

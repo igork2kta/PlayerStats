@@ -128,6 +128,7 @@ public class SoulReviveHandler {
 
                         //Não deixa reviver se o player estiver na tela de respawn, pois buga
                         if (revivedPlayer == null || revivedPlayer.gameMode.getGameModeForPlayer() != GameType.SPECTATOR ) continue;
+                        created = revivedPlayer;
                     }
                 }
                 // revival normal de mobs
@@ -159,16 +160,32 @@ public class SoulReviveHandler {
 
                 //Isso precisa estar depois da explosão, senão o defunto morre dnv
                 if ((created instanceof ServerPlayer revivedPlayer)) {
-                    // Restaura os dados persistentes
-                    revivedPlayer.load(storedEntityTag);
-                    revivedPlayer.getFoodData().setFoodLevel(3);
-                    revivedPlayer.getFoodData().setSaturation(0.0F);
+
                     // Precisa passar para survival para reviver no hardcore
                     revivedPlayer.setGameMode(GameType.SURVIVAL);
 
-                    // Teleporta para o ritual
+                    // Restaura os dados persistentes
+                    revivedPlayer.load(storedEntityTag);
+                    revivedPlayer.getFoodData().setSaturation(0.0F);
+                    revivedPlayer.getFoodData().setFoodLevel(3);
+
+                    // Garante que não esteja marcado como voando
+                    revivedPlayer.getAbilities().flying = false;
+                    revivedPlayer.getAbilities().mayfly = false;
+                    revivedPlayer.onUpdateAbilities();
+
+                    // Zera a distância de queda
+                    revivedPlayer.fallDistance = 0.0F;
+
+                    // Força posição válida em cima do bloco sólido
+                    BlockPos safePos = pos.above(); // garante que está acima da âncora
                     revivedPlayer.teleportTo(server,
-                            pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
+                            safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5,
+                            level.random.nextFloat() * 360f, 0f);
+
+                    // Força sincronização de posição com o cliente
+                    revivedPlayer.connection.teleport(
+                            safePos.getX() + 0.5, safePos.getY(), safePos.getZ() + 0.5,
                             level.random.nextFloat() * 360f, 0f);
 
                     int duration = 10 * 60 * 20; // 10 minutos
@@ -178,7 +195,7 @@ public class SoulReviveHandler {
                     revivedPlayer.setHealth(1);
                     revivedPlayer.playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 1.0F, 1.0F);
                 }
-                if((created instanceof LivingEntity revived)){
+                else if((created instanceof LivingEntity revived)){
 
                     // Restaura os dados persistentes
                     revived.load(storedEntityTag);
@@ -202,8 +219,8 @@ public class SoulReviveHandler {
                 //Aplicar efeitos negativos no conjurador
                 if (player instanceof ServerPlayer serverPlayer) {
                     serverPlayer.setHealth(1.0F);
-                    serverPlayer.getFoodData().setFoodLevel(0);
                     serverPlayer.getFoodData().setSaturation(0.0F);
+                    serverPlayer.getFoodData().setFoodLevel(3);
 
                     int duration = 10 * 60 * 20;
                     serverPlayer.addEffect(new MobEffectInstance(MobEffects.HUNGER, duration, 1));
