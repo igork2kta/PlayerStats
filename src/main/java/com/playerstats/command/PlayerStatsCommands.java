@@ -36,7 +36,7 @@ public class PlayerStatsCommands {
                                     int amount = IntegerArgumentType.getInteger(ctx, "amount");
                                     int current = PlayerAttributePersistence.getPoints(player);
 
-                                    PlayerAttributePersistence.addAbilityPoints(player, -amount);
+                                    PlayerAttributePersistence.addPoints(player, -amount);
                                     ctx.getSource().sendSuccess(() ->
                                             net.minecraft.network.chat.Component.translatable("gui.playerstats.removed_points", current - amount), false);
                                     return 1;
