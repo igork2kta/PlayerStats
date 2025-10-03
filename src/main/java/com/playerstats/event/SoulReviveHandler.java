@@ -167,8 +167,6 @@ public class SoulReviveHandler {
                     revivedPlayer.getFoodData().setSaturation(0.0F);
                     revivedPlayer.getFoodData().setFoodLevel(3);
 
-
-
                     // Garante que não esteja marcado como voando
                     revivedPlayer.getAbilities().flying = false;
                     revivedPlayer.getAbilities().mayfly = false;

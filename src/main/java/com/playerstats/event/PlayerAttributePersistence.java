@@ -26,7 +26,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.registries.ForgeRegistries;
 
 @Mod.EventBusSubscriber(modid = "playerstats")
 public class PlayerAttributePersistence {
@@ -62,7 +61,8 @@ public class PlayerAttributePersistence {
                         int upgradeCount = upgradesTag.getInt(key);
                         double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
 
-                        PlayerStats.LOGGER.info("Configurando atributo:{} valor atual: {} upgrade count: {} increment: {}", attr.getDescriptionId(), instance.getBaseValue(), upgradeCount, increment);
+                        PlayerStats.LOGGER.info("Setting attribute: {} current value: {} upgrade count: {} increment: {}", attr.getDescriptionId(), instance.getBaseValue(), upgradeCount, increment);
+
                         double totalIncrement = upgradeCount * increment;
                         applyModifier(instance, attr.getDescriptionId(), totalIncrement);
                     }
@@ -78,28 +78,7 @@ public class PlayerAttributePersistence {
 
         Player player = event.getEntity();
 
-        //CompoundTag root = player.getPersistentData();
-
-        //ensurePointsInitialized(player);
-
         ClientAttributeCache.clean();
-
-        /*
-        CompoundTag upgradesTag = root.getCompound(ATTRIBUTE_UPGRADES_TAG);
-        for (String key : upgradesTag.getAllKeys()) {
-            ResourceLocation id = ResourceLocation.tryParse(key);
-            Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
-            AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
-
-            if (attr != null && instance != null) {
-                int upgradeCount = upgradesTag.getInt(key);
-                double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
-
-                PlayerStats.LOGGER.info("Configurando atributo:" + attr.getDescriptionId() + " valor atual: " +  instance.getBaseValue() +  " upgrade count: " + upgradeCount + " increment: " + increment );
-                double totalIncrement = upgradeCount * increment;
-                applyModifier(instance, attr.getDescriptionId(), totalIncrement);
-            }
-        }*/
 
         //Envia os dados para o cliente no login
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), (ServerPlayer) player);
@@ -137,8 +116,6 @@ public class PlayerAttributePersistence {
                     // Ao aplicar o upgrade
                     applyUpgrade(entity, attr);
                     setPoints(player, playerPoints - 1);
-
-                    //PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
 
                     int count = PlayerAttributePersistence.getUpgradeCount(entity);
                     PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
@@ -259,23 +236,6 @@ public class PlayerAttributePersistence {
         }
         player.giveExperiencePoints(points * -1);
     }
-
-    /*
-    public static boolean ensurePointsInitialized(Player player) {
-        CompoundTag tag = player.getPersistentData();
-        if (!tag.contains(POINTS_TAG)) {
-            if (Config.DEBUG_MODE.get()) {
-                    PlayerStats.LOGGER.info("Configuring player points");
-
-            }
-            setPoints(player, 0);
-            return false;
-        }
-        if (Config.DEBUG_MODE.get())
-            PlayerStats.LOGGER.info("Player points already configured");
-        return true;
-    }
-*/
 
     public static void applyModifier(AttributeInstance instance, String attrId, double value) {
         // Remover qualquer modificador antigo com o mesmo nome
