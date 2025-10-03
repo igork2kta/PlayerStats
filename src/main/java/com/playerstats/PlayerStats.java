@@ -112,7 +112,6 @@ public class PlayerStats {
         makeAttributesSyncable();
     }
 
-
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         PlayerStatsCommands.register(event.getDispatcher());

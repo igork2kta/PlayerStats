@@ -64,7 +64,8 @@ public class PlayerAttributePersistence {
                     int upgradeCount = upgradesTag.getInt(key);
                     double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
 
-                        PlayerStats.LOGGER.info("Configurando atributo:{} valor atual: {} upgrade count: {} increment: {}", attr.getDescriptionId(), instance.getBaseValue(), upgradeCount, increment);
+                        PlayerStats.LOGGER.info("Setting attribute: {} current value: {} upgrade count: {} increment: {}", attr.getDescriptionId(), instance.getBaseValue(), upgradeCount, increment);
+
                         double totalIncrement = upgradeCount * increment;
                         applyModifier(instance, attr.getDescriptionId(), totalIncrement);
                     }
@@ -244,23 +245,6 @@ public class PlayerAttributePersistence {
         }
         player.giveExperiencePoints(points * -1);
     }
-
-    /*
-    public static boolean ensurePointsInitialized(Player player) {
-        CompoundTag tag = player.getPersistentData();
-        if (!tag.contains(POINTS_TAG)) {
-            if (Config.DEBUG_MODE.get()) {
-                    PlayerStats.LOGGER.info("Configuring player points");
-
-            }
-            setPoints(player, 0);
-            return false;
-        }
-        if (Config.DEBUG_MODE.get())
-            PlayerStats.LOGGER.info("Player points already configured");
-        return true;
-    }
-*/
 
     public static void applyModifier(AttributeInstance instance, String attrId, double value) {
         // Remover qualquer modificador antigo com o mesmo nome

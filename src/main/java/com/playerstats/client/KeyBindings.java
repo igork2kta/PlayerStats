@@ -1,8 +1,8 @@
 package com.playerstats.client;
 
-import com.playerstats.PlayerStats;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -14,27 +14,33 @@ import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
 public class KeyBindings {
 
-
     public static void register() {
         EVENT_BUS.register(KeyBindings.class);
     }
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
-        while (OPEN_STATS_KEY.get().consumeClick()) {
+
+        if (KeyMappings.OPEN_STATS_KEY.get().consumeClick()) {
             Minecraft.getInstance().setScreen(new StatsScreen());
         }
-        while (OPEN_ENTITY_STATS_KEY.get().consumeClick()) {
-            PlayerStats.LOGGER.info("Atalho pressionado");
+
+        if (KeyMappings.OPEN_ENTITY_STATS_KEY.get().consumeClick()) {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-                // Raycast para pegar a entidade que o player está mirando
-                HitResult hit = mc.hitResult;
-                if (hit instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity entity) {
-                    Minecraft.getInstance().setScreen(new StatsScreen(entity));
-                }
+            HitResult hit = mc.hitResult;
+
+            if (hit instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity entity) {
+                Minecraft.getInstance().setScreen(new StatsScreen(entity));
+                return;
+            }
+            //Se o player estiver montado sem mirar em ninguem, acessa os atributos da entidade montada
+            Player player = Minecraft.getInstance().player;
+            assert player != null;
+            if(player.getVehicle() != null){
+                Minecraft.getInstance().setScreen(new StatsScreen((LivingEntity) player.getVehicle()));
             }
         }
+
 
     }
 }
