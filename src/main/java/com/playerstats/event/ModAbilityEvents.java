@@ -9,6 +9,7 @@ import com.playerstats.util.ModDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -99,7 +100,7 @@ public class ModAbilityEvents {
                 soulData.putString("id", "minecraft:player");
                 soulData.putString("UUID", player.getUUID().toString()); // Salva explicitamente UUID
                 soulFragment.set(ModDataComponents.STORED_ENTITY, soulData);
-
+                soulData.putString("StoredEntityName", player.getDisplayName().getString());
             }
             else {
                 // mobs normais

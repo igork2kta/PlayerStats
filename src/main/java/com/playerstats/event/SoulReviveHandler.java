@@ -37,7 +37,7 @@ import java.util.UUID;
 @EventBusSubscriber(modid = "playerstats")
 public class SoulReviveHandler {
 
-    private static int tickCounter = 0;
+    private static final Map<Level, Integer> levelTicks = new HashMap<>();
 
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Post event) {
@@ -45,8 +45,12 @@ public class SoulReviveHandler {
         Level level = event.getLevel();
         if (level.isClientSide()) return;
 
-        tickCounter++;
-        if (tickCounter % 40 != 0) return; // 20 ticks = 1 segundo
+
+        int count = levelTicks.getOrDefault(level, 0) + 1;
+        levelTicks.put(level, count);
+
+        if (count % 40 != 0) return;
+
 
         //valida se há ritual perto de players
         for (var player : level.players()) {
@@ -73,7 +77,6 @@ public class SoulReviveHandler {
             for (ItemEntity fragmentEntity : items) {
                 ItemStack fragStack = fragmentEntity.getItem();
                 if (fragStack.getItem() != ModItems.SOUL_FRAGMENT.get()) continue;
-
                 BlockPos pos = fragmentEntity.blockPosition();
 
                 BlockState state = level.getBlockState(pos.below());
@@ -91,6 +94,7 @@ public class SoulReviveHandler {
 
 
                 if (!storedEntityTag.contains("id")) continue;
+
                 String entityId = storedEntityTag.getString("id");
                 if (entityId.isEmpty()) continue;
 
