@@ -32,6 +32,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import javax.swing.text.html.parser.Entity;
 import java.util.*;
 
 
@@ -86,18 +87,22 @@ public class ModAbilityEvents {
     @SubscribeEvent
     public static void onMobDrops(LivingDropsEvent event) {
         LivingEntity entity = event.getEntity();
-
+        System.out.println("Entidade morta");
         AttributeInstance revivable = entity.getAttribute(ModAttributes.REBIRTH.get());
         if (revivable != null && revivable.getValue() == 1.0D) {
-
+            System.out.println("Entidade possui rebirth");
             ItemStack soulFragment = new ItemStack(ModItems.SOUL_FRAGMENT.get());
+            System.out.println(Entity.NAME);
             if (entity instanceof ServerPlayer player) {
+                System.out.println("Entidade é um player");
                 CompoundTag soulData = new CompoundTag();
                 player.saveWithoutId(soulData); // salva inventário, XP etc.
                 soulFragment.getOrCreateTag().put("StoredEntity", soulData);
                 soulData.putString("id", "minecraft:player"); // <- forçado aqui
                 // Salva explicitamente UUID
                 soulData.putString("UUID", player.getUUID().toString());
+                soulFragment.getOrCreateTag().putString("StoredEntityName",
+                        Component.Serializer.toJson(player.getDisplayName()));
             }
             else {
                 // mobs normais

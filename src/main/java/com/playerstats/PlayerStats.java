@@ -47,7 +47,6 @@ public class PlayerStats {
         PacketHandler.register();
         // Registrar os itens
         ModItems.register(modEventBus);
-        //ModSounds.register(modEventBus);
         ModAttributes.ATTRIBUTES.register(FMLJavaModLoadingContext.get().getModEventBus());
 
         modEventBus.addListener(this::addCreative);

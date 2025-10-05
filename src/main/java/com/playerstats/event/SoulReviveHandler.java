@@ -35,16 +35,20 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = "playerstats")
 public class SoulReviveHandler {
 
-    private static int tickCounter = 0;
+    private static final Map<Level, Integer> levelTicks = new HashMap<>();
 
     @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
-
+        if (event.phase != TickEvent.Phase.END) return;
         Level level = event.level;
-        if (level.isClientSide()) return;
+        if (level.isClientSide())return;
 
-        tickCounter++;
-        if (tickCounter % 40 != 0) return; // 20 ticks = 1 segundo
+
+        int count = levelTicks.getOrDefault(event.level, 0) + 1;
+        levelTicks.put(event.level, count);
+
+        if (count % 40 != 0) return;
+
 
         //valida se há ritual perto de players
         for (var player : level.players()) {
@@ -68,27 +72,31 @@ public class SoulReviveHandler {
             //Se não achar nenhuma Soul Stone, não da para completar o ritual.
             if(stones.isEmpty()) return;
 
+
             for (ItemEntity fragmentEntity : items) {
                 ItemStack fragStack = fragmentEntity.getItem();
                 if (fragStack.getItem() != ModItems.SOUL_FRAGMENT.get()) continue;
-
                 BlockPos pos = fragmentEntity.blockPosition();
 
                 BlockState state = level.getBlockState(pos.below());
                 // Precisa ter uma respawn anchor carregada abaixo
                 if (state.is(Blocks.RESPAWN_ANCHOR) && !(state.getValue(RespawnAnchorBlock.CHARGE) > 0)) return;
 
+
                 // verifica se existe uma Soul Stone na mesma posição
                 ItemEntity stoneEntity = stones.get(pos);
                 if (stoneEntity == null) continue;
 
+
                 // pega o StoredEntity
                 CompoundTag tag = fragStack.getTag();
                 if (tag == null || !tag.contains("StoredEntity")) continue;
+
                 CompoundTag storedEntityTag = tag.getCompound("StoredEntity");
 
 
                 if (!storedEntityTag.contains("id")) continue;
+
                 String entityId = storedEntityTag.getString("id");
                 if (entityId.isEmpty()) continue;
 
