@@ -87,14 +87,11 @@ public class ModAbilityEvents {
     @SubscribeEvent
     public static void onMobDrops(LivingDropsEvent event) {
         LivingEntity entity = event.getEntity();
-        System.out.println("Entidade morta");
         AttributeInstance revivable = entity.getAttribute(ModAttributes.REBIRTH.get());
         if (revivable != null && revivable.getValue() == 1.0D) {
-            System.out.println("Entidade possui rebirth");
             ItemStack soulFragment = new ItemStack(ModItems.SOUL_FRAGMENT.get());
             System.out.println(Entity.NAME);
             if (entity instanceof ServerPlayer player) {
-                System.out.println("Entidade é um player");
                 CompoundTag soulData = new CompoundTag();
                 player.saveWithoutId(soulData); // salva inventário, XP etc.
                 soulFragment.getOrCreateTag().put("StoredEntity", soulData);
