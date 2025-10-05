@@ -106,7 +106,7 @@ public class StatsScreen extends Screen {
                 20,                              // altura
                 Component.literal("Unique Abilities"),
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
-                btn -> {showAttributes = false; scrollOffset = 0; rebuildButtons(); }
+                btn -> {showAttributes = false; scrollOffset = 0; rebuildButtons();}
         );
 
         resetButton = new CustomButton(
@@ -191,8 +191,8 @@ public class StatsScreen extends Screen {
                 String baseText = name + ": " + value;
                 guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
 
-                // Parte do boost (somente se existir)
                 if(entity.equals(player)){
+                    // Parte do boost (somente se existir)
                     ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
                     if (boost != null) {
                         String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
@@ -245,7 +245,6 @@ public class StatsScreen extends Screen {
             textWidth = font.width(abilityPoints);
             textX = leftPos + (BG_WIDTH - textWidth) / 2;
             guiGraphics.drawString(font, abilityPoints, textX, topPos + 35, color);
-
 
             if(consumeXp){
                 int xpCost = Config.REQUIRED_XP_FOR_ABILITY.get();

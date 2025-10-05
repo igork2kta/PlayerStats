@@ -69,17 +69,13 @@ public class PlayerStats {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::addCreative);
 
-        // Registrar pacotes de rede
-        //PacketHandler.register(modEventBus);
         // Registrar os itens
         ModItems.register(modEventBus);
 
         ModDataComponents.register(modEventBus);
 
-        //Registrar pacores
+        //Registrar pacotes
         PacketHandler.register(modEventBus);
-
-        //PlayerAttributePersistence.register();
 
         NeoForge.EVENT_BUS.register(AttributeBoostScrollItem.class);
 
@@ -90,13 +86,7 @@ public class PlayerStats {
         // 🔹 Registra o listener do evento
         modEventBus.addListener(ModAttributes::onEntityAttributeModification);
 
-        //Atalhos de teclado
-        //modEventBus.addListener(KeyMappings::registerBindings);
-        //modEventBus.addListener(KeyMappings::onClientTick);
-
         modEventBus.addListener(this::onConfigReload);
-        //NeoForge.EVENT_BUS.addListener(KeyBindings::onClientTick); pode ser feito assim ou da forma abaixo. Porque preciso ter keymappings e keybindings?
-        //KeyBindings.register();
 
         // Registrar eventos apenas no lado do cliente
         // No construtor do seu ModMain ou em algum registrador
@@ -104,14 +94,12 @@ public class PlayerStats {
             modEventBus.addListener(this::onClientSetup);
         }
 
-
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON);
         modContainer.registerConfig(ModConfig.Type.SERVER, Config.SERVER);
 
         makeAttributesSyncable();
     }
-
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
@@ -122,26 +110,10 @@ public class PlayerStats {
         KeyBindings.register();
     }
 
-    /*
-    // Add the example block item to the building blocks tab
-    private void addCreative(BuildCreativeModeTabContentsEvent event) {
-
-        if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES){
-            event.accept(ModItems.UPGRADE_RUNE.get());
-            event.accept(ModItems.ATTRIBUTE_BOOST_SCROLL.get());
-        }
-    }
-*/
     private void onConfigReload(ModConfigEvent event) {
         if (event.getConfig().getSpec() == Config.SERVER) {
             Config.reloadCustomMobChances();
         }
-    }
-
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    public void onServerStarting(ServerStartingEvent event) {
-        // Do something when the server starts
-        LOGGER.info("HELLO from server starting");
     }
 
     @SubscribeEvent
