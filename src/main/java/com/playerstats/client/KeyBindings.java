@@ -8,8 +8,6 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-import static com.playerstats.client.KeyMappings.OPEN_ENTITY_STATS_KEY;
-import static com.playerstats.client.KeyMappings.OPEN_STATS_KEY;
 import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
 public class KeyBindings {
