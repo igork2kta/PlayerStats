@@ -15,6 +15,8 @@
   "gui.playerstats.teleport_locked" : "Você precisa liberar a habilidade \"Seguir Dono\" antes de liberar essa hailidade",
   "gui.playerstats.added_points": "Pontos adicionados. Total: %s",
   "gui.playerstats.removed_points": "Pontos removidos. Total: %s",
+  "gui.playerstats.added_points_target": "Pontos adicionados a %s. Total: %s",
+  "gui.playerstats.removed_points_target": "Pontos removidos de %s. Total: %s",
   "gui.playerstats.reloaded_configs": "Configurações recarregadas",
   "gui.playerstats.attribute.max_value_reached": "Atributo \"%s\" atingiu seu valor máximo!",
   "event.playerstats.point_given": "§aVocê ganhou +1 ponto de atributo! Pressione %s §apara utilizar.",
@@ -31,7 +33,9 @@
   "config.playerstats.custom_attribute_increment": "Lista de atributos personalizados (de mods ou vanilla) que aumentam ao evoluir, no formato id=incremento (ex: 'attribute.name.generic.max_health=2'). Você pode ver o nome exato ativando o modo debug, abrindo o console de desenvolvedor e abrindo a janela de status. O padrão é 0.1)",
   "config.playerstats.ignored_attributes": "Lista de nomes de atributos a serem ignorados (ex: 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')",
 
-  "item.playerstats.upgrade_rune": "Runa do Aprimoramento",
+  "command.playerstats.attribute_set": "Atributo %s de %s definido como %d",
+
+  "item.playerstats.upgrade_rune": "Runa d\"gui.playerstats.added_points_target\": \"Pontos adicionados a %s. Total: %s\",\n  \"gui.playerstats.removed_points_target\": \"Pontos removidos de %s. Total: %s\",o Aprimoramento",
   "item.playerstats.upgrade_rune.hoverText": "Uma antiga runa pulsando com energia desconhecida. Dizem que ela desperta o verdadeiro potencial de quem a usa.",
   "item.playerstats.upgrade_rune.message": "Você sente um poder crescendo dentro de si...",
 
@@ -49,8 +53,6 @@
 
   "item.playerstats.soul_stone": "Pedra da Alma",
   "item.playerstats.soul_stone.hoverText": "§6Usado em um ritual de renascimento§r\n§7- Jogue junto com um Fragmento de Alma\n- Sobre uma Âncora de Renascimento carregada\n- Com um mob de oferenda do mesmo tipo\n\n§c⚠ O ritual consome a energia vital de quem o executa, deixando-o à beira da morte.§r",
-
-
 
   "attribute.playerstats.life_regen": "Regeneração de Vida",
   "attribute.playerstats.follow_owner": "Seguir Dono",
