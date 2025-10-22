@@ -184,16 +184,14 @@ public class PlayerStatsCommands {
 
         AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
         AttributeModifier modifier = instance.getModifiers().stream()
-                .filter(mod -> mod.getName().equals("playerstats:" + id))
+                .filter(mod -> mod.getName().equals("playerstats:" + attr.getDescriptionId()))
                 .findFirst()
                 .orElse(null);
 
         double modifierValue = (modifier != null) ? modifier.getAmount() : 0;
         double value = DoubleArgumentType.getDouble(ctx, "value") + modifierValue - instance.getValue();
 
-        //Remover o que tem antes dos ":", dá erro na 1.21
-        String attrIdid = id.toString().substring(id.toString().indexOf(":")+1);
-        PlayerAttributePersistence.applyModifier(instance,attrIdid , value);
+        PlayerAttributePersistence.applyModifier(instance, attr.getDescriptionId() , value);
 
         ctx.getSource().sendSuccess(() ->
                 Component.translatable("command.playerstats.attribute_set", AttributeUtils.getAttributeName(instance.getAttribute()),  player.getName(), DoubleArgumentType.getDouble(ctx, "value")), true);
