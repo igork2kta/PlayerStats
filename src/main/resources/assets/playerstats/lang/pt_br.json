@@ -32,8 +32,7 @@
   "config.playerstats.custom_attribute_increment": "Lista de atributos personalizados (de mods ou vanilla) que aumentam ao evoluir, no formato id=incremento (ex: 'attribute.name.generic.max_health=2'). Você pode ver o nome exato ativando o modo debug, abrindo o console de desenvolvedor e abrindo a janela de status. O padrão é 0.1)",
   "config.playerstats.ignored_attributes": "Lista de nomes de atributos a serem ignorados (ex: 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')",
 
-  "command.playerstats.attribute_set": "Atributo %s definido como %d",
-  "command.playerstats.attribute_set_target": "Atributo %s de %s definido como %d",
+  "command.playerstats.attribute_set": "Atributo %s de %s definido como %d",
 
   "item.playerstats.upgrade_rune": "Runa d\"gui.playerstats.added_points_target\": \"Pontos adicionados a %s. Total: %s\",\n  \"gui.playerstats.removed_points_target\": \"Pontos removidos de %s. Total: %s\",o Aprimoramento",
   "item.playerstats.upgrade_rune.hoverText": "Uma antiga runa pulsando com energia desconhecida. Dizem que ela desperta o verdadeiro potencial de quem a usa.",

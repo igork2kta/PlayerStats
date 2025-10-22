@@ -31,8 +31,7 @@
   "config.playerstats.custom_mob_chances": "List of custom mob chances in the format id=chance (e.g. 'entity.minecraft.chicken', you can see the exact name by enabling debug mode, opening the developer console, and killing the desired mob.)",
   "config.playerstats.ignored_attributes": "List of attribute names to ignore (e.g. 'attribute.name.generic.armor', 'attribute.name.generic.movement_speed')",
 
-  "command.playerstats.attribute_set": "Attribute %s set to %d",
-  "command.playerstats.attribute_set_target": "Attribute %s of %s set to %d",
+  "command.playerstats.attribute_set": "Attribute %s of %s set to %d",
 
   "item.playerstats.upgrade_rune": "Upgrade Rune",
   "item.playerstats.upgrade_rune.hoverText": "An ancient rune pulsing with unknown energy. It is said to awaken the true potential of those who use it.",

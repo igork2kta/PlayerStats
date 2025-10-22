@@ -191,9 +191,12 @@ public class PlayerStatsCommands {
         double modifierValue = (modifier != null) ? modifier.getAmount() : 0;
         double value = DoubleArgumentType.getDouble(ctx, "value") + modifierValue - instance.getValue();
 
-        PlayerAttributePersistence.applyModifier(instance, id.toString(), value);
+        //Remover o que tem antes dos ":", dá erro na 1.21
+        String attrIdid = id.toString().substring(id.toString().indexOf(":")+1);
+        PlayerAttributePersistence.applyModifier(instance,attrIdid , value);
+
         ctx.getSource().sendSuccess(() ->
-                Component.translatable("command.playerstats.attribute_set", player.getName(), id, DoubleArgumentType.getDouble(ctx, "value")), true);
+                Component.translatable("command.playerstats.attribute_set", AttributeUtils.getAttributeName(instance.getAttribute()),  player.getName(), DoubleArgumentType.getDouble(ctx, "value")), true);
         return 1;
     }
 }
