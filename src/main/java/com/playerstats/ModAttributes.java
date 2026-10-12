@@ -71,6 +71,12 @@ public class ModAttributes {
                     () -> new RangedAttribute("attribute.playerstats.patrol", -1.0D, -1.0D, 1.0D)
                             .setSyncable(true));
 
+    // Cura efeitos em área (leite)
+    public static final DeferredHolder<Attribute, Attribute> MILKY_AURA =
+            ATTRIBUTES.register("milky_aura",
+                    () -> new RangedAttribute("attribute.playerstats.milky_aura", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true));
+
 
 
     //Aqui são atribuidos os atributos customizados às entidadess
@@ -112,6 +118,10 @@ public class ModAttributes {
 
             if(type == EntityType.PARROT){
                 event.add(type, ModAttributes.SCOUT_VISION.getDelegate());
+            }
+
+            if(type == EntityType.COW){
+                event.add(type, ModAttributes.MILKY_AURA.getDelegate());
             }
 
         }
