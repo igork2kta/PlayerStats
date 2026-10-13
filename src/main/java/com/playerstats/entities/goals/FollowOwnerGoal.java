@@ -21,6 +21,8 @@ public class FollowOwnerGoal extends Goal {
     private final float minDist = 6.0F;
     private final float maxDist = 15.0F;
 
+    private int timeToRecalcPath;
+
     public FollowOwnerGoal(Mob mob) {
         this.mob = mob;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -32,18 +34,29 @@ public class FollowOwnerGoal extends Goal {
             return false; // se já está atacando alguém, não segue
         }
 
-        try {
-            UUID ownerId = mob.getPersistentData().getUUID("Owner");
-            if (ownerId == null) return false;
-            owner = mob.level().getPlayerByUUID(ownerId);
-
-            return owner != null
-                    && !mob.isPassenger()
-                    && !mob.isLeashed()
-                    && mob.distanceTo(owner) > minDist;
-        } catch (Exception ex) {
+        if (!mob.getPersistentData().hasUUID("Owner")) {
             return false;
         }
+
+        if (AttributeUtils.getAttributeValue(mob, ModAttributes.FOLLOW_OWNER) < 1.0D) {
+            return false;
+        }
+
+        // Se a patrulha estiver ativa, o mob não segue o dono nem teleporta
+        if (AttributeUtils.getAttributeValue(mob, ModAttributes.PATROL) == 1.0D) {
+            return false;
+        }
+
+        UUID ownerId = mob.getPersistentData().getUUID("Owner");
+   
+        owner = mob.level().getPlayerByUUID(ownerId);
+
+        return owner != null
+                && !owner.isSpectator()
+                && !mob.isPassenger()
+                && !mob.isLeashed()
+                && mob.distanceTo(owner) > minDist;
+
     }
 
     @Override
@@ -52,31 +65,56 @@ public class FollowOwnerGoal extends Goal {
             return false; // interrompe enquanto luta
         }
 
+        if (AttributeUtils.getAttributeValue(mob, ModAttributes.FOLLOW_OWNER) < 1.0D) {
+            return false;
+        }
+
+        // Se a patrulha estiver ativa, interrompe imediatamente o seguimento e teleporte
+        if (AttributeUtils.getAttributeValue(mob, ModAttributes.PATROL) == 1.0D) {
+            return false;
+        }
+
         return owner != null
+                && !owner.isSpectator()
                 && mob.distanceTo(owner) > maxDist
                 && !mob.isPassenger()
-                && !mob.isLeashed();
+                && !mob.isLeashed()
+                && mob.distanceTo(owner) > minDist;
+    }
+
+    @Override
+    public void start() {
+        this.timeToRecalcPath = 0;
+    }
+
+    @Override
+    public void stop() {
+        this.owner = null;
+        this.mob.getNavigation().stop();
     }
 
 
     @Override
     public void tick() {
-        if (owner == null) return;
 
-        if (AttributeUtils.getAttributeValue(mob, ModAttributes.FOLLOW_OWNER) < 1) return;
+        mob.getLookControl().setLookAt(owner, 10.0F, (float) mob.getMaxHeadXRot());
 
-        double distance = mob.distanceTo(owner);
+        // Recalcula rota a cada 10 ticks (0.5s) em vez de todo tick
+        if (--this.timeToRecalcPath <= 0) {
+            this.timeToRecalcPath = this.adjustedTickDelay(10);
 
-        // Teleporta se muito longe
-        if (distance > 12.0 && AttributeUtils.getAttributeValue(mob, ModAttributes.TELEPORT_TO_OWNER) == 1) {
-            teleportToOwner();
-        } else {
-            mob.getNavigation().moveTo(owner, speed);
+            double distance = mob.distanceTo(owner);
+
+            // Teleporta se muito longe
+            if (distance > 12.0 && AttributeUtils.getAttributeValue(mob, ModAttributes.TELEPORT_TO_OWNER) == 1) {
+                teleportToOwner();
+            } else {
+                mob.getNavigation().moveTo(owner, speed);
+            }
         }
     }
 
     private void teleportToOwner() {
-        if (owner == null) return;
 
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {

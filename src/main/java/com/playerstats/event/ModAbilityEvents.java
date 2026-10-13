@@ -54,9 +54,11 @@ public class ModAbilityEvents {
         }
         if (event.getEntity() instanceof IronGolem golem) {
             golem.targetSelector.addGoal(1, new DefendOwnerTargetGoal(golem)); //maior prioridade
-            golem.targetSelector.addGoal(3, new FollowOwnerGoal(golem)); //menor prioridade
+            golem.targetSelector.addGoal(4, new FollowOwnerGoal(golem)); //menor prioridade
             golem.goalSelector.addGoal(5, new PatrolGoal(golem, 1.0D, 16.0D));
-
+        }
+        if (event.getEntity() instanceof Wolf wolf) {
+            wolf.goalSelector.addGoal(5, new PatrolGoal(wolf, 1.0D, 16.0D));
         }
     }
 
@@ -149,17 +151,21 @@ public class ModAbilityEvents {
         for (Wolf ally : allies) {
             ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 600, 1)); // +dano 60s
             ally.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 1)); // +velocidade 60s
-            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 600, 1)); // +velocidade 60s
+            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 600, 1)); // +resistência 60s
         }
 
-        Player owner = (Player) wolf.getOwner();
-        owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 600, 1)); // +dano 60s
-        owner.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 1)); // +velocidade 60s
-        owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 600, 1)); // +velocidade 60s
+        // Buffa o dono do lobo
+        // Vai que algum animal adiciona a habilidade a um lobo selvagem, então checa se o dono é um player
+        if (wolf.getOwner() instanceof Player owner) {
+            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 600, 1)); // +dano 60s
+            owner.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 1)); // +velocidade 60s
+            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 600, 1)); // +resistência 60s
+        }
 
+        // Buffa o próprio lobo
         wolf.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 600, 1)); // +dano 60s
         wolf.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 1)); // +velocidade 60s
-        wolf.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 600, 1)); // +velocidade 60s
+        wolf.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 600, 1)); // +resistência 60s
 
         // Efeito visual e sonoro
         if (wolf.level() instanceof ServerLevel server) {

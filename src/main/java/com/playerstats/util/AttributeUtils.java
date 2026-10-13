@@ -88,8 +88,9 @@ public class AttributeUtils {
         }).toList();
     }
 
-    public static double getAttributeValue(LivingEntity entity, RegistryObject<Attribute> attribute){
-        return entity.getAttributes().getInstance(attribute.getHolder().get()).getValue();
+    public static double getAttributeValue(LivingEntity entity, RegistryObject<Attribute> attribute) {
+        AttributeInstance instance = entity.getAttribute(attribute.get());
+        return instance != null ? instance.getValue() : -1.0D;
     }
 
 

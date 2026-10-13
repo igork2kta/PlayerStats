@@ -50,9 +50,9 @@ public class UniqueAbilitiesUtils {
             disableAbility(ModAttributes.FOLLOW_OWNER, entity);
             disableAbility(ModAttributes.TELEPORT_TO_OWNER, entity);
 
-            entity.getPersistentData().putDouble("PatrolX", entity.getX());
-            entity.getPersistentData().putDouble("PatrolY", entity.getY());
-            entity.getPersistentData().putDouble("PatrolZ", entity.getZ());
+            entity.getPersistentData().putInt("PatrolX", entity.blockPosition().getX());
+            entity.getPersistentData().putInt("PatrolY", entity.blockPosition().getY());
+            entity.getPersistentData().putInt("PatrolZ", entity.blockPosition().getZ());
 
         }
 

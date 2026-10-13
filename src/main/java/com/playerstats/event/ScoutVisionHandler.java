@@ -27,6 +27,9 @@ public class ScoutVisionHandler {
         Level level = event.level;
         if (level.isClientSide()) return;
 
+        // Executa a cada 20 ticks (1 segundo) para balancear responsividade e performance
+        if (level.getGameTime() % 20 != 0) return;
+
         double radius = 16.0D;
 
         for (var player : level.players()) {
@@ -47,6 +50,8 @@ public class ScoutVisionHandler {
                 parrots.add(null); // usamos null como “flag” para indicar Scout Vision no player
             }
 
+            if (parrots.isEmpty()) continue;
+            
             for (Parrot parrot : parrots) {
                 AABB visionBox;
                 if (parrot != null) {

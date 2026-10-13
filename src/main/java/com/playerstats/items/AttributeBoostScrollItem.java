@@ -97,7 +97,7 @@ public class AttributeBoostScrollItem extends Item {
                         .orElse(null);
 
                 if (attribute != null) {
-                    UUID modifierId = UUID.randomUUID();
+                    UUID modifierId = UUID.nameUUIDFromBytes(("playerstats_boost:" + attribute.getDescriptionId()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
                     double amount = tag.getDouble("BoostAmount");
                     int duration = tag.getInt("BoostDuration");
 
@@ -175,37 +175,46 @@ public class AttributeBoostScrollItem extends Item {
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide) return;
 
-        UUID playerId = event.player.getUUID();
+        Player player = event.player;
+        UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.get(playerId);
         if (boosts == null || boosts.isEmpty()) return;
 
+        boolean syncNeeded = false;
         Iterator<BoostInstance> iterator = boosts.iterator();
         while (iterator.hasNext()) {
             BoostInstance boost = iterator.next();
             boost.ticksRemaining--;
 
             if (boost.ticksRemaining <= 0) {
-                AttributeInstance instance = event.player.getAttribute(boost.attribute);
+                AttributeInstance instance = player.getAttribute(boost.attribute);
                 if (instance != null) {
                     instance.removeModifier(boost.modifierId);
                 }
                 iterator.remove();
-                sendBoostsToClient(event.player);
+                syncNeeded = true;
+            } else if (boost.ticksRemaining % 20 == 0) {
+                // Sincroniza apenas 1 vez por segundo
+                syncNeeded = true;
             }
         }
 
-        // Remove do mapa se não tiver mais boosts
         if (boosts.isEmpty()) {
             activeBoosts.remove(playerId);
+            sendBoostsToClient(player); // Envia pacote vazio para limpar o cliente
+        } else if (syncNeeded) {
+            sendBoostsToClient(player);
         }
-        else{sendBoostsToClient(event.player);}
     }
 
 
     public static void saveBoostsToPlayer(Player player) {
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.get(playerId);
-        if (boosts == null || boosts.isEmpty()) return;
+        if (boosts == null || boosts.isEmpty()) {
+            player.getPersistentData().remove("PlayerStatsBoosts");
+            return;
+        }
 
         var tag = new net.minecraft.nbt.CompoundTag();
         int index = 0;
@@ -220,8 +229,6 @@ public class AttributeBoostScrollItem extends Item {
         }
 
         player.getPersistentData().put("PlayerStatsBoosts", tag);
-
-        sendBoostsToClient(player);
     }
 
     public static void loadBoostsFromPlayer(Player player) {
@@ -234,17 +241,21 @@ public class AttributeBoostScrollItem extends Item {
         for (String key : tag.getAllKeys()) {
             var boostTag = tag.getCompound(key);
             String attrKey = boostTag.getString("Attribute");
-            UUID modId = boostTag.getUUID("ModifierId");
+            UUID modId = boostTag.hasUUID("ModifierId") ? boostTag.getUUID("ModifierId") : null;
             int ticks = boostTag.getInt("TicksRemaining");
 
             Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(ResourceLocation.tryParse(attrKey)).orElse(null);
             if (attribute != null) {
+                if (modId == null) {
+                    modId = UUID.nameUUIDFromBytes(("playerstats_boost:" + attribute.getDescriptionId()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                }
                 // reaplica o boost
                 double amount = boostTag.getDouble("Amount");
                 AttributeInstance instance = player.getAttribute(attribute);
                 if (instance != null) {
+                    instance.removeModifier(modId);
                     instance.addTransientModifier(new AttributeModifier(modId, "Scroll Boost", amount, AttributeModifier.Operation.ADDITION));
-                    boosts.add(new BoostInstance(attribute, modId, ticks, amount)); // passe amount aqui!
+                    boosts.add(new BoostInstance(attribute, modId, ticks, amount));
                 }
             }
         }
@@ -258,13 +269,13 @@ public class AttributeBoostScrollItem extends Item {
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
-       saveBoostsToPlayer(event.getEntity());
-
+        saveBoostsToPlayer(event.getEntity());
+        activeBoosts.remove(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
-       loadBoostsFromPlayer(event.getEntity());
+        loadBoostsFromPlayer(event.getEntity());
     }
 
     @SubscribeEvent
@@ -281,11 +292,13 @@ public class AttributeBoostScrollItem extends Item {
     }
 
     public static void sendBoostsToClient(Player player) {
-        UUID playerId = player.getUUID();
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+
+        UUID playerId = serverPlayer.getUUID();
         List<BoostInstance> boosts = activeBoosts.get(playerId);
         if (boosts == null || boosts.isEmpty()) {
             // Envia pacote vazio para limpar o cache no cliente
-            PacketHandler.sendToClient(new BoostsSyncPacket(Map.of()),(ServerPlayer) player);
+            PacketHandler.sendToClient(new BoostsSyncPacket(Map.of()), serverPlayer);
             return;
         }
 
@@ -293,12 +306,12 @@ public class AttributeBoostScrollItem extends Item {
                 .collect(Collectors.toMap(
                         boost -> BuiltInRegistries.ATTRIBUTE.getKey(boost.attribute),
                         boost -> new BoostsSyncPacket.BoostData(
-                                boost.amount,  // usa o amount do boost salvo
-                                boost.ticksRemaining / 20
+                                boost.amount,
+                                Math.max(0, boost.ticksRemaining / 20)
                         )
                 ));
 
-        PacketHandler.sendToClient(new BoostsSyncPacket(map), (ServerPlayer) player);
+        PacketHandler.sendToClient(new BoostsSyncPacket(map), serverPlayer);
     }
 }
 
