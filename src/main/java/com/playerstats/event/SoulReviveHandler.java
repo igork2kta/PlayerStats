@@ -35,20 +35,13 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = "playerstats")
 public class SoulReviveHandler {
 
-    private static final Map<Level, Integer> levelTicks = new HashMap<>();
-
     @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         Level level = event.level;
         if (level.isClientSide())return;
 
-
-        int count = levelTicks.getOrDefault(event.level, 0) + 1;
-        levelTicks.put(event.level, count);
-
-        if (count % 40 != 0) return;
-
+        if (level.getGameTime() % 40 != 0) return;
 
         //valida se há ritual perto de players
         for (var player : level.players()) {

@@ -62,29 +62,30 @@ public class ModAbilityEvents {
         }
     }
 
-    //FROST WALKER
+    private static final Map<AbstractHorse, BlockPos> lastHorsePositions = new WeakHashMap<>();
+
+    // FROST WALKER
     @SubscribeEvent
     public static void onHorseTick(LivingEvent.LivingTickEvent event) {
+        if (!(event.getEntity() instanceof AbstractHorse horse)) return;
 
-            if (!(event.getEntity() instanceof AbstractHorse horse)) return;
-            Level level = horse.level();
-            if (level.isClientSide) return;
+        Level level = horse.level();
+        if (level.isClientSide || !horse.onGround()) return;
 
-            //por algum motivo isso da exceção às vezes
-            boolean hasFrostWalker = ModAttributes.FROST_WALKER.getHolder()
-                    .flatMap(holder -> Optional.ofNullable(horse.getAttributes().getInstance(holder)))
-                    .map(instance -> instance.getValue() == 1)
-                    .orElse(false);
+        AttributeInstance attr = horse.getAttribute(ModAttributes.FROST_WALKER.get());
+        if (attr == null || attr.getValue() != 1.0D) return;
 
-            if (hasFrostWalker) {
-                BlockPos pos = horse.blockPosition();
+        BlockPos currentPos = horse.blockPosition();
+        BlockPos lastPos = lastHorsePositions.get(horse);
 
-                // reaproveitar a lógica vanilla do Frost Walker
-                int frostLevel = 1; // pode ser fixo ou dinâmico
-                FrostWalkerEnchantment.onEntityMoved(horse, level, pos, frostLevel);
-            }
+        boolean hasMoved = !currentPos.equals(lastPos);
+        boolean shouldRefreshStill = (level.getGameTime() % 20 == 0);
+
+        if (hasMoved || shouldRefreshStill) {
+            lastHorsePositions.put(horse, currentPos);
+            FrostWalkerEnchantment.onEntityMoved(horse, level, currentPos, 1);
+        }
     }
-
     //REBIRTH (droppar fragmento)
     @SubscribeEvent
     public static void onMobDrops(LivingDropsEvent event) {

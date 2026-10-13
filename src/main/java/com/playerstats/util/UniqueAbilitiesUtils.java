@@ -21,7 +21,7 @@ public class UniqueAbilitiesUtils {
             if(!entity.getPersistentData().contains("Owner"))
                 entity.getPersistentData().putUUID("Owner", player.getUUID());
 
-            if(attributeId.contains("follow_owner")) disableAbility(ModAttributes.PATROL, entity);
+            if(attributeId.contains("follow_owner") && state) disableAbility(ModAttributes.PATROL, entity);
         }
 
         else if(attributeId.contains("teleport_to_owner")) {
