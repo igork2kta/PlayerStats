@@ -78,6 +78,12 @@ public class ModAttributes {
                             .setSyncable(true));
 
 
+    // Gelo infinito temporário
+    public static final DeferredHolder<Attribute, Attribute> INFINITE_ICE =
+            ATTRIBUTES.register("infinite_ice",
+                    () -> new RangedAttribute("attribute.playerstats.infinite_ice", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true));
+
     //Aqui são atribuidos os atributos customizados às entidadess
     @SubscribeEvent
     public static void onEntityAttributeModification(EntityAttributeModificationEvent event) {
@@ -88,6 +94,10 @@ public class ModAttributes {
             // Adiciona apenas para os tipos de criatura pacíficos e player
             if (type.getCategory() == MobCategory.CREATURE || type == EntityType.PLAYER) {
                 event.add(type, ModAttributes.REBIRTH.getDelegate()); //Será ocultado para o player caso não seja hardcore
+            }
+
+            if (type == EntityType.PLAYER) {
+                event.add(type, ModAttributes.INFINITE_ICE.getDelegate());
             }
 
             if (type != EntityType.PLAYER) {

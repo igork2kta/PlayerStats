@@ -56,6 +56,13 @@ public class PacketHandler {
                 PacketHandler::handleResetAttributes
         );
 
+        // Cliente → Servidor (Ativar Habilidade de Gelo Infinito)
+        registrar.playToServer(
+                ActivateInfiniteIcePacket.TYPE,
+                ActivateInfiniteIcePacket.CODEC,
+                PacketHandler::handleActivateInfiniteIce
+        );
+
         // Servidor → Cliente
         registrar.playToClient(
                 BoostsSyncPacket.TYPE,
@@ -128,6 +135,14 @@ public class PacketHandler {
                 if (entity instanceof LivingEntity living) {
                     PlayerAttributePersistence.resetAttributes(living, player, false);
                 }
+            }
+        });
+    }
+
+    private static void handleActivateInfiniteIce(ActivateInfiniteIcePacket msg, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                com.playerstats.event.InfiniteIceHandler.activateAbility(player);
             }
         });
     }
