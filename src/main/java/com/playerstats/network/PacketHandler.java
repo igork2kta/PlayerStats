@@ -56,6 +56,12 @@ public class PacketHandler {
                 ModifyAttributePacket::decode,
                 ModifyAttributePacket::handle);
 
+        INSTANCE.registerMessage(id++, ActivateInfiniteIcePacket.class,
+                ActivateInfiniteIcePacket::encode,
+                ActivateInfiniteIcePacket::decode,
+                ActivateInfiniteIcePacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
     }
 
 

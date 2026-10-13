@@ -29,11 +29,18 @@ public class KeyMappings {
             "key.categories.playerstats"    // categoria
     );
 
+    public static final KeyMapping ACTIVATE_ICE_KEY = new KeyMapping(
+            "key.playerstats.activate_ice",
+            GLFW.GLFW_KEY_V,                // tecla V
+            "key.categories.playerstats"
+    );
+
 
     //Aqui o atalho é registrado nos controles do jogo, permitindo alterar, o padrão é R
     @SubscribeEvent
     public static void onKeyMappingRegister(RegisterKeyMappingsEvent event) {
         event.register(OPEN_STATS_KEY);
         event.register(OPEN_ENTITY_STATS_KEY);
+        event.register(ACTIVATE_ICE_KEY);
     }
 }
