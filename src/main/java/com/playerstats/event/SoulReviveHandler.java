@@ -43,9 +43,7 @@ public class SoulReviveHandler {
         Level level = event.getLevel();
         if (level.isClientSide()) return;
 
-
         if (level.getGameTime() % 40 != 0) return;
-
 
         //valida se há ritual perto de players
         for (var player : level.players()) {

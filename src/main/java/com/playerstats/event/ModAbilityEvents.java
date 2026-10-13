@@ -36,12 +36,15 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.AnimalTameEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.*;
 
 @EventBusSubscriber(modid = "playerstats")
 public class ModAbilityEvents {
+
+    private static final Map<AbstractHorse, BlockPos> lastHorsePositions = new WeakHashMap<>();
 
     @SubscribeEvent
     public static void onHorseTamed(AnimalTameEvent event){
@@ -68,36 +71,25 @@ public class ModAbilityEvents {
 
     //FROST WALKER
     @SubscribeEvent
-    public static void onHorseTick(PlayerTickEvent.Post event) {
-        
-        if (!(event.getEntity().getVehicle() instanceof AbstractHorse horse)) return;
+    public static void onHorseTick(EntityTickEvent.Pre event) {
+        if (!(event.getEntity() instanceof AbstractHorse horse)) return;
 
         Level level = horse.level();
-        if (level.isClientSide) return;
+        if (level.isClientSide || !horse.onGround()) return;
 
-        boolean hasFrostWalker = Optional.ofNullable(horse.getAttribute(ModAttributes.FROST_WALKER.getDelegate()))
-            .map(attr -> attr.getValue() == 1)
-            .orElse(false);
+        AttributeInstance attr = horse.getAttribute(ModAttributes.FROST_WALKER.getDelegate());
+        if (attr == null || attr.getValue() != 1.0D) return;
 
-        if (hasFrostWalker) {
-            BlockPos currentPos = horse.blockPosition();
-            CompoundTag data = horse.getPersistentData();
-            if (data.contains("LastFrostWalkerX")) {
-                int lastX = data.getInt("LastFrostWalkerX");
-                int lastY = data.getInt("LastFrostWalkerY");
-                int lastZ = data.getInt("LastFrostWalkerZ");
-                if (lastX == currentPos.getX() && lastY == currentPos.getY() && lastZ == currentPos.getZ()) {
-                    return;
-                }
-            }
-            data.putInt("LastFrostWalkerX", currentPos.getX());
-            data.putInt("LastFrostWalkerY", currentPos.getY());
-            data.putInt("LastFrostWalkerZ", currentPos.getZ());
+        BlockPos currentPos = horse.blockPosition();
+        BlockPos lastPos = lastHorsePositions.get(horse);
 
-            applyFrostWalker(horse, horse.level(), currentPos, 1);
+        boolean hasMoved = !currentPos.equals(lastPos);
+        boolean shouldRefreshStill = (level.getGameTime() % 20 == 0);
+
+        if (hasMoved || shouldRefreshStill) {
+            lastHorsePositions.put(horse, currentPos);
+            applyFrostWalker(horse, level, currentPos, 1);
         }
-
-
     }
 
     //REBIRTH (droppar fragmento)
@@ -134,57 +126,6 @@ public class ModAbilityEvents {
         }
     }
 
-
-    //TAUNT
-    @SubscribeEvent
-    public static void onTargetChange(LivingChangeTargetEvent event) {
-        LivingEntity attacker = event.getEntity();
-        LivingEntity originalTarget = event.getOriginalAboutToBeSetTarget();
-
-        // só vale se for hostil mirando em um player
-        if (!(originalTarget instanceof ServerPlayer player)) return;
-
-        Level level = attacker.level();
-
-        // procura Iron Golem próximo com atributo TAUNT ativo
-        List<IronGolem> golems = level.getEntitiesOfClass(IronGolem.class,
-                attacker.getBoundingBox().inflate(16.0D),
-                g -> g.getAttribute(ModAttributes.TAUNT.getDelegate()) != null
-                        && g.getAttribute(ModAttributes.TAUNT.getDelegate()).getValue() == 1.0D
-                        && g.isAlive());
-
-        if (!golems.isEmpty()) {
-            IronGolem golem = golems.get(0); // escolhe o primeiro, ou pode pegar o mais próximo
-            event.setNewAboutToBeSetTarget(golem);
-            golem.setTarget(attacker);
-
-            // Partículas visuais sobre o Golem
-            if (level instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-                        golem.getX(), golem.getY() + 1.0, golem.getZ(),
-                        10, 0.5, 0.5, 0.5, 0.05);
-            }
-        }
-
-        // procura lobos hostis/neutros próximos para redirecionar
-        List<LivingEntity> wolves = level.getEntitiesOfClass(LivingEntity.class,
-                attacker.getBoundingBox().inflate(16.0D),
-                w -> w.isAlive() && w.getType() == EntityType.WOLF && w.getAttribute(ModAttributes.TAUNT.getDelegate()) != null
-                        && w.getAttribute(ModAttributes.TAUNT.getDelegate()).getValue() == 1.0D);
-
-        if (!wolves.isEmpty()) {
-            Wolf wolf = (Wolf) wolves.get(0);
-
-            event.setNewAboutToBeSetTarget(wolf); // redireciona o ataque para o lobo
-            wolf.setTarget(attacker);
-
-            if (level instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-                        wolf.getX(), wolf.getY() + 0.5, wolf.getZ(),
-                        10, 0.3, 0.3, 0.3, 0.05);
-            }
-        }
-    }
 
     //HOWL_BUFF
     private static final Map<UUID, Long> howlCooldowns = new HashMap<>();

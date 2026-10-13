@@ -114,14 +114,21 @@ public class FollowOwnerGoal extends Goal {
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int dy = 0; dy >= -2; dy--) {
-                    Vec3 target = owner.position().add(dx, dy, dz);
-                    BlockPos pos = BlockPos.containing(target);
+                    double targetX = owner.getX() + dx + 0.5D;
+                    double targetY = owner.getY() + dy;
+                    double targetZ = owner.getZ() + dz + 0.5D;
+                    BlockPos pos = BlockPos.containing(targetX, targetY, targetZ);
                     BlockPos below = pos.below();
 
-                    if (mob.level().getBlockState(pos).getCollisionShape(mob.level(), pos).isEmpty()
-                            && mob.level().getBlockState(below).isSolidRender(mob.level(), below)) {
+                    // Verifica se o bloco de baixo é sólido e não é perigoso (lava/fogo/etc)
+                    if (!mob.level().getBlockState(below).entityCanStandOn(mob.level(), below, mob)) {
+                        continue;
+                    }
 
-                        mob.setPos(target.x, target.y, target.z);
+                    // Verifica se a bounding box completa do mob nesta posição não colide com blocos ou fluidos
+                    var boundingBox = mob.getDimensions(mob.getPose()).makeBoundingBox(targetX, targetY, targetZ);
+                    if (mob.level().noCollision(mob, boundingBox)) {
+                        mob.moveTo(targetX, targetY, targetZ, mob.getYRot(), mob.getXRot());
                         mob.getNavigation().stop();
                         return;
                     }
