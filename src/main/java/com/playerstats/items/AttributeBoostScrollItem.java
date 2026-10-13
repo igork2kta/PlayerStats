@@ -1,3 +1,4 @@
+
 package com.playerstats.items;
 
 import com.playerstats.Config;
@@ -61,7 +62,7 @@ public class AttributeBoostScrollItem extends Item {
         if (!level.isClientSide) {
             Random random = new Random();
 
-
+            // Primeiro uso: definir atributo, incremento e tempo
             if (stack.get(ModDataComponents.DEFINED_ATTRIBUTE) == null) {
                 List<Attribute> filteredAttributes = AttributeUtils.getAttributes(player, "");
 
@@ -83,23 +84,24 @@ public class AttributeBoostScrollItem extends Item {
                     int maxTicks = maxMinutes * 60 * 20;
                     int duration = minTicks + random.nextInt(maxTicks - minTicks + 1);
 
+                    //Limitar a 2 casas decimais
                     stack.set(ModDataComponents.BOOST_AMOUNT, Math.round(amount * 100.0) / 100.0);
                     stack.set(ModDataComponents.BOOST_DURATION, duration);
 
                 }
-            } else {
+                
+            } 
+            // Segundo uso: aplicar boost já salvo
+            else {
                 String attrKey = stack.get(ModDataComponents.DEFINED_ATTRIBUTE);
                 Attribute attribute = BuiltInRegistries.ATTRIBUTE
                         .getOptional(ResourceLocation.tryParse(attrKey))
                         .orElse(null);
 
                 if (attribute != null) {
-
-
-                    ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", attribute.getDescriptionId());
                     double amount = stack.get(ModDataComponents.BOOST_AMOUNT);
                     int duration = stack.get(ModDataComponents.BOOST_DURATION);
-                    applyBoost(player, attribute, modifierId, amount, duration);
+                    applyBoost(player, attribute, amount, duration);
                 }
 
                 if (!player.isCreative()) stack.shrink(1);
@@ -109,39 +111,40 @@ public class AttributeBoostScrollItem extends Item {
         return InteractionResultHolder.success(stack);
     }
 
-    private void applyBoost(Player player, Attribute attribute, ResourceLocation id, double amount, int duration) {
+    private void applyBoost(Player player, Attribute attribute, double amount, int duration) {
         AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attribute);
         if (instance == null) return;
 
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.computeIfAbsent(playerId, k -> new ArrayList<>());
 
+        // Cria um ResourceLocation único para esse atributo
+        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + attribute.getDescriptionId());
+
         // Verifica se já existe boost para o mesmo atributo
         for (BoostInstance existing : boosts) {
             if (existing.attribute.equals(attribute)) {
-                // Apenas renova o tempo
+                // Apenas renova o tempo e atualiza quantidade
                 existing.ticksRemaining = duration;
                 existing.amount = amount;
+                instance.removeModifier(modifierId);
+                instance.addTransientModifier(new AttributeModifier(modifierId, amount, AttributeModifier.Operation.ADD_VALUE));
                 sendBoostsToClient(player);
                 return;
             }
         }
 
-        // Cria um ResourceLocation único para esse atributo
-        ResourceLocation modifierId =  ResourceLocation.fromNamespaceAndPath("playerstats_scroll_boost", attribute.getDescriptionId());
-
-        //Remove o atributo se ja estiver ativo
+        // Remove o atributo se ja estiver ativo
         instance.removeModifier(modifierId);
 
         AttributeModifier modifier = new AttributeModifier(
-
                 modifierId,
                 amount,
                 AttributeModifier.Operation.ADD_VALUE
         );
 
         instance.addTransientModifier(modifier);
-        boosts.add(new BoostInstance(attribute, id, duration, amount));
+        boosts.add(new BoostInstance(attribute, modifierId, duration, amount));
 
         sendBoostsToClient(player);
     }
@@ -176,88 +179,100 @@ public class AttributeBoostScrollItem extends Item {
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-
         if (event.getEntity().level().isClientSide) return;
 
-        UUID playerId = event.getEntity().getUUID();
-        List<AttributeBoostScrollItem.BoostInstance> boosts = AttributeBoostScrollItem.activeBoosts.get(playerId);
+        Player player = event.getEntity();
+        UUID playerId = player.getUUID();
+        List<BoostInstance> boosts = activeBoosts.get(playerId);
         if (boosts == null || boosts.isEmpty()) return;
 
-        Iterator<AttributeBoostScrollItem.BoostInstance> iterator = boosts.iterator();
+        boolean syncNeeded = false;
+        Iterator<BoostInstance> iterator = boosts.iterator();
         while (iterator.hasNext()) {
-            AttributeBoostScrollItem.BoostInstance boost = iterator.next();
+            BoostInstance boost = iterator.next();
             boost.ticksRemaining--;
             if (boost.ticksRemaining <= 0) {
-                AttributeInstance instance = AttributeUtils.getAttributeInstance(event.getEntity(), boost.attribute);
-                if (instance != null) instance.removeModifier(boost.modifierId);
+                AttributeInstance instance = AttributeUtils.getAttributeInstance(player, boost.attribute);
+                if (instance != null) {
+                    instance.removeModifier(boost.modifierId);
+                }
                 iterator.remove();
-                AttributeBoostScrollItem.sendBoostsToClient(event.getEntity());
+                syncNeeded = true;
+            } else if (boost.ticksRemaining % 20 == 0) {
+                // Sincroniza apenas 1 vez por segundo (ao mudar o segundo restante)
+                syncNeeded = true;
             }
         }
 
-        if (boosts.isEmpty()) AttributeBoostScrollItem.activeBoosts.remove(playerId);
-        else AttributeBoostScrollItem.sendBoostsToClient(event.getEntity());
+        if (boosts.isEmpty()) {
+            activeBoosts.remove(playerId);
+            sendBoostsToClient(player);
+        } else if (syncNeeded) {
+            sendBoostsToClient(player);
+        }
     }
-
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        AttributeBoostScrollItem.saveBoostsToPlayer(event.getEntity());
+        saveBoostsToPlayer(event.getEntity());
+        activeBoosts.remove(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        AttributeBoostScrollItem.loadBoostsFromPlayer(event.getEntity());
+        loadBoostsFromPlayer(event.getEntity());
     }
 
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         player.getPersistentData().remove("PlayerStatsBoosts");
-        AttributeBoostScrollItem.activeBoosts.remove(player.getUUID());
-        AttributeBoostScrollItem.sendBoostsToClient(player);
+        activeBoosts.remove(player.getUUID());
+        sendBoostsToClient(player);
     }
 
     public static void sendBoostsToClient(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.get(playerId);
         if (boosts == null || boosts.isEmpty()) {
-            //PacketHandler.sendToClient(new com.playerstats.network.BoostsSyncPacket(Map.of()), (ServerPlayer) player);
+            PacketHandler.sendToClient(new com.playerstats.network.BoostsSyncPacket(Map.of()), serverPlayer);
             return;
         }
 
         Map<ResourceLocation, com.playerstats.network.BoostsSyncPacket.BoostData> map = boosts.stream()
                .collect(Collectors.toMap(
                         boost -> BuiltInRegistries.ATTRIBUTE.getKey(boost.attribute),
-                        boost -> new com.playerstats.network.BoostsSyncPacket.BoostData(boost.amount, boost.ticksRemaining / 20)
+                        boost -> new com.playerstats.network.BoostsSyncPacket.BoostData(boost.amount, Math.max(0, boost.ticksRemaining / 20))
                 ));
 
-        PacketHandler.sendToClient(new com.playerstats.network.BoostsSyncPacket(map), (ServerPlayer) player);
+        PacketHandler.sendToClient(new com.playerstats.network.BoostsSyncPacket(map), serverPlayer);
     }
 
     public static void saveBoostsToPlayer(Player player) {
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.get(playerId);
-        if (boosts == null || boosts.isEmpty()) return;
+        if (boosts == null || boosts.isEmpty()) {
+            player.getPersistentData().remove("PlayerStatsBoosts");
+            return;
+        }
 
         var tag = new CompoundTag();
         for (int i = 0; i < boosts.size(); i++) {
             BoostInstance boost = boosts.get(i);
             var boostTag = new CompoundTag();
             boostTag.putString("Attribute", BuiltInRegistries.ATTRIBUTE.getKey(boost.attribute).toString());
-            boostTag.putString("ModifierId", boost.modifierId.getNamespace());
+            boostTag.putString("ModifierId", boost.modifierId.toString());
             boostTag.putInt("TicksRemaining", boost.ticksRemaining);
             boostTag.putDouble("Amount", boost.amount);
             tag.put("Boost" + i, boostTag);
         }
 
         player.getPersistentData().put("PlayerStatsBoosts", tag);
-
-        sendBoostsToClient(player);
     }
 
     public static void loadBoostsFromPlayer(Player player) {
-
         var tag = player.getPersistentData().getCompound("PlayerStatsBoosts");
         if (tag == null || tag.isEmpty()) return;
 
@@ -271,20 +286,27 @@ public class AttributeBoostScrollItem extends Item {
             int ticks = boostTag.getInt("TicksRemaining");
             double amount = boostTag.getDouble("Amount");
 
-            ResourceLocation id = ResourceLocation.fromNamespaceAndPath("playerstats", modId);
-
             Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(ResourceLocation.tryParse(attrKey)).orElse(null);
-            if (attribute != null) {
+            if (attribute != null && ticks > 0) {
+                ResourceLocation modifierId = ResourceLocation.tryParse(modId);
+                if (modifierId == null) {
+                    modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + attribute.getDescriptionId());
+                }
+
                 AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attribute);
                 if (instance != null) {
-                    ResourceLocation modifierId =  ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost");
+                    instance.removeModifier(modifierId);
                     instance.addTransientModifier(new AttributeModifier(modifierId, amount, AttributeModifier.Operation.ADD_VALUE));
-                    boosts.add(new BoostInstance(attribute, id, ticks, amount));
+                    boosts.add(new BoostInstance(attribute, modifierId, ticks, amount));
                 }
             }
         }
 
-        if (!boosts.isEmpty()) activeBoosts.put(playerId, boosts);
+        if (!boosts.isEmpty()) {
+            activeBoosts.put(playerId, boosts);
+        } else {
+            player.getPersistentData().remove("PlayerStatsBoosts");
+        }
 
         sendBoostsToClient(player);
     }

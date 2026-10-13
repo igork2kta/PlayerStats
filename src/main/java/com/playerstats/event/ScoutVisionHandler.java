@@ -27,6 +27,9 @@ public class ScoutVisionHandler {
         Level level = event.getLevel();
         if (level.isClientSide()) return;
 
+        // Executa a cada 20 ticks (1 segundo) para balancear responsividade e performance
+        if (level.getGameTime() % 20 != 0) return;
+
         double radius = 16.0D;
 
         for (var player : level.players()) {
@@ -47,6 +50,8 @@ public class ScoutVisionHandler {
                 // cria um centro de visão no player
                 parrots.add(null); // usamos null como “flag” para indicar Scout Vision no player
             }
+
+            if (parrots.isEmpty()) continue;
 
             for (Parrot parrot : parrots) {
                 AABB visionBox = (parrot != null)
@@ -69,19 +74,34 @@ public class ScoutVisionHandler {
         CompoundTag tag = leftShoulder ? player.getShoulderEntityLeft() : player.getShoulderEntityRight();
         if (tag == null || tag.isEmpty()) return false;
         if (!"minecraft:parrot".equals(tag.getString("id"))) return false;
-        if (!tag.contains("Attributes", 9)) return false;
-        ListTag attributes = tag.getList("Attributes", 10);
+
+        // No 1.21.1 a tag é "attributes" (minúsculo), mantendo suporte a "Attributes"
+        String attrKey = tag.contains("attributes", 9) ? "attributes" : (tag.contains("Attributes", 9) ? "Attributes" : null);
+        if (attrKey == null) return false;
+
+        ListTag attributes = tag.getList(attrKey, 10);
 
         for (int i = 0; i < attributes.size(); i++) {
             CompoundTag attr = attributes.getCompound(i);
-            if ("playerstats:scout_vision".equals(attr.getString("Name")) && attr.contains("Modifiers", 9)) {
-                ListTag mods = attr.getList("Modifiers", 10);
-                if (!mods.isEmpty()) {
-                    CompoundTag mod = mods.getCompound(0);
-                    double amount = mod.getDouble("Amount");
-                    if (-1 + amount == 1.0) { // lógica original mantida
-                        return true;
+            // No 1.21.1 é "id", anteriormente era "Name"
+            String id = attr.contains("id") ? attr.getString("id") : attr.getString("Name");
+
+            if ("playerstats:scout_vision".equals(id) || "attribute.playerstats.scout_vision".equals(id)) {
+                double base = attr.contains("base") ? attr.getDouble("base") : (attr.contains("Base") ? attr.getDouble("Base") : -1.0D);
+                double total = base;
+
+                String modKey = attr.contains("modifiers", 9) ? "modifiers" : (attr.contains("Modifiers", 9) ? "Modifiers" : null);
+                if (modKey != null) {
+                    ListTag mods = attr.getList(modKey, 10);
+                    for (int j = 0; j < mods.size(); j++) {
+                        CompoundTag mod = mods.getCompound(j);
+                        double amount = mod.contains("amount") ? mod.getDouble("amount") : mod.getDouble("Amount");
+                        total += amount;
                     }
+                }
+
+                if (total == 1.0D) {
+                    return true;
                 }
             }
         }

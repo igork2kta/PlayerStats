@@ -54,6 +54,8 @@ public class StatsScreen extends Screen {
     private final int xpIncrement = Config.XP_COST_INCREMENT.get();
 
     private boolean showAttributes = true;
+    private List<Attribute> cachedAttributes = List.of();
+    private List<AttributeInstance> cachedAbilities = List.of();
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
@@ -62,6 +64,14 @@ public class StatsScreen extends Screen {
     public StatsScreen(LivingEntity entity) {
         super(Component.literal("Player Stats"));
         this.entity = entity;
+    }
+
+    private void updateFilteredLists() {
+        if (showAttributes) {
+            this.cachedAttributes = AttributeUtils.getAttributes(entity, searchText);
+        } else {
+            this.cachedAbilities = AttributeUtils.getCustomAttributes(entity, searchText);
+        }
     }
 
     @Override
@@ -85,6 +95,7 @@ public class StatsScreen extends Screen {
         this.searchBox.setResponder(text -> {
             this.searchText = text.toLowerCase();
             this.scrollOffset = 0;
+            updateFilteredLists();            
             rebuildButtons();
 
         });
@@ -96,7 +107,7 @@ public class StatsScreen extends Screen {
                 20,                              // altura
                 Component.literal("Attributes"),
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
-                btn -> {showAttributes = true; scrollOffset = 0; rebuildButtons();}
+                btn -> {showAttributes = true; scrollOffset = 0; updateFilteredLists(); rebuildButtons();}
         );
 
         uniqueAbilitiesButton = new CustomButton(
@@ -106,7 +117,7 @@ public class StatsScreen extends Screen {
                 20,                              // altura
                 Component.literal("Unique Abilities"),
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
-                btn -> {showAttributes = false; scrollOffset = 0; rebuildButtons();}
+                btn -> {showAttributes = false; scrollOffset = 0; updateFilteredLists(); rebuildButtons();}
         );
 
         resetButton = new CustomButton(
@@ -118,7 +129,7 @@ public class StatsScreen extends Screen {
                 ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
                 btn -> PacketHandler.sendToServer(new ResetAttributesPacket(entity.getId()))
         );
-
+        updateFilteredLists();
         rebuildButtons();
 
 
@@ -170,12 +181,10 @@ public class StatsScreen extends Screen {
                 textX = leftPos + (BG_WIDTH - textWidth) / 2;
                 guiGraphics.drawString(font, xp, textX, topPos + 46, color);
             }
-            List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
-
-
+           
             int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
 
-            for (Attribute attr : filteredAttributes) {
+            for (Attribute attr : cachedAttributes) {
                 AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
                 String name = AttributeUtils.getAttributeName(attr);
 
@@ -256,11 +265,9 @@ public class StatsScreen extends Screen {
                 guiGraphics.drawString(font, xp, textX, topPos + 46, color);
             }
 
-            List<AttributeInstance> filteredAbilities = AttributeUtils.getCustomAttributes(entity, searchText);
-
             int y = clipTop - scrollOffset + 3; //2 para alinhamento do texto com os botões
 
-            for (AttributeInstance instance: filteredAbilities) {
+            for (AttributeInstance instance: cachedAbilities) {
 
                 String name = AttributeUtils.getAttributeName(instance.getAttribute().value());
 
@@ -313,14 +320,12 @@ public class StatsScreen extends Screen {
 
         if(showAttributes){
 
-        List<Attribute> filteredAttributes = AttributeUtils.getAttributes(entity, searchText);
-
         int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
-        maxScroll = Math.max(0, (filteredAttributes.size() - visibleLines) * LINE_HEIGHT);
+        maxScroll = Math.max(0, (cachedAttributes.size() - visibleLines) * LINE_HEIGHT);
 
         int y = clipTop - scrollOffset;
 
-        for (Attribute attr : filteredAttributes) {
+        for (Attribute attr : cachedAttributes) {
 
                 if (y + 17 <= clipTop) {
                     y += LINE_HEIGHT;
@@ -351,14 +356,12 @@ public class StatsScreen extends Screen {
         }
         else{
 
-            List<AttributeInstance> filteredAbilities = AttributeUtils.getCustomAttributes(entity, searchText);
-
             int visibleLines = (clipBottom - clipTop) / LINE_HEIGHT;
-            maxScroll = Math.max(0, (filteredAbilities.size() - visibleLines) * LINE_HEIGHT);
+            maxScroll = Math.max(0, (cachedAbilities.size() - visibleLines) * LINE_HEIGHT);
 
             int y = clipTop - scrollOffset;
 
-            for (AttributeInstance instance: filteredAbilities) {
+            for (AttributeInstance instance: cachedAbilities) {
 
                 if (y + 17 <= clipTop) {
                     y += LINE_HEIGHT;
@@ -413,6 +416,7 @@ public class StatsScreen extends Screen {
             if (searchBox.isMouseOver(mouseX, mouseY)) {
                 searchBox.setValue("");       // limpa o texto
                 scrollOffset = 0;             // reseta scroll (opcional)
+                updateFilteredLists();
                 rebuildButtons();             // atualiza a lista
                 return true;
             }

@@ -116,8 +116,9 @@ public class AttributeUtils {
         }).toList();
     }
 
-    public static double getAttributeValue(LivingEntity entity, DeferredHolder<Attribute, Attribute> attribute){
-        return entity.getAttributes().getInstance(attribute).getValue();
+   public static double getAttributeValue(LivingEntity entity, DeferredHolder<Attribute, Attribute> attribute){
+        AttributeInstance instance = entity.getAttributes().getInstance(attribute);
+        return instance != null ? instance.getValue() : -1.0D;
     }
 
 
