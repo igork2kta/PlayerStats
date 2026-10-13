@@ -1,0 +1,7 @@
+1. Se a Goal já está rodando:
+   └── Chama canContinueToUse()
+       ├── Se retornar FALSE ──> Chama stop() e NÃO chama tick()!
+       └── Se retornar TRUE  ──> Chama tick()
+2. Se a Goal NÃO está rodando:
+   └── Chama canUse()
+       └── Se retornar TRUE  ──> Chama start() e depois tick()

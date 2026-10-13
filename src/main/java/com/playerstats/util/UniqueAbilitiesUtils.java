@@ -21,7 +21,7 @@ public class UniqueAbilitiesUtils {
             if(!entity.getPersistentData().contains("Owner"))
                 entity.getPersistentData().putUUID("Owner", player.getUUID());
 
-            if(attributeId.contains("follow_owner")) disableAbility(ModAttributes.PATROL, entity);
+            if(attributeId.contains("follow_owner") && state) disableAbility(ModAttributes.PATROL, entity);
         }
 
         else if(attributeId.contains("teleport_to_owner")) {
@@ -50,9 +50,9 @@ public class UniqueAbilitiesUtils {
             disableAbility(ModAttributes.FOLLOW_OWNER, entity);
             disableAbility(ModAttributes.TELEPORT_TO_OWNER, entity);
 
-            entity.getPersistentData().putDouble("PatrolX", entity.getX());
-            entity.getPersistentData().putDouble("PatrolY", entity.getY());
-            entity.getPersistentData().putDouble("PatrolZ", entity.getZ());
+            entity.getPersistentData().putInt("PatrolX", entity.blockPosition().getX());
+            entity.getPersistentData().putInt("PatrolY", entity.blockPosition().getY());
+            entity.getPersistentData().putInt("PatrolZ", entity.blockPosition().getZ());
 
         }
 
