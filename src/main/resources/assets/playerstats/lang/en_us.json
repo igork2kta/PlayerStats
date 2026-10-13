@@ -61,6 +61,7 @@
   "attribute.playerstats.taunt": "Taunt",
   "attribute.playerstats.scout_vision": "Scout Vision",
   "attribute.playerstats.howl_buff": "Howl Buff",
-  "attribute.playerstats.patrol": "Patrol"
+  "attribute.playerstats.patrol": "Patrol",
+  "attribute.playerstats.milky_aura": "Milky Aura"
 
 }
