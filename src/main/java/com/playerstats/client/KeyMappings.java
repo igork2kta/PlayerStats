@@ -29,10 +29,18 @@ public class KeyMappings {
             "key.categories.playerstats"
     ));
 
+    public static final Lazy<KeyMapping> ACTIVATE_ICE_KEY = Lazy.of(() -> new KeyMapping(
+            "key.playerstats.activate_ice",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_V, // Padrão tecla V
+            "key.categories.playerstats"
+    ));
+
     @SubscribeEvent // on the mod event bus only on the physical client
     public static void registerBindings(RegisterKeyMappingsEvent event) {
         event.register(OPEN_STATS_KEY.get());
         event.register(OPEN_ENTITY_STATS_KEY.get());
+        event.register(ACTIVATE_ICE_KEY.get());
     }
 
 

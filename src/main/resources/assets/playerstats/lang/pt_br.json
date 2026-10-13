@@ -1,6 +1,7 @@
 {
-  "key.categories.playerstats": "Status do Jogador",
+  "key.categories.playerstats_screen": "Status do Jogador",
   "key.playerstats.open_stats": "Abrir Tela de Atributos",
+    "key.playerstats.activate_ice": "Ativar Habilidade de Gelo",
   "key.playerstats.open_entity_stats": "Abrir tela de atributos da entidade (entidade na mira)",
   "gui.playerstats.title": "Atributos do Jogador",
   "gui.playerstats.points": "Pontos Disponíveis: %s",
@@ -64,5 +65,16 @@
   "attribute.playerstats.scout_vision": "Visão de Patrulha",
   "attribute.playerstats.howl_buff": "Buff do Uivo",
   "attribute.playerstats.patrol": "Patrulha",
-  "attribute.playerstats.milky_aura": "Aura de Leite"
+  "attribute.playerstats.milky_aura": "Aura de Leite",
+  "attribute.playerstats.infinite_ice": "Criador de Gelo",
+
+  "item.playerstats.infinite_ice": "Gelo Infinito",
+  "item.playerstats.infinite_ice.hover_text": "Gelo Infinito Temporário",
+  "item.playerstats.infinite_ice.hover_text_desc": "Permite colocar gelo sem gastar enquanto a habilidade estiver ativa.",
+  "gui.playerstats.ice_ability_locked": "Você precisa desbloquear a habilidade Criador de Gelo primeiro!",
+  "gui.playerstats.ice_ability_already_active": "A habilidade de gelo já está ativa (%s s restantes)!",
+  "gui.playerstats.ice_ability_cooldown": "Habilidade de gelo em recarga: faltam %s segundos.",
+  "gui.playerstats.ice_inventory_full": "Inventário cheio! Não foi possível guardar o item para ativar a habilidade.",
+  "gui.playerstats.ice_ability_activated": "Habilidade de Gelo Infinito ativada por 1 minuto!",
+  "gui.playerstats.ice_ability_expired": "A habilidade de Gelo Infinito expirou."
 }
