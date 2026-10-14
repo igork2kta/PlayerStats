@@ -17,9 +17,9 @@ public class ModDataComponents {
     public static final String MODID = "playerstats";
 
 
-    // Criar o registry
+    // Criar o registry compatível com 1.21 e 1.21.1
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES =
-            DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MODID);
+            DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MODID);
 
     //region AttributeBoostScrool
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> DEFINED_ATTRIBUTE =

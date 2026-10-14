@@ -12,7 +12,6 @@ import org.lwjgl.glfw.GLFW;
 
 
 @OnlyIn(Dist.CLIENT)
-@EventBusSubscriber(modid = "playerstats", value = Dist.CLIENT)
 public class KeyMappings {
 
     public static final Lazy<KeyMapping> OPEN_STATS_KEY = Lazy.of(() -> new KeyMapping(

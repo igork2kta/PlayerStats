@@ -89,9 +89,9 @@ public class PlayerStats {
         modEventBus.addListener(this::onConfigReload);
 
         // Registrar eventos apenas no lado do cliente
-        // No construtor do seu ModMain ou em algum registrador
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modEventBus.addListener(this::onClientSetup);
+            modEventBus.addListener(com.playerstats.client.KeyMappings::registerBindings);
         }
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
