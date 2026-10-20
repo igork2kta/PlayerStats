@@ -131,7 +131,7 @@ dependencies {
     // implementation project(":myproject")
 
     // Apotheosis para testes de compatibilidade em runtime
-    localRuntime "dev.shadowsoffire:Apotheosis:1.21.1-8.9.0"
+    //localRuntime "dev.shadowsoffire:Apotheosis:1.21.1-8.9.0"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
