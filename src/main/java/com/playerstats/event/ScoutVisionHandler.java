@@ -33,30 +33,35 @@ public class ScoutVisionHandler {
         double radius = 16.0D;
 
         for (var player : level.players()) {
+            int shoulderLvl = getShoulderScoutVisionLevel(player);
 
             // Papagaios soltos com Scout Vision
             List<Parrot> parrots = level.getEntitiesOfClass(Parrot.class,
-                    player.getBoundingBox().inflate(radius),
+                    player.getBoundingBox().inflate(32.0D),
                     g -> {
                         var attr = g.getAttribute(ModAttributes.SCOUT_VISION.getDelegate());
-                        return g.isAlive() && attr != null && attr.getValue() == 1.0D;
+                        return g.isAlive() && attr != null && attr.getValue() > 0.0D;
                     });
 
-            // Papagaios nos ombros (não há entidade, então usamos player como centro)
-            boolean left = hasScoutVision(player, true);
-            boolean right = hasScoutVision(player, false);
+            if (parrots.isEmpty() && shoulderLvl <= 0) continue;
 
-            if (left || right) {
-                // cria um centro de visão no player
-                parrots.add(null); // usamos null como “flag” para indicar Scout Vision no player
+            // Processa papagaio no ombro
+            if (shoulderLvl > 0) {
+                double shoulderRadius = 16.0D + ((shoulderLvl - 1) * 8.0D); // Nv 1: 16b, Nv 2: 24b, Nv 3: 32b
+                AABB visionBox = player.getBoundingBox().inflate(shoulderRadius);
+                List<LivingEntity> mobs = level.getEntitiesOfClass(LivingEntity.class,
+                        visionBox,
+                        e -> e instanceof Monster || e instanceof Slime);
+                for (LivingEntity mob : mobs) {
+                    mob.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200, 0, false, false));
+                }
             }
 
-            if (parrots.isEmpty()) continue;
-
+            // Processa papagaios soltos
             for (Parrot parrot : parrots) {
-                AABB visionBox = (parrot != null)
-                        ? parrot.getBoundingBox().inflate(radius)
-                        : player.getBoundingBox().inflate(radius);
+                int lvl = (int) Math.round(parrot.getAttribute(ModAttributes.SCOUT_VISION.getDelegate()).getValue());
+                double parrotRadius = 16.0D + ((lvl - 1) * 8.0D);
+                AABB visionBox = parrot.getBoundingBox().inflate(parrotRadius);
 
                 List<LivingEntity> mobs = level.getEntitiesOfClass(LivingEntity.class,
                         visionBox,
@@ -69,15 +74,21 @@ public class ScoutVisionHandler {
         }
     }
 
-    /** Verifica se o papagaio no ombro tem Scout Vision */
-    private static boolean hasScoutVision(Player player, boolean leftShoulder) {
+    /** Retorna o nível de Scout Vision do papagaio no ombro (ou 0 se não tiver) */
+    private static int getShoulderScoutVisionLevel(Player player) {
+        int left = getShoulderLevel(player, true);
+        int right = getShoulderLevel(player, false);
+        return Math.max(left, right);
+    }
+
+    private static int getShoulderLevel(Player player, boolean leftShoulder) {
         CompoundTag tag = leftShoulder ? player.getShoulderEntityLeft() : player.getShoulderEntityRight();
-        if (tag == null || tag.isEmpty()) return false;
-        if (!"minecraft:parrot".equals(tag.getString("id"))) return false;
+        if (tag == null || tag.isEmpty()) return 0;
+        if (!"minecraft:parrot".equals(tag.getString("id"))) return 0;
 
         // No 1.21.1 a tag é "attributes" (minúsculo), mantendo suporte a "Attributes"
         String attrKey = tag.contains("attributes", 9) ? "attributes" : (tag.contains("Attributes", 9) ? "Attributes" : null);
-        if (attrKey == null) return false;
+        if (attrKey == null) return 0;
 
         ListTag attributes = tag.getList(attrKey, 10);
 
@@ -100,11 +111,11 @@ public class ScoutVisionHandler {
                     }
                 }
 
-                if (total == 1.0D) {
-                    return true;
+                if (total > 0.0D) {
+                    return (int) Math.round(total);
                 }
             }
         }
-        return false;
+        return 0;
     }
 }

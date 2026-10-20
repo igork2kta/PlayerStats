@@ -183,8 +183,10 @@ public class PlayerStatsCommands {
         }
 
         AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
+        String sanitizedPath = AttributeUtils.sanitizeToPath(attr.getDescriptionId());
         AttributeModifier modifier = instance.getModifiers().stream()
-                .filter(mod -> mod.id().getNamespace().equals("playerstats") && mod.id().getPath().equals(attr.getDescriptionId()))
+                .filter(mod -> mod.id().getNamespace().equals("playerstats")
+                        && (mod.id().getPath().equals(attr.getDescriptionId()) || mod.id().getPath().equals(sanitizedPath)))
                 .findFirst()
                 .orElse(null);
 

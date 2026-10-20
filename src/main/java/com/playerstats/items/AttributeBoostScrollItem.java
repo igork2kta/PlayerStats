@@ -118,8 +118,9 @@ public class AttributeBoostScrollItem extends Item {
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.computeIfAbsent(playerId, k -> new ArrayList<>());
 
-        // Cria um ResourceLocation único para esse atributo
-        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + attribute.getDescriptionId());
+        // Cria um ResourceLocation unico para esse atributo
+        String sanitizedPath = AttributeUtils.sanitizeToPath(attribute.getDescriptionId());
+        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + sanitizedPath);
 
         // Verifica se já existe boost para o mesmo atributo
         for (BoostInstance existing : boosts) {
@@ -290,7 +291,7 @@ public class AttributeBoostScrollItem extends Item {
             if (attribute != null && ticks > 0) {
                 ResourceLocation modifierId = ResourceLocation.tryParse(modId);
                 if (modifierId == null) {
-                    modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + attribute.getDescriptionId());
+                    modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + AttributeUtils.sanitizeToPath(attribute.getDescriptionId()));
                 }
 
                 AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attribute);

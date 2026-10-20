@@ -17,7 +17,23 @@ version = mod_version
 group = mod_group_id
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+   /* //Aphoteosis
+    // Shadows of Fire (Apotheosis, Placebo, Apothic Attributes)
+    maven {
+        name = "Shadows of Fire Maven"
+        url = "https://maven.shadowsoffire.dev/releases"
+    }
+    // Curios API
+    maven {
+        name = "Illusive Soulworks Maven"
+        url = "https://maven.theillusivec4.top/"
+    }
+    // Patchouli (BlameJared)
+    maven {
+        name = "BlameJared Maven"
+        url = "https://maven.blamejared.com/"
+    }
+    */
 }
 
 base {
@@ -114,9 +130,8 @@ dependencies {
     // Example project dependency using a sister or child project:
     // implementation project(":myproject")
 
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
+    // Apotheosis para testes de compatibilidade em runtime
+    localRuntime "dev.shadowsoffire:Apotheosis:1.21.1-8.9.0"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

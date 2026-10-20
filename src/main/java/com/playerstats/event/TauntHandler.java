@@ -61,14 +61,14 @@ public class TauntHandler {
         // --- GOLEMS ---
         List<IronGolem> golems = level.getEntitiesOfClass(IronGolem.class,
                 attacker.getBoundingBox().inflate(16.0D),
-                g -> g.isAlive()
-                        && g.getAttribute(ModAttributes.TAUNT.getDelegate()) != null
-                        && g.getAttribute(ModAttributes.TAUNT.getDelegate()).getValue() == 1.0D);
+                g -> {
+                    var attr = g.getAttribute(ModAttributes.TAUNT.getDelegate());
+                    return g.isAlive() && attr != null && attr.getValue() == 1.0D;
+                });
 
         for (IronGolem golem : golems) {
             if (attacker == golem) continue;
 
-            // Ativa automaticamente se possível
             if (activateTaunt(golem)) {
                 triggerTauntParticles(golem, level);
             }
@@ -83,9 +83,10 @@ public class TauntHandler {
         // --- LOBOS ---
         List<Wolf> wolves = level.getEntitiesOfClass(Wolf.class,
                 attacker.getBoundingBox().inflate(16.0D),
-                w -> w.isAlive()
-                        && w.getAttribute(ModAttributes.TAUNT.getDelegate()) != null
-                        && w.getAttribute(ModAttributes.TAUNT.getDelegate()).getValue() == 1.0D);
+                w -> {
+                    var attr = w.getAttribute(ModAttributes.TAUNT.getDelegate());
+                    return w.isAlive() && attr != null && attr.getValue() == 1.0D;
+                });
 
         for (Wolf wolf : wolves) {
             if (attacker == wolf) break;
@@ -102,7 +103,7 @@ public class TauntHandler {
         }
     }
 
-    // Ativa o taunt automaticamente
+    // Ativa o taunt se não estiver em cooldown
     private static boolean activateTaunt(LivingEntity entity) {
         long now = entity.level().getGameTime();
 

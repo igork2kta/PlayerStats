@@ -15,6 +15,15 @@ import java.util.List;
 
 public class AttributeUtils {
 
+    /**
+     * Sanitiza qualquer identificador de atributo ou translation key (ex: apothic_attributes:arrow_velocity)
+     * para um path valido em ResourceLocation ([a-z0-9/._-]).
+     */
+    public static String sanitizeToPath(String raw) {
+        if (raw == null) return "unknown";
+        return raw.replace(':', '.');
+    }
+
     public static double getIncrement(String descriptionId) {
 
         if (Config.cachedCustomAttributeIncrement.containsKey(descriptionId)) {

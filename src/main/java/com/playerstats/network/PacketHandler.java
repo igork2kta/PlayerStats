@@ -50,6 +50,13 @@ public class PacketHandler {
                 PacketHandler::handleUpdateUpgradeCount
         );
 
+        // Servidor → Cliente (Sincronizar nível de habilidade salvo)
+        registrar.playToClient(
+                SyncAbilityLevelPacket.TYPE,
+                SyncAbilityLevelPacket.CODEC,
+                PacketHandler::handleSyncAbilityLevel
+        );
+
         // Cliente → Servidor
         registrar.playToServer(
                 ResetAttributesPacket.TYPE,
@@ -101,9 +108,11 @@ public class PacketHandler {
                     if (attribute != null) {
                         var instance = AttributeUtils.getAttributeInstance(living, attribute);
                         if (instance != null) {
-
-                            PlayerAttributePersistence.upgradeAttribute(living, player, msg.attributeId());
-
+                            if (msg.isToggle()) {
+                                PlayerAttributePersistence.toggleAbility(living, player, msg.attributeId());
+                            } else {
+                                PlayerAttributePersistence.upgradeAttribute(living, player, msg.attributeId());
+                            }
                         }
                     }
                 }
@@ -125,6 +134,13 @@ public class PacketHandler {
         context.enqueueWork(() -> {
             // Estamos no lado cliente
             com.playerstats.client.ClientAttributeCache.setUpgradeCount(packet.upgradeCount());
+        });
+    }
+
+    private static void handleSyncAbilityLevel(SyncAbilityLevelPacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            // Estamos no lado cliente
+            com.playerstats.client.ClientAttributeCache.setAbilityLevel(packet.attributeId(), packet.level());
         });
     }
 

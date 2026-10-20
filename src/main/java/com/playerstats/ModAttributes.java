@@ -53,28 +53,28 @@ public class ModAttributes {
                     () -> new RangedAttribute("attribute.playerstats.taunt", -1.0D, -1.0D, 1.0D)
                             .setSyncable(true));
 
-    //Atrair atenção de mobs hostis
+    //Visão de Patrulha (1 a 3 níveis)
     public static final DeferredHolder<Attribute, Attribute> SCOUT_VISION =
             ATTRIBUTES.register("scout_vision",
-                    () -> new RangedAttribute("attribute.playerstats.scout_vision", -1.0D, -1.0D, 1.0D)
+                    () -> new RangedAttribute("attribute.playerstats.scout_vision", -1.0D, -1.0D, 3.0D)
                             .setSyncable(true));
 
-    //Atrair atenção de mobs hostis
+    //Uivo do lobo em combate (1 a 3 níveis)
     public static final DeferredHolder<Attribute, Attribute> HOWL_BUFF  =
             ATTRIBUTES.register("howl_buff",
-                    () -> new RangedAttribute("attribute.playerstats.howl_buff", -1.0D, -1.0D, 1.0D)
+                    () -> new RangedAttribute("attribute.playerstats.howl_buff", -1.0D, -1.0D, 3.0D)
                             .setSyncable(true));
 
-    //Atrair atenção de mobs hostis
+    // Patrulha
     public static final DeferredHolder<Attribute, Attribute> PATROL  =
             ATTRIBUTES.register("patrol",
                     () -> new RangedAttribute("attribute.playerstats.patrol", -1.0D, -1.0D, 1.0D)
                             .setSyncable(true));
 
-    // Cura efeitos em área (leite)
+    // Cura efeitos em área (leite - 1 a 3 níveis)
     public static final DeferredHolder<Attribute, Attribute> MILKY_AURA =
             ATTRIBUTES.register("milky_aura",
-                    () -> new RangedAttribute("attribute.playerstats.milky_aura", -1.0D, -1.0D, 1.0D)
+                    () -> new RangedAttribute("attribute.playerstats.milky_aura", -1.0D, -1.0D, 3.0D)
                             .setSyncable(true));
 
 
@@ -83,6 +83,12 @@ public class ModAttributes {
     public static final DeferredHolder<Attribute, Attribute> INFINITE_ICE =
             ATTRIBUTES.register("infinite_ice",
                     () -> new RangedAttribute("attribute.playerstats.infinite_ice", -1.0D, -1.0D, 1.0D)
+                            .setSyncable(true));
+
+    // Vampirismo (Life Steal) por níveis (1 a 5)
+    public static final DeferredHolder<Attribute, Attribute> VAMPIRISM =
+            ATTRIBUTES.register("vampirism",
+                    () -> new RangedAttribute("attribute.playerstats.vampirism", -1.0D, -1.0D, 5.0D)
                             .setSyncable(true));
 
     //Aqui são atribuidos os atributos customizados às entidadess
@@ -99,6 +105,7 @@ public class ModAttributes {
 
             if (type == EntityType.PLAYER) {
                 event.add(type, ModAttributes.INFINITE_ICE.getDelegate());
+                event.add(type, ModAttributes.VAMPIRISM.getDelegate());
             }
 
             if (type != EntityType.PLAYER) {
