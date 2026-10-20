@@ -18,7 +18,8 @@ Additionally, Player Stats features a **Companion/Entity progression system**, *
 - ⚔️ **Mob-Based Progression:** Earn attribute points by defeating bosses, high-health mobs, or configured creatures. Milestone kill rewards at 100 kills and every 1,000 kills.
 - 🛠️ **Dynamic Attribute Upgrades:** Allocate points directly into player or entity stats with live search and filter options in the UI.
 - 🐾 **Companion & Mount Progression:** Inspect and improve the stats and special skills of tamed animals, mounts, or allied golems.
-- 🌟 **Unique Abilities System:** Unlock passive and active abilities (e.g., life regeneration, follow/teleport to owner, patrol area, taunt enemies, scout vision, ice conjuring, and rebirth).
+- 🌟 **Unique Abilities & Leveled Skills:** Unlock and upgrade passive and active abilities (e.g., Vampirism life-steal, Howl buff, Scout Vision, Milky Aura, Rebirth, Ice Conjuring).
+- 🎛️ **Ability Toggling & Tooltips:** Right-click unlocked abilities in the UI to toggle them On/Off anytime without losing invested levels. Informative tooltips display dynamic values and stats per level.
 - 📜 **Items & Runes:** Upgrade runes, attribute boost scrolls with temporary buffs, ability crystals, soul stones, and temporary infinite ice.
 - 🕯️ **Rebirth Ritual:** Revive fallen pets, mobs, or hardcore players using Soul Fragments and Soul Stones on top of a charged Respawn Anchor.
 - 🔄 **Configurable Resets:** Reset allocated attributes anytime by paying configurable XP levels.
@@ -48,20 +49,23 @@ Additionally, Player Stats features a **Companion/Entity progression system**, *
 ## ✨ Unique Abilities
 Abilities can be unlocked for players or entities using Ability Points:
 
-| Ability | Applicable Entities | Description |
-| :--- | :--- | :--- |
-| **Life Regen** | Non-player entities | Gives permanent passive health regeneration. |
-| **Follow Owner** | Horses, Donkeys, Mules, Camels, Iron Golems | Makes the creature follow its owner. |
-| **Teleport to Owner** | Mounts, Iron Golems | Teleports the creature to the owner if it falls too far behind *(requires Follow Owner)*. |
-| **Defend Owner** | Iron Golems | Causes the golem to prioritize and attack entities targeting its owner. |
-| **Frost Walker** | Horses, Donkeys, Mules, Camels | Freezes water into ice under the mount's hooves when walking. |
-| **Patrol** | Iron Golems, Wolves | Sets the entity to guard and patrol around its current position. |
-| **Taunt** | Iron Golems, Wolves | Forces nearby hostile monsters to target them instead of the player. |
-| **Howl Buff** | Wolves | Howls when entering combat, granting a strength buff to the wolf and nearby allies. |
-| **Scout Vision** | Parrots | Highlights nearby hostile entities (glowing outline), either while perching nearby or on the player's shoulder. |
-| **Milky Aura** | Cows, Mooshrooms | Clears potion effects from nearby entities within 2 blocks. |
-| **Ice Conjurer** | Players | Allows activating temporary infinite ice placement by pressing `V`. |
-| **Rebirth** | All creatures & Players | Drops a **Soul Fragment** upon death containing the entity's data, allowing resurrection. |
+| Ability | Applicable Entities | Levels | Description |
+| :--- | :--- | :---: | :--- |
+| **Vampirism** | Players | 1 – 5 | Has a chance (30% to 50%) on hit to restore 10% to 18% of dealt damage as health. |
+| **Life Regen** | Non-player entities | 1 | Gives permanent passive health regeneration. |
+| **Follow Owner** | Horses, Donkeys, Mules, Camels, Iron Golems | 1 | Makes the creature follow its owner. |
+| **Teleport to Owner** | Mounts, Iron Golems | 1 | Teleports the creature to the owner if it falls too far behind *(requires Follow Owner)*. |
+| **Defend Owner** | Iron Golems | 1 | Causes the golem to prioritize and attack entities targeting its owner. |
+| **Frost Walker** | Horses, Donkeys, Mules, Camels | 1 | Freezes water into ice under the mount's hooves when walking. |
+| **Patrol** | Iron Golems, Wolves | 1 | Sets the entity to guard and patrol around its current position. |
+| **Taunt** | Iron Golems, Wolves | 1 | Forces nearby hostile monsters to temporarily target them upon engaging in combat. |
+| **Howl Buff** | Wolves | 1 – 3 | Howls when entering combat (5 min cooldown), granting Strength, Speed, and Resistance to allies in an 8 to 16-block radius for 30s to 60s (potency increases at Level 3). |
+| **Scout Vision** | Parrots | 1 – 3 | Detects and highlights nearby monsters with a glowing outline in a 16, 24, or 32-block radius (works when perching or on player shoulders). |
+| **Milky Aura** | Cows, Mooshrooms | 1 – 3 | Clears negative status effects from allies in a 3, 5, or 7-block radius around the cow. |
+| **Ice Conjurer** | Players | 1 | Allows activating temporary infinite ice placement by pressing V. |
+| **Rebirth** | All creatures & Players | 1 | Drops a **Soul Fragment** upon death containing the entity's data, allowing resurrection. |
+
+> **Tip:** You can **Right-Click** any unlocked ability in the UI to toggle it **Active / Inactive** at will without losing upgrade levels. Unlocked but deactivated abilities and unpurchased abilities are clearly distinguished by color, with full details shown on hover tooltips.
 
 ---
 

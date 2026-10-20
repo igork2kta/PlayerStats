@@ -15,8 +15,6 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = "playerstats")
 public class MilkyAuraHandler {
 
-    private static final double AURA_RADIUS = 2.0D;
-
     @SubscribeEvent
     public static void onEntityTick(LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof Cow cow)) return;
@@ -26,10 +24,17 @@ public class MilkyAuraHandler {
         if (cow.tickCount % 10 != 0) return;
 
         var auraAttr = cow.getAttribute(ModAttributes.MILKY_AURA.get());
-        if (auraAttr == null || auraAttr.getValue() != 1.0D) return;
+        if (auraAttr == null) return;
 
-        // Área de efeito de 2 blocos ao redor da vaca
-        AABB auraBox = cow.getBoundingBox().inflate(AURA_RADIUS);
+        double levelValue = auraAttr.getValue();
+        int level = (int) Math.round(levelValue);
+        if (level <= 0) return;
+
+        // Escala o raio da aura de acordo com o nível: Nv 1 = 2b, Nv 2 = 4b, Nv 3 = 6b
+        double auraRadius = level * 2.0D;
+
+        // Área de efeito ao redor da vaca
+        AABB auraBox = cow.getBoundingBox().inflate(auraRadius);
         List<LivingEntity> nearby = cow.level().getEntitiesOfClass(
                 LivingEntity.class,
                 auraBox,

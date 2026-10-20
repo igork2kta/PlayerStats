@@ -62,6 +62,12 @@ public class PacketHandler {
                 ActivateInfiniteIcePacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
 
+        INSTANCE.registerMessage(id++, SyncAbilityLevelPacket.class,
+                SyncAbilityLevelPacket::encode,
+                SyncAbilityLevelPacket::decode,
+                SyncAbilityLevelPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
     }
 
 

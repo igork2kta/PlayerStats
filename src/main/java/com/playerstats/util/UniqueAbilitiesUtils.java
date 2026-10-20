@@ -62,6 +62,23 @@ public class UniqueAbilitiesUtils {
         return true;
     }
 
+    public static boolean isLeveledAbility(String attributeId) {
+        return attributeId.contains("vampirism")
+                || attributeId.contains("milky_aura")
+                || attributeId.contains("howl_buff")
+                || attributeId.contains("scout_vision");
+    }
+
+    public static int getMaxLevel(String attributeId) {
+        if (attributeId.contains("vampirism")) {
+            return 5;
+        }
+        if (attributeId.contains("milky_aura") || attributeId.contains("howl_buff") || attributeId.contains("scout_vision")) {
+            return 3;
+        }
+        return 1;
+    }
+
     private static void disableAbility(RegistryObject<Attribute> ability, LivingEntity entity){
 
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, ability.get());

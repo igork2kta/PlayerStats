@@ -7,6 +7,7 @@ import com.playerstats.client.widget.CustomSearchBox;
 import com.playerstats.client.widget.CustomButton;
 import com.playerstats.network.*;
 import com.playerstats.util.AttributeUtils;
+import com.playerstats.util.UniqueAbilitiesUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -268,30 +269,92 @@ public class StatsScreen extends Screen {
                 }
 
                 int pos = leftPos + 40;
-                if(instance.getValue() == -1)
-                    guiGraphics.drawString(font,name, pos, y, 0X291d13, false);
-                else if(instance.getValue() == 1)
-                    guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
-                else
-                    guiGraphics.drawString(font,Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X291d13, false);
+                String descId = instance.getAttribute().getDescriptionId();
+                if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
+                    int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
+                    int currentVal = (int) Math.round(instance.getValue());
+                    int cachedLvl = ClientAttributeCache.getAbilityLevel(descId);
+                    int activeLvl = Math.max(currentVal, cachedLvl);
 
-                // Tooltip em modo debug
-                if (Config.DEBUG_MODE.get()) {
-                    int mouseX1 = pos;
-                    int mouseX2 = pos +  font.width(name);;
-                    int mouseY1 = y;
-                    int mouseY2 = y + LINE_HEIGHT;
-
-                    if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
-                        double increment = AttributeUtils.getIncrement(instance.getAttribute().getDescriptionId());
-
-                        List<Component> tooltip = List.of(
-                                Component.literal("ID: " + instance.getAttribute().getDescriptionId()),
-                                Component.literal(String.format(java.util.Locale.ROOT, "increment: %.2f", increment))
-                        );
-
-                        guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    if (currentVal < 0 && activeLvl <= 0) {
+                        // Não adquirida: CINZA
+                        guiGraphics.drawString(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0X888888, false);
+                    } else if (currentVal == 0 || (currentVal < 0 && activeLvl > 0)) {
+                        // Desativada: CINZA
+                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X888888, false);
+                    } else {
+                        // Ativa: COR PADRÃO
+                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X291d13, false);
                     }
+                } else {
+                    if(instance.getValue() == -1)
+                        // Não adquirida: CINZA
+                        guiGraphics.drawString(font, name, pos, y, 0X888888, false);
+                    else if(instance.getValue() == 1)
+                        // Ativa: COR PADRÃO
+                        guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
+                    else
+                        // Desativada: CINZA
+                        guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X888888, false);
+                }
+
+                
+                int mouseX1 = pos;
+                int mouseX2 = pos + font.width(name) + 60;
+                int mouseY1 = y;
+                int mouseY2 = y + LINE_HEIGHT;
+                
+                if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
+                    int currentVal = (int) Math.round(instance.getValue());
+                    int cachedLvl = ClientAttributeCache.getAbilityLevel(descId);
+                    int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
+
+                    Component statusComp;
+                    if (currentVal < 0 && cachedLvl <= 0) {
+                        statusComp = Component.translatable("gui.playerstats.ability_not_unlocked").withStyle(s -> s.withColor(0xAAAAAA));
+                    } else if (currentVal == 0 || (currentVal < 0 && cachedLvl > 0)) {
+                        statusComp = Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFF5555));
+                    } else {
+                        statusComp = Component.translatable("gui.playerstats.ability_status_active").withStyle(s -> s.withColor(0x55FF55));
+                    }
+
+                    List<Component> tooltip = new java.util.ArrayList<>();
+                    tooltip.add(Component.translatable(descId).withStyle(s -> s.withBold(true).withColor(0xFFFFFF)));
+                    tooltip.add(statusComp);
+
+                    if (descId.contains("vampirism")) {
+                        int displayLvl = Math.max(Math.max(1, currentVal), cachedLvl);
+                        int procChance = 30 + (displayLvl - 1) * 5;
+                        int healPercent = 10 + (displayLvl - 1) * 2;
+                        tooltip.add(Component.translatable("gui.playerstats.ability.vampirism_desc", procChance, healPercent, displayLvl, maxLvl));
+                    } else if (descId.contains("milky_aura")) {
+                        int displayLvl = Math.max(Math.max(1, currentVal), cachedLvl);
+                        int radius = 1 + (displayLvl * 2); // 3, 5, 7 blocos
+                        tooltip.add(Component.translatable("gui.playerstats.ability.milky_aura_desc", radius, displayLvl, maxLvl));
+                    } else if (descId.contains("howl_buff")) {
+                        int displayLvl = Math.max(Math.max(1, currentVal), cachedLvl);
+                        int radius = 4 + (displayLvl * 4); // 8, 12, 16 blocos
+                        int duration = 15 + (displayLvl * 15); // 30s, 45s, 60s
+                        tooltip.add(Component.translatable("gui.playerstats.ability.howl_buff_desc", radius, duration, displayLvl, maxLvl));
+                    } else if (descId.contains("scout_vision")) {
+                        int displayLvl = Math.max(Math.max(1, currentVal), cachedLvl);
+                        int radius = 16 + ((displayLvl - 1) * 8); // 16, 24, 32 blocos
+                        tooltip.add(Component.translatable("gui.playerstats.ability.scout_vision_desc", radius, displayLvl, maxLvl));
+                    } else {
+                        String shortKey = descId.replace("attribute.playerstats.", "");
+                        String descKey = "gui.playerstats.ability." + shortKey + "_desc";
+                        tooltip.add(Component.translatable(descKey).withStyle(s -> s.withColor(0xDDDDDD)));
+                    }
+
+                    if (currentVal >= 0.0D || cachedLvl > 0) {
+                        tooltip.add(Component.translatable("gui.playerstats.ability_toggle_hint").withStyle(s -> s.withItalic(true).withColor(0xAAAAAA)));
+                    }
+
+                    if (Config.DEBUG_MODE.get()) {
+                        tooltip.add(Component.literal("ID: " + descId).withStyle(s -> s.withColor(0x888888)));
+                    }
+
+                    guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
                 }
 
                 y += LINE_HEIGHT;
@@ -390,6 +453,13 @@ public class StatsScreen extends Screen {
         }
     }
 
+    private void sendAttributeToggle(Attribute attribute) {
+        ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
+        if (id != null) {
+            PacketHandler.sendToServer(new ModifyAttributePacket(entity.getId(), id.toString(), true));
+        }
+    }
+
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
@@ -410,6 +480,29 @@ public class StatsScreen extends Screen {
                 updateFilteredLists();
                 rebuildButtons();             // atualiza a lista
                 return true;
+            }
+            
+            // Se estiver na aba de habilidades únicas, clique com o botão direito alterna On/Off
+            if (!showAttributes) {
+                int y = clipTop - scrollOffset;
+                for (AttributeInstance instance : cachedAbilities) {
+                    if (y + 17 > clipTop && y + 4 < clipBottom) {
+                        // Verifica se clicou na área do botão '+' ou no texto da linha da habilidade
+                        int buttonX = leftPos + 20;
+                        int textX = leftPos + 40;
+                        String name = AttributeUtils.getAttributeName(instance.getAttribute());
+                        int textWidth = font.width(name) + 120;
+
+                        boolean clickedButton = (mouseX >= buttonX && mouseX <= buttonX + 14 && mouseY >= y && mouseY <= y + 14);
+                        boolean clickedText = (mouseX >= textX && mouseX <= textX + textWidth && mouseY >= y && mouseY <= y + LINE_HEIGHT);
+
+                        if (clickedButton || clickedText) {
+                            sendAttributeToggle(instance.getAttribute());
+                            return true;
+                        }
+                    }
+                    y += LINE_HEIGHT;
+                }
             }
         }
 

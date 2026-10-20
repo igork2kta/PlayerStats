@@ -33,68 +33,88 @@ public class ScoutVisionHandler {
         double radius = 16.0D;
 
         for (var player : level.players()) {
+            int shoulderLvl = getShoulderScoutVisionLevel(player);
 
             // Papagaios soltos com Scout Vision
             List<Parrot> parrots = level.getEntitiesOfClass(Parrot.class,
-                    player.getBoundingBox().inflate(radius),
-                    g -> g.getAttribute(ModAttributes.SCOUT_VISION.get()) != null
-                            && g.getAttribute(ModAttributes.SCOUT_VISION.get()).getValue() == 1.0D
-                            && g.isAlive());
+                    player.getBoundingBox().inflate(32.0D),
+                    g -> {
+                        var attr = g.getAttribute(ModAttributes.SCOUT_VISION.get());
+                        return g.isAlive() && attr != null && attr.getValue() > 0.0D;
+                    });
 
-            // Papagaios nos ombros (não há entidade, então usamos player como centro)
-            boolean left = hasScoutVision(player, true);
-            boolean right = hasScoutVision(player, false);
+            if (parrots.isEmpty() && shoulderLvl <= 0) continue;
 
-            if (left || right) {
-                // cria um centro de visão no player
-                parrots.add(null); // usamos null como “flag” para indicar Scout Vision no player
+            // Processa papagaio no ombro
+            if (shoulderLvl > 0) {
+                double shoulderRadius = 16.0D + ((shoulderLvl - 1) * 8.0D); // Nv 1: 16b, Nv 2: 24b, Nv 3: 32b
+                AABB visionBox = player.getBoundingBox().inflate(shoulderRadius);
+                List<LivingEntity> mobs = level.getEntitiesOfClass(LivingEntity.class,
+                        visionBox,
+                        e -> e instanceof Monster || e instanceof Slime);
+                for (LivingEntity mob : mobs) {
+                    mob.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200, 0, false, false));
+                }
             }
 
-            if (parrots.isEmpty()) continue;
-            
+            // Processa papagaios soltos
             for (Parrot parrot : parrots) {
-                AABB visionBox;
-                if (parrot != null) {
-                    visionBox = parrot.getBoundingBox().inflate(radius);
-                } else {
-                    visionBox = player.getBoundingBox().inflate(radius);
-                }
+                int lvl = (int) Math.round(parrot.getAttribute(ModAttributes.SCOUT_VISION.get()).getValue());
+                double parrotRadius = 16.0D + ((lvl - 1) * 8.0D);
+                AABB visionBox = parrot.getBoundingBox().inflate(parrotRadius);
 
                 List<LivingEntity> mobs = level.getEntitiesOfClass(LivingEntity.class,
                         visionBox,
                         e -> e instanceof Monster || e instanceof Slime);
 
-                if (!mobs.isEmpty()) {
-                    for (LivingEntity mob : mobs) {
-                        mob.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200, 0, false, false));
-                    }
+                for (LivingEntity mob : mobs) {
+                    mob.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200, 0, false, false));
                 }
             }
         }
     }
 
-    /** Verifica se o papagaio no ombro tem Scout Vision */
-    private static boolean hasScoutVision(Player player, boolean leftShoulder) {
+    /** Retorna o nível de Scout Vision do papagaio no ombro (ou 0 se não tiver) */
+    private static int getShoulderScoutVisionLevel(Player player) {
+        int left = getShoulderLevel(player, true);
+        int right = getShoulderLevel(player, false);
+        return Math.max(left, right);
+    }
+
+    private static int getShoulderLevel(Player player, boolean leftShoulder) {
         CompoundTag tag = leftShoulder ? player.getShoulderEntityLeft() : player.getShoulderEntityRight();
-        if (tag == null || tag.isEmpty()) return false;
-        if (!"minecraft:parrot".equals(tag.getString("id"))) return false;
-        if (!tag.contains("Attributes", 9)) return false;
-        ListTag attributes = tag.getList("Attributes", 10);
+        if (tag == null || tag.isEmpty()) return 0;
+        if (!"minecraft:parrot".equals(tag.getString("id"))) return 0;
+
+        String attrKey = tag.contains("Attributes", 9) ? "Attributes" : (tag.contains("attributes", 9) ? "attributes" : null);
+        if (attrKey == null) return 0;
+
+        ListTag attributes = tag.getList(attrKey, 10);
 
         for (int i = 0; i < attributes.size(); i++) {
             CompoundTag attr = attributes.getCompound(i);
-            if ("playerstats:scout_vision".equals(attr.getString("Name")) && attr.contains("Modifiers", 9)) {
-                ListTag mods = attr.getList("Modifiers", 10);
-                if (!mods.isEmpty()) {
-                    CompoundTag mod = mods.getCompound(0);
-                    double amount = mod.getDouble("Amount");
-                    if (-1 + amount == 1.0) {
-                        return true;
+            String id = attr.contains("Name") ? attr.getString("Name") : attr.getString("id");
+
+            if ("playerstats:scout_vision".equals(id) || "attribute.playerstats.scout_vision".equals(id)) {
+                double base = attr.contains("Base") ? attr.getDouble("Base") : (attr.contains("base") ? attr.getDouble("base") : -1.0D);
+                double total = base;
+
+                String modKey = attr.contains("Modifiers", 9) ? "Modifiers" : (attr.contains("modifiers", 9) ? "modifiers" : null);
+                if (modKey != null) {
+                    ListTag mods = attr.getList(modKey, 10);
+                    for (int j = 0; j < mods.size(); j++) {
+                        CompoundTag mod = mods.getCompound(j);
+                        double amount = mod.contains("Amount") ? mod.getDouble("Amount") : mod.getDouble("amount");
+                        total += amount;
                     }
+                }
+
+                if (total > 0.0D) {
+                    return (int) Math.round(total);
                 }
             }
         }
-        return false;
+        return 0;
     }
 
 }

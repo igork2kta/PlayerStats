@@ -14,19 +14,29 @@ import java.util.function.Supplier;
 public class ModifyAttributePacket {
     private final int entityId;
     private final String attributeId;
+    private final boolean isToggle;
 
     public ModifyAttributePacket(int entityId, String attributeId) {
+        this(entityId, attributeId, false);
+    }
+
+    public ModifyAttributePacket(int entityId, String attributeId, boolean isToggle) {
         this.entityId = entityId;
         this.attributeId = attributeId;
+        this.isToggle = isToggle;
     }
 
     public static void encode(ModifyAttributePacket msg, FriendlyByteBuf buf) {
         buf.writeInt(msg.entityId);
         buf.writeUtf(msg.attributeId);
+        buf.writeBoolean(msg.isToggle);
     }
 
     public static ModifyAttributePacket decode(FriendlyByteBuf buf) {
-        return new ModifyAttributePacket(buf.readInt(), buf.readUtf());
+        int entityId = buf.readInt();
+        String attrId = buf.readUtf();
+        boolean isToggle = buf.isReadable() && buf.readBoolean();
+        return new ModifyAttributePacket(entityId, attrId, isToggle);
     }
 
     public static void handle(ModifyAttributePacket msg, Supplier<NetworkEvent.Context> ctx) {
@@ -41,9 +51,11 @@ public class ModifyAttributePacket {
                     if (attribute != null) {
                         var instance = AttributeUtils.getAttributeInstance(living, attribute);
                         if (instance != null) {
-
+                            if (msg.isToggle) {
+                                PlayerAttributePersistence.toggleAbility(living, player, msg.attributeId);
+                            } else {
                                 PlayerAttributePersistence.upgradeAttribute(living, player, msg.attributeId);
-
+                            }
                         }
                     }
                 }
