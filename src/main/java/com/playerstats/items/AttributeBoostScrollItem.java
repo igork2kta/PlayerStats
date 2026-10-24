@@ -74,7 +74,7 @@ public class AttributeBoostScrollItem extends Item {
 
                     int minMultiplier = Config.BOOST_AMOUNT_MIN_MULTIPLIER.get();
                     int maxMultiplier = Config.BOOST_AMOUNT_MAX_MULTIPLIER.get();
-                    double baseIncrement = AttributeUtils.getIncrement(selected.getDescriptionId());
+                    double baseIncrement = AttributeUtils.getIncrement(selected);
                     int multiplier = minMultiplier + random.nextInt(maxMultiplier - minMultiplier + 1);
                     double amount = baseIncrement * multiplier;
 

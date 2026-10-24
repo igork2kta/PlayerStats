@@ -1,5 +1,6 @@
 # 🛡️ Player Stats
 A lightweight and highly configurable progression and RPG system for Minecraft
+
 Gain upgrade points by defeating mobs, customize player and companion stats, unlock unique abilities, use magical items, and even revive fallen companions or players.
 
 Fully supports modded mobs and attributes through a flexible configuration system.
@@ -17,13 +18,14 @@ Additionally, Player Stats features a **Companion/Entity progression system**, *
 ## 🎯 Features
 - ⚔️ **Mob-Based Progression:** Earn attribute points by defeating bosses, high-health mobs, or configured creatures. Milestone kill rewards at 100 kills and every 1,000 kills.
 - 🛠️ **Dynamic Attribute Upgrades:** Allocate points directly into player or entity stats with live search and filter options in the UI.
+- 📊 **Rich Informative Tooltips:** Hover over any attribute to see exact gain per point, next-level preview, natural base value, upgrade bonuses, active boost scrolls, and the origin mod name (*Minecraft*, *Iron's Spells*, etc.).
 - 🐾 **Companion & Mount Progression:** Inspect and improve the stats and special skills of tamed animals, mounts, or allied golems.
 - 🌟 **Unique Abilities & Leveled Skills:** Unlock and upgrade passive and active abilities (e.g., Vampirism life-steal, Howl buff, Scout Vision, Milky Aura, Rebirth, Ice Conjuring).
 - 🎛️ **Ability Toggling & Tooltips:** Right-click unlocked abilities in the UI to toggle them On/Off anytime without losing invested levels. Informative tooltips display dynamic values and stats per level.
 - 📜 **Items & Runes:** Upgrade runes, attribute boost scrolls with temporary buffs, ability crystals, soul stones, and temporary infinite ice.
 - 🕯️ **Rebirth Ritual:** Revive fallen pets, mobs, or hardcore players using Soul Fragments and Soul Stones on top of a charged Respawn Anchor.
 - 🔄 **Configurable Resets:** Reset allocated attributes anytime by paying configurable XP levels.
-- ⚙️ **In-Depth Configuration:** Configure drop chances, XP costs, boost durations/multipliers, ignored attributes, and custom increments via config files.
+- ⚙️ **In-Game & File Configuration:** Full compatibility with the **Configured** mod for intuitive in-game settings, alongside detailed TOML configs for drop chances, XP costs, boost durations/multipliers, ignored attributes, and custom increments.
 - 🧪 **Debug Mode & Slash Commands:** Easily inspect mob and attribute IDs, reload configs without restarting, or manage player points via commands.
 
 ---
@@ -103,6 +105,8 @@ All commands require OP/permission level 2:
 
 ## 🔧 Configuration
 
+> 💡 **In-Game Configuration:** Player Stats is fully integrated with **[Configured](https://www.curseforge.com/minecraft/mc-mods/configured)**! You can easily adjust all settings, drop rates, and custom attribute increments directly in-game through clean, translated menus with helpful tooltips and add buttons.
+
 Configurations are split between:
 - `playerstats-common.toml` (Client/Common settings):
   - `debugMode`: Enables logging and in-game debug messages for mob IDs and attribute registry keys.
@@ -162,6 +166,7 @@ boostDurationMaxMinutes = 30
 ---
 
 ## 🧩 Compatibility
+- **In-Game Configs:** Full support for **Configured** and built-in Forge configuration menus.
 - **Progressive Bosses:** Integrated support for modded Wither variants.
 - **Custom Attributes & Modded Mobs:** Automatically recognizes attributes from mods like *Iron’s Spells ‘n Spellbooks*, *Epic Fight*, and any standard Forge mod.
 - **Dedicated Servers:** Fully synchronized across client and server with low network footprint.
