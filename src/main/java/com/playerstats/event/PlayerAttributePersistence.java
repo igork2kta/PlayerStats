@@ -63,7 +63,7 @@ public class PlayerAttributePersistence {
 
                 if (attr != null && instance != null) {
                     int upgradeCount = upgradesTag.getInt(key);
-                    double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+                    double increment = AttributeUtils.getIncrement(instance);
 
                         PlayerStats.LOGGER.info("Setting attribute: {} current value: {} upgrade count: {} increment: {}", attr.getDescriptionId(), instance.getBaseValue(), upgradeCount, increment);
 
@@ -117,7 +117,7 @@ public class PlayerAttributePersistence {
 
                 if (playerPoints > 0 && (player.experienceLevel >= xpCost || !consumeXp)) {
 
-                    if(attr == Attributes.FALL_DAMAGE_MULTIPLIER.value() && instance.getValue() <= 0.5 ){
+                    if (AttributeUtils.isMaxed(instance)) {
                         player.sendSystemMessage(Component.translatable("gui.playerstats.attribute.max_value_reached", AttributeUtils.getAttributeName(attr)));
                         return;
                     }
@@ -269,7 +269,7 @@ public class PlayerAttributePersistence {
 
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity,attr);
         if (instance != null) {
-            double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+            double increment = AttributeUtils.getIncrement(instance);
             applyModifier(instance, attr.getDescriptionId(), increment * currentUpgrades);
             incrementUpgradeCount(entity);
         }

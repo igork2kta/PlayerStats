@@ -8,6 +8,7 @@ import com.playerstats.client.widget.CustomButton;
 import com.playerstats.network.*;
 import com.playerstats.util.AttributeUtils;
 import com.playerstats.util.UniqueAbilitiesUtils;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -20,9 +21,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class StatsScreen extends Screen {
 
@@ -212,23 +216,94 @@ public class StatsScreen extends Screen {
                 }
 
 
-                // Tooltip em modo debug
-                if (Config.DEBUG_MODE.get()) {
-                    int mouseX1 = pos;
-                    int mouseX2 = pos +  font.width(name);;
-                    int mouseY1 = y;
-                    int mouseY2 = y + LINE_HEIGHT;
+                // Tooltip informativa do atributo (Sempre ativa)
+                int mouseX1 = pos;
+                int mouseX2 = leftPos + BG_WIDTH - 25;
+                int mouseY1 = y;
+                int mouseY2 = y + LINE_HEIGHT;
 
-                    if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
-                        double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+                if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
+                    double increment = AttributeUtils.getIncrement(instance);
+                    double baseValue = instance.getBaseValue();
+                    double currentValue = instance.getValue();
+                    double nextValue = currentValue + increment;
 
-                        List<Component> tooltip = List.of(
-                                Component.literal("ID: " + attr.getDescriptionId()),
-                                Component.literal(String.format(java.util.Locale.ROOT, "Increment: %.2f", increment))
-                        );
+                    String sanitizedPath = AttributeUtils.sanitizeToPath(attr.getDescriptionId());
+                    AttributeModifier modifier = instance.getModifiers().stream()
+                            .filter(mod -> mod.id().getNamespace().equals("playerstats")
+                                    && (mod.id().getPath().equals(attr.getDescriptionId()) || mod.id().getPath().equals(sanitizedPath)))
+                            .findFirst()
+                            .orElse(null);
 
-                        guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    double pointsBonus = modifier != null ? modifier.amount() : 0.0;
+                    int pointsInvested = Math.abs(increment) > 0.0001 && Math.abs(pointsBonus) > 0.0001
+                            ? (int) Math.round(pointsBonus / increment) : 0;
+
+                    List<Component> tooltip = new ArrayList<>();
+                    // Título em destaque
+                    tooltip.add(Component.literal(name).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+
+                    boolean isMaxed = AttributeUtils.isMaxed(instance);
+                    Double limitValue = AttributeUtils.getAttributeLimit(instance);
+
+                    if (isMaxed) {
+                        tooltip.add(Component.translatable("gui.playerstats.tooltip.max_reached")
+                                .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+                    } else {
+                        // Ganho por ponto e prévia do próximo nível
+                        String incFormatted = (increment > 0 ? "+" : "") + String.format(Locale.ROOT, "%.2f", increment);
+                        tooltip.add(Component.translatable("gui.playerstats.tooltip.increment", incFormatted)
+                                .withStyle(ChatFormatting.GREEN));
+
+                        tooltip.add(Component.translatable("gui.playerstats.tooltip.next_value",
+                                String.format(Locale.ROOT, "%.2f", nextValue), incFormatted)
+                                .withStyle(ChatFormatting.AQUA));
                     }
+
+                    // Valores atuais e detalhes
+                    tooltip.add(Component.translatable("gui.playerstats.tooltip.base_value", String.format(Locale.ROOT, "%.2f", baseValue))
+                            .withStyle(ChatFormatting.GRAY));
+
+                    if (limitValue != null) {
+                        if (increment < 0) {
+                            tooltip.add(Component.translatable("gui.playerstats.tooltip.min_value", String.format(Locale.ROOT, "%.2f", limitValue))
+                                    .withStyle(ChatFormatting.GOLD));
+                        } else {
+                            tooltip.add(Component.translatable("gui.playerstats.tooltip.max_value", String.format(Locale.ROOT, "%.2f", limitValue))
+                                    .withStyle(ChatFormatting.GOLD));
+                        }
+                    }
+
+                    if (Math.abs(pointsBonus) > 0.0001) {
+                        String bonusFormatted = (pointsBonus > 0 ? "+" : "") + String.format(Locale.ROOT, "%.2f", pointsBonus);
+                        tooltip.add(Component.translatable("gui.playerstats.tooltip.points_bonus", bonusFormatted, pointsInvested)
+                                .withStyle(ChatFormatting.DARK_GREEN));
+                    }
+
+                    ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
+                    if (boost != null) {
+                        tooltip.add(Component.translatable("gui.playerstats.tooltip.boost",
+                                String.format(Locale.ROOT, "%.2f", boost.amount), boost.secondsRemaining)
+                                .withStyle(ChatFormatting.LIGHT_PURPLE));
+                    }
+
+                    tooltip.add(Component.translatable("gui.playerstats.tooltip.current_value", String.format(Locale.ROOT, "%.2f", currentValue))
+                            .withStyle(ChatFormatting.WHITE));
+
+                    // ID técnico
+                    tooltip.add(Component.translatable("gui.playerstats.tooltip.attribute_id", attr.getDescriptionId())
+                            .withStyle(ChatFormatting.DARK_GRAY));
+
+                    // Mod de Origem
+                    ResourceLocation attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                    String modNamespace = attrLocation != null ? attrLocation.getNamespace() : "minecraft";
+                    String modName = net.neoforged.fml.ModList.get().getModContainerById(modNamespace)
+                            .map(c -> c.getModInfo().getDisplayName())
+                            .orElse(modNamespace.equals("minecraft") ? "Minecraft" : org.apache.commons.lang3.StringUtils.capitalize(modNamespace));
+
+                    tooltip.add(Component.literal(modName).withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+
+                    guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
                 }
 
                 y += LINE_HEIGHT;
@@ -395,12 +470,14 @@ public class StatsScreen extends Screen {
                 }
                 if (y + 4 >= clipBottom) break;
 
+                AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+
                 if (Config.DEBUG_MODE.get()) {
-                    double increment = AttributeUtils.getIncrement(attr.getDescriptionId());
+                    double increment = AttributeUtils.getIncrement(instance);
                     PlayerStats.LOGGER.info("Configurando atributo: {} Incremento: {}", attr.getDescriptionId(), increment);
                 }
 
-                this.addRenderableWidget(new CustomButton(
+                CustomButton plusButton = new CustomButton(
                         leftPos + 20, // X
                         y,  // Y
                         14, // Largura
@@ -410,7 +487,9 @@ public class StatsScreen extends Screen {
                         button -> {
                             sendAttributeChange(attr);
                         }
-                ));
+                );
+                plusButton.setActiveSupplier(() -> !AttributeUtils.isMaxed(instance));
+                this.addRenderableWidget(plusButton);
 
                 y += LINE_HEIGHT;
             }
@@ -451,6 +530,10 @@ public class StatsScreen extends Screen {
     }
 
     private void sendAttributeChange(Attribute attribute) {
+        AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attribute);
+        if (instance != null && AttributeUtils.isMaxed(instance)) {
+            return;
+        }
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (id != null) {
             PacketHandler.sendToServer(new ModifyAttributePacket(entity.getId(), id.toString(), false));

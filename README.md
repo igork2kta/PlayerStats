@@ -1,11 +1,11 @@
 # 🛡️ Player Stats
 A lightweight and highly configurable progression and RPG system for Minecraft
 
-![Minecraft](https://img.shields.io/badge/Minecraft-1.21%20%7C%201.21.1-brightgreen)
-![NeoForge](https://img.shields.io/badge/NeoForge-21.0%2B%20%7C%2021.1%2B-orange)
-![Java](https://img.shields.io/badge/Java-21-blue)
+![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.21%20%7C%201.21.1-brightgreen)
+![Loaders](https://img.shields.io/badge/Loaders-Forge%20%7C%20NeoForge-orange)
+![Java](https://img.shields.io/badge/Java-17%20%7C%2021-blue)
 
-> **Note:** A single unified build works seamlessly on both **Minecraft 1.21** and **Minecraft 1.21.1** (NeoForge).
+> **Note:** Available for **Minecraft 1.20.1** (Forge/NeoForge) and **Minecraft 1.21 / 1.21.1** (NeoForge). For 1.21.x, a single unified build works seamlessly on both 1.21 and 1.21.1.
 
 Gain upgrade points by defeating mobs, customize player and companion stats, unlock unique abilities, use magical items, and even revive fallen companions or players.
 
@@ -24,13 +24,14 @@ Additionally, Player Stats features a **Companion/Entity progression system**, *
 ## 🎯 Features
 - ⚔️ **Mob-Based Progression:** Earn attribute points by defeating bosses, high-health mobs, or configured creatures. Milestone kill rewards at 100 kills and every 1,000 kills.
 - 🛠️ **Dynamic Attribute Upgrades:** Allocate points directly into player or entity stats with live search and filter options in the UI.
+- 📊 **Rich Informative Tooltips:** Hover over any attribute to see exact gain per point, next-level preview, natural base value, upgrade bonuses, active boost scrolls, and the origin mod name (*Minecraft*, *Iron's Spells*, etc.).
 - 🐾 **Companion & Mount Progression:** Inspect and improve the stats and special skills of tamed animals, mounts, or allied golems.
 - 🌟 **Unique Abilities & Leveled Skills:** Unlock and upgrade passive and active abilities (e.g., Vampirism life-steal, Howl buff, Scout Vision, Milky Aura, Rebirth, Ice Conjuring).
 - 🎛️ **Ability Toggling & Tooltips:** Right-click unlocked abilities in the UI to toggle them On/Off anytime without losing invested levels. Informative tooltips display dynamic values and stats per level.
 - 📜 **Items & Runes:** Upgrade runes, attribute boost scrolls with temporary buffs, ability crystals, soul stones, and temporary infinite ice.
 - 🕯️ **Rebirth Ritual:** Revive fallen pets, mobs, or hardcore players using Soul Fragments and Soul Stones on top of a charged Respawn Anchor.
 - 🔄 **Configurable Resets:** Reset allocated attributes anytime by paying configurable XP levels.
-- ⚙️ **In-Depth Configuration:** Configure drop chances, XP costs, boost durations/multipliers, ignored attributes, and custom increments via config files.
+- ⚙️ **In-Game & File Configuration:** Full compatibility with the **Configured** mod for intuitive in-game settings, alongside detailed TOML configs for drop chances, XP costs, boost durations/multipliers, ignored attributes, and custom increments.
 - 🧪 **Debug Mode & Slash Commands:** Easily inspect mob and attribute IDs, reload configs without restarting, or manage player points via commands.
 
 ---
@@ -50,6 +51,10 @@ Additionally, Player Stats features a **Companion/Entity progression system**, *
 | **`V`** | Activate Ice Ability | Activates the temporary Infinite Ice conjurer ability (once unlocked). |
 
 *(All keybinds can be rebound under Minecraft's Controls menu).*
+
+#### 🎬 Gameplay & Attribute Showcase:
+[![Player Stats Demonstration](https://img.youtube.com/vi/Lh-G0W7TR-s/hqdefault.jpg)](https://youtu.be/Lh-G0W7TR-s)
+*(Click above to watch the demonstration on YouTube)*
 
 ---
 
@@ -74,6 +79,10 @@ Abilities can be unlocked for players or entities using Ability Points:
 
 > **Tip:** You can **Right-Click** any unlocked ability in the UI to toggle it **Active / Inactive** at will without losing upgrade levels. Unlocked but deactivated abilities and unpurchased abilities are clearly distinguished by color, with full details shown on hover tooltips.
 
+#### 🐺 Wolf Howl Buff Preview:
+[![Wolf Howl Buff Demonstration](https://img.youtube.com/vi/7Ek2acyz-_k/hqdefault.jpg)](https://youtu.be/7Ek2acyz-_k)
+*(Click above to watch the Howl Buff in combat)*
+
 ---
 
 ## 🔮 Items & Rebirth Ritual
@@ -94,6 +103,10 @@ To revive a fallen companion or player:
    - For **mobs / pets**: requires a mob of the **same entity type**.
 4. ⚠️ *The ritual consumes vital energy from the caster, leaving them near death.*
 
+#### 🕯️ Watch the Rebirth Ritual in Action:
+[![Rebirth Ritual Demonstration](https://img.youtube.com/vi/dgLRhEgf-BU/hqdefault.jpg)](https://youtu.be/dgLRhEgf-BU)
+*(Click above to watch the resurrection ritual on YouTube)*
+
 ---
 
 ## 💻 Commands
@@ -109,6 +122,8 @@ All commands require OP/permission level 2:
 ---
 
 ## 🔧 Configuration
+
+> 💡 **In-Game Configuration:** Player Stats is fully integrated with **[Configured](https://www.curseforge.com/minecraft/mc-mods/configured)**! You can easily adjust all settings, drop rates, and custom attribute increments directly in-game through clean, translated menus with helpful tooltips and add buttons.
 
 Configurations are split between:
 - `playerstats-common.toml` (Client/Common settings):
@@ -169,8 +184,9 @@ boostDurationMaxMinutes = 30
 ---
 
 ## 🧩 Compatibility
-- **Minecraft Versions:** Compatible with both **1.21** and **1.21.1** within the same `.jar`.
-- **Mod Loader:** Built for **NeoForge** (21.0.x / 21.1.x+).
+- **Minecraft Versions:** Available for **1.20.1**, **1.21**, and **1.21.1**.
+- **Mod Loaders:** Compatible with **Forge** (1.20.1) and **NeoForge** (1.20.1 / 21.0.x / 21.1.x+).
+- **In-Game Configs:** Full support for **Configured** and built-in Forge/NeoForge configuration menus.
 - **Progressive Bosses:** Integrated support for modded Wither variants.
 - **Custom Attributes & Modded Mobs:** Automatically recognizes attributes from mods like *Iron’s Spells ‘n Spellbooks*, *Epic Fight*, and any standard Forge/NeoForge mod.
 - **Dedicated Servers:** Fully synchronized across client and server with low network footprint.

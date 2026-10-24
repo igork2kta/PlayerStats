@@ -54,10 +54,14 @@ public class Config {
     static {
         // ===================== COMMON =====================
 
-        commonBuilder.push("geral");
+        commonBuilder
+                .comment("General configuration options")
+                .translation("playerstats.configuration.geral")
+                .push("geral");
 
         DEBUG_MODE = commonBuilder
                 .comment("Activate debug mode")
+                .translation("playerstats.configuration.debug_mode")
                 .define("debugMode", false);
 
         commonBuilder.pop();
@@ -67,100 +71,134 @@ public class Config {
         ModConfigSpec.Builder serverBuilder = new ModConfigSpec.Builder();
 
         // ----- Geral -----
-        serverBuilder.push("geral");
+        serverBuilder
+                .comment("General configuration options")
+                .translation("playerstats.configuration.geral")
+                .push("geral");
 
         RESET_ON_DEATH = serverBuilder
                 .comment("Reset attributes on death")
+                .translation("playerstats.configuration.reset_on_death")
                 .define("resetOnDeath", false);
 
         HIGH_HEALTH = serverBuilder
                 .comment("Amount of health considered high")
+                .translation("playerstats.configuration.high_health_amount")
                 .define("highHealthAmount", 50);
 
         serverBuilder.pop();
 
         // ----- Chances de Mobs -----
-        serverBuilder.push("mob_chances");
+        serverBuilder
+                .comment("Chances of acquiring points upon defeating bosses and high-health mobs")
+                .translation("playerstats.configuration.mob_chances")
+                .push("mob_chances");
 
         WITHER_CHANCE = serverBuilder
                 .comment("Chance to gain points when killing Wither")
+                .translation("playerstats.configuration.wither_chance")
                 .defineInRange("witherChance", 0.5, 0.0, 1.0);
 
         ENDER_DRAGON_CHANCE = serverBuilder
                 .comment("Chance to gain points when killing Ender Dragon")
+                .translation("playerstats.configuration.ender_dragon_chance")
                 .defineInRange("enderDragonChance", 0.5, 0.0, 1.0);
 
         WARDEN_CHANCE = serverBuilder
                 .comment("Chance to gain points when killing Warden")
+                .translation("playerstats.configuration.warden_chance")
                 .defineInRange("wardenChance", 0.3, 0.0, 1.0);
 
         ELDER_GUARDIAN_CHANCE = serverBuilder
                 .comment("Chance to gain points when killing Elder Guardian")
+                .translation("playerstats.configuration.elder_guardian_chance")
                 .defineInRange("elderGuardianChance", 0.5, 0.0, 1.0);
 
         HIGH_HEALTH_CHANCE = serverBuilder
                 .comment("Chance to gain points when killing mobs with high health")
+                .translation("playerstats.configuration.high_health_chance")
                 .defineInRange("highHealthChance", 0.05, 0.0, 1.0);
 
         CUSTOM_MOB_CHANCES = serverBuilder
                 .comment("Custom mob chances (id=chance)")
-                .defineListAllowEmpty("customMobChances", List.of(),
+                .translation("playerstats.configuration.custom_mob_chances")
+                .defineListAllowEmpty("customMobChances", List.of(), () -> "entity.minecraft.chicken=0.1",
                         o -> o instanceof String && ((String) o).contains("="));
 
         serverBuilder.pop();
 
         // ----- Incrementos e Atributos -----
-        serverBuilder.push("attribute_settings");
+        serverBuilder
+                .comment("Customize attribute increments and ignored attributes")
+                .translation("playerstats.configuration.attribute_settings")
+                .push("attribute_settings");
 
         CUSTOM_ATTRIBUTE_INCREMENT = serverBuilder
                 .comment("Custom attribute increment (id=increment)")
-                .defineListAllowEmpty("customAttributeIncrement", List.of(),
+                .translation("playerstats.configuration.custom_attribute_increment")
+                .defineListAllowEmpty("customAttributeIncrement", List.of(), () -> "attribute.name.generic.max_health=2.0",
                         o -> o instanceof String && ((String) o).contains("="));
 
         IGNORED_ATTRIBUTES = serverBuilder
                 .comment("List of attribute names to ignore")
-                .defineListAllowEmpty("ignoredAttributes", List.of(), o -> o instanceof String);
+                .translation("playerstats.configuration.ignored_attributes")
+                .defineListAllowEmpty("ignoredAttributes", List.of(), () -> "attribute.name.generic.armor",
+                        o -> o instanceof String);
 
         serverBuilder.pop();
 
         // ----- Experiência -----
-        serverBuilder.push("experience");
+        serverBuilder
+                .comment("Experience costs for upgrading attributes, abilities, and resetting")
+                .translation("playerstats.configuration.experience")
+                .push("experience");
 
         XP_COST_INCREMENT = serverBuilder
                 .comment("The cost of experience that will be incremented for the next upgrade")
+                .translation("playerstats.configuration.experience_cost_increment")
                 .defineInRange("experienceCostIncrement", 5, 1, 999);
 
         REQUIRED_XP_FOR_RESET = serverBuilder
                 .comment("The cost of experience that will be required for reset")
+                .translation("playerstats.configuration.required_xp_for_reset")
                 .defineInRange("requiredXpForReset", 50, 1, 999);
 
         CONSUME_XP = serverBuilder
                 .comment("Consume experience on upgrade?")
+                .translation("playerstats.configuration.consume_experience")
                 .define("consumeExperience", true);
 
         REQUIRED_XP_FOR_ABILITY = serverBuilder
                 .comment("The cost of experience that will be required to by an ability")
+                .translation("playerstats.configuration.required_xp_for_ability")
                 .defineInRange("requiredXpForAbility", 30, 1, 999);
 
         serverBuilder.pop();
 
         // ----- Boost de Atributos -----
-        serverBuilder.push("attribute_boost");
+        serverBuilder
+                .comment("Configure multipliers and duration for attribute boost scrolls")
+                .translation("playerstats.configuration.attribute_boost")
+                .push("attribute_boost");
 
         BOOST_AMOUNT_MIN_MULTIPLIER = serverBuilder
                 .comment("Minimum multiplier for attribute boost (1.0 = base increment)")
+                .translation("playerstats.configuration.boost_amount_min_multiplier")
                 .defineInRange("boostAmountMinMultiplier", 1, 1, 10);
 
         BOOST_AMOUNT_MAX_MULTIPLIER = serverBuilder
                 .comment("Maximum multiplier for attribute boost (3.0 = triple the base increment)")
+                .translation("playerstats.configuration.boost_amount_max_multiplier")
                 .defineInRange("boostAmountMaxMultiplier", 3, 1, 10);
 
         BOOST_DURATION_MIN_MINUTES = serverBuilder
                 .comment("Minimum duration of boost in minutes")
+                .translation("playerstats.configuration.boost_duration_min_minutes")
                 .defineInRange("boostDurationMinMinutes", 10, 1, 240);
 
         BOOST_DURATION_MAX_MINUTES = serverBuilder
                 .comment("Maximum duration of boost in minutes")
+                .translation("playerstats.configuration.boost_duration_max_minutes")
                 .defineInRange("boostDurationMaxMinutes", 30, 1, 240);
 
         serverBuilder.pop();
