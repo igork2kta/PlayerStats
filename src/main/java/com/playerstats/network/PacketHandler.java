@@ -57,6 +57,20 @@ public class PacketHandler {
                 PacketHandler::handleSyncAbilityLevel
         );
 
+        // Cliente → Servidor (Solicitar estado de melhorias/desativações da entidade)
+        registrar.playToServer(
+                RequestEntityUpgradesPacket.TYPE,
+                RequestEntityUpgradesPacket.CODEC,
+                PacketHandler::handleRequestEntityUpgrades
+        );
+
+        // Servidor → Cliente (Sincronizar melhorias e atributos desativados da entidade)
+        registrar.playToClient(
+                SyncEntityUpgradesPacket.TYPE,
+                SyncEntityUpgradesPacket.CODEC,
+                PacketHandler::handleSyncEntityUpgrades
+        );
+
         // Cliente → Servidor
         registrar.playToServer(
                 ResetAttributesPacket.TYPE,
@@ -109,7 +123,11 @@ public class PacketHandler {
                         var instance = AttributeUtils.getAttributeInstance(living, attribute);
                         if (instance != null) {
                             if (msg.isToggle()) {
-                                PlayerAttributePersistence.toggleAbility(living, player, msg.attributeId());
+                                if (msg.attributeId().startsWith("playerstats:")) {
+                                    PlayerAttributePersistence.toggleAbility(living, player, msg.attributeId());
+                                } else {
+                                    PlayerAttributePersistence.toggleAttributeUpgrade(living, player, msg.attributeId());
+                                }
                             } else {
                                 PlayerAttributePersistence.upgradeAttribute(living, player, msg.attributeId());
                             }
@@ -141,6 +159,27 @@ public class PacketHandler {
         context.enqueueWork(() -> {
             // Estamos no lado cliente
             com.playerstats.client.ClientAttributeCache.setAbilityLevel(packet.attributeId(), packet.level());
+        });
+    }
+
+    private static void handleRequestEntityUpgrades(RequestEntityUpgradesPacket msg, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) {
+                var entity = player.level().getEntity(msg.entityId());
+                if (entity instanceof LivingEntity living) {
+                    PlayerAttributePersistence.syncEntityUpgrades(living, player);
+                }
+            }
+        });
+    }
+
+    private static void handleSyncEntityUpgrades(SyncEntityUpgradesPacket msg, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            com.playerstats.client.ClientAttributeCache.setEntityUpgrades(
+                    msg.entityId(),
+                    msg.upgrades(),
+                    msg.disabledAttributes()
+            );
         });
     }
 

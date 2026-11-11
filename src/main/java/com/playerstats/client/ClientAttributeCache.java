@@ -6,6 +6,8 @@ public class ClientAttributeCache {
     private static int upgradeCount;
     private static int abilityPoints;
     private static final java.util.Map<String, Integer> abilityLevels = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, java.util.Map<String, Integer>> entityUpgrades = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, java.util.Set<String>> entityDisabledAttributes = new java.util.HashMap<>();
 
     public static void clean(){
        pointsInitialized = false;
@@ -13,6 +15,23 @@ public class ClientAttributeCache {
        upgradeCount = 0;
        abilityPoints = 0;
        abilityLevels.clear();
+       entityUpgrades.clear();
+       entityDisabledAttributes.clear();
+    }
+
+    public static void setEntityUpgrades(int entityId, java.util.Map<String, Integer> upgrades, java.util.Set<String> disabled) {
+        entityUpgrades.put(entityId, new java.util.HashMap<>(upgrades));
+        entityDisabledAttributes.put(entityId, new java.util.HashSet<>(disabled));
+    }
+
+    public static int getEntityUpgradeCount(int entityId, String attributeId) {
+        java.util.Map<String, Integer> map = entityUpgrades.get(entityId);
+        return map != null ? map.getOrDefault(attributeId, 0) : 0;
+    }
+
+    public static boolean isAttributeDisabled(int entityId, String attributeId) {
+        java.util.Set<String> set = entityDisabledAttributes.get(entityId);
+        return set != null && set.contains(attributeId);
     }
 
     public static void setAbilityLevel(String attributeId, int level) {

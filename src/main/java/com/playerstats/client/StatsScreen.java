@@ -61,6 +61,7 @@ public class StatsScreen extends Screen {
     private boolean showAttributes = true;
     private List<Attribute> cachedAttributes = List.of();
     private List<AttributeInstance> cachedAbilities = List.of();
+    private final java.util.Map<String, Boolean> renderedAbilityButtons = new java.util.HashMap<>();
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
@@ -137,6 +138,7 @@ public class StatsScreen extends Screen {
 
         updateFilteredLists();
         rebuildButtons();
+        PacketHandler.sendToServer(new RequestEntityUpgradesPacket(entity.getId()));
 
 
     }
@@ -151,6 +153,10 @@ public class StatsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+
+        if (!showAttributes && hasAbilityButtonStateChanged()) {
+            rebuildButtons();
+        }
 
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         RenderSystem.setShaderTexture(0, BACKGROUND);
@@ -201,9 +207,14 @@ public class StatsScreen extends Screen {
                 String value = String.format("%.2f", instance.getValue());
                 int pos = leftPos + 40;
 
+                ResourceLocation attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                String attrKey = attrLocation != null ? attrLocation.toString() : "";
+                int syncedUpgrades = ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey);
+                boolean isDisabled = syncedUpgrades > 0 && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
+
                 // Parte base (nome + valor normal)
                 String baseText = name + ": " + value;
-                guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
+                guiGraphics.drawString(font, baseText, pos, y, isDisabled ? 0X888888 : 0X291d13, false);
 
                 if(entity.equals(player)){
                     // Parte do boost (somente se existir)
@@ -226,24 +237,37 @@ public class StatsScreen extends Screen {
                     double increment = AttributeUtils.getIncrement(instance);
                     double baseValue = instance.getBaseValue();
                     double currentValue = instance.getValue();
-                    double nextValue = currentValue + increment;
 
-                    String sanitizedPath = AttributeUtils.sanitizeToPath(attr.getDescriptionId());
-                    AttributeModifier modifier = instance.getModifiers().stream()
-                            .filter(mod -> mod.id().getNamespace().equals("playerstats")
-                                    && (mod.id().getPath().equals(attr.getDescriptionId()) || mod.id().getPath().equals(sanitizedPath)))
-                            .findFirst()
-                            .orElse(null);
+                    AttributeModifier modifier = getPermanentModifier(instance, attr);
+                    double pointsBonus;
+                    int pointsInvested;
+                    if (isDisabled) {
+                        pointsInvested = syncedUpgrades;
+                        pointsBonus = syncedUpgrades * increment;
+                    } else {
+                        pointsBonus = modifier != null ? modifier.amount() : 0.0;
+                        pointsInvested = Math.abs(increment) > 0.0001 && Math.abs(pointsBonus) > 0.0001
+                                ? (int) Math.round(pointsBonus / increment) : syncedUpgrades;
+                    }
 
-                    double pointsBonus = modifier != null ? modifier.amount() : 0.0;
-                    int pointsInvested = Math.abs(increment) > 0.0001 && Math.abs(pointsBonus) > 0.0001
-                            ? (int) Math.round(pointsBonus / increment) : 0;
+                    double effectiveValue = isDisabled ? currentValue + pointsBonus : currentValue;
+                    double nextValue = effectiveValue + increment;
 
                     List<Component> tooltip = new ArrayList<>();
                     // Título em destaque
                     tooltip.add(Component.literal(name).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 
-                    boolean isMaxed = AttributeUtils.isMaxed(instance);
+                    if (pointsInvested > 0) {
+                        if (isDisabled) {
+                            tooltip.add(Component.translatable("gui.playerstats.attribute_status_inactive")
+                                    .withStyle(s -> s.withColor(0xFF5555)));
+                        } else {
+                            tooltip.add(Component.translatable("gui.playerstats.attribute_status_active")
+                                    .withStyle(s -> s.withColor(0x55FF55)));
+                        }
+                    }
+
+                    boolean isMaxed = AttributeUtils.isMaxed(instance, effectiveValue);
                     Double limitValue = AttributeUtils.getAttributeLimit(instance);
 
                     if (isMaxed) {
@@ -274,10 +298,10 @@ public class StatsScreen extends Screen {
                         }
                     }
 
-                    if (Math.abs(pointsBonus) > 0.0001) {
+                    if (pointsInvested > 0 || Math.abs(pointsBonus) > 0.0001) {
                         String bonusFormatted = (pointsBonus > 0 ? "+" : "") + String.format(Locale.ROOT, "%.2f", pointsBonus);
                         tooltip.add(Component.translatable("gui.playerstats.tooltip.points_bonus", bonusFormatted, pointsInvested)
-                                .withStyle(ChatFormatting.DARK_GREEN));
+                                .withStyle(isDisabled ? ChatFormatting.GRAY : ChatFormatting.DARK_GREEN));
                     }
 
                     ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
@@ -290,12 +314,16 @@ public class StatsScreen extends Screen {
                     tooltip.add(Component.translatable("gui.playerstats.tooltip.current_value", String.format(Locale.ROOT, "%.2f", currentValue))
                             .withStyle(ChatFormatting.WHITE));
 
+                    if (pointsInvested > 0) {
+                        tooltip.add(Component.translatable("gui.playerstats.ability_toggle_hint")
+                                .withStyle(s -> s.withItalic(true).withColor(0xAAAAAA)));
+                    }
+
                     // ID técnico
                     tooltip.add(Component.translatable("gui.playerstats.tooltip.attribute_id", attr.getDescriptionId())
                             .withStyle(ChatFormatting.DARK_GRAY));
 
                     // Mod de Origem
-                    ResourceLocation attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
                     String modNamespace = attrLocation != null ? attrLocation.getNamespace() : "minecraft";
                     String modName = net.neoforged.fml.ModList.get().getModContainerById(modNamespace)
                             .map(c -> c.getModInfo().getDisplayName())
@@ -354,16 +382,17 @@ public class StatsScreen extends Screen {
 
                 int pos = leftPos + 40;
                 String descId = instance.getAttribute().value().getDescriptionId();
-                if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
-                    int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
-                    int currentVal = (int) Math.round(instance.getValue());
-                    int cachedLvl = ClientAttributeCache.getAbilityLevel(descId);
-                    int activeLvl = Math.max(currentVal, cachedLvl);
+                int currentVal = (int) Math.round(instance.getValue());
+                int cachedLvl = getCachedAbilityLevel(descId);
+                int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
+                int activeLvl = Math.max(currentVal, cachedLvl);
+                boolean isAcquired = isAbilityAcquired(instance);
 
-                    if (currentVal < 0 && activeLvl <= 0) {
+                if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
+                    if (!isAcquired) {
                         // Não adquirida: CINZA
                         guiGraphics.drawString(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0X888888, false);
-                    } else if (currentVal == 0 || (currentVal < 0 && activeLvl > 0)) {
+                    } else if (currentVal <= 0) {
                         // Desativada: CINZA
                         guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X888888, false);
                     } else {
@@ -371,15 +400,16 @@ public class StatsScreen extends Screen {
                         guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X291d13, false);
                     }
                 } else {
-                    if(instance.getValue() == -1)
+                    if (!isAcquired) {
                         // Não adquirida: CINZA
                         guiGraphics.drawString(font, name, pos, y, 0X888888, false);
-                    else if(instance.getValue() == 1)
+                    } else if (currentVal == 1) {
                         // Ativa: COR PADRÃO
-                        guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
-                    else
+                        guiGraphics.drawString(font, name, pos, y, 0X291d13, false);
+                    } else {
                         // Desativada: CINZA
-                        guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X888888, false);
+                        guiGraphics.drawString(font, name, pos, y, 0X888888, false);
+                    }
                 }
 
                 int mouseX1 = pos;
@@ -388,22 +418,22 @@ public class StatsScreen extends Screen {
                 int mouseY2 = y + LINE_HEIGHT;
 
                 if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
-                    int currentVal = (int) Math.round(instance.getValue());
-                    int cachedLvl = ClientAttributeCache.getAbilityLevel(descId);
-                    int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
-
-                    Component statusComp;
-                    if (currentVal < 0 && cachedLvl <= 0) {
-                        statusComp = Component.translatable("gui.playerstats.ability_not_unlocked").withStyle(s -> s.withColor(0xAAAAAA));
-                    } else if (currentVal == 0 || (currentVal < 0 && cachedLvl > 0)) {
-                        statusComp = Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFF5555));
-                    } else {
-                        statusComp = Component.translatable("gui.playerstats.ability_status_active").withStyle(s -> s.withColor(0x55FF55));
-                    }
-
                     List<Component> tooltip = new java.util.ArrayList<>();
                     tooltip.add(Component.translatable(descId).withStyle(s -> s.withBold(true).withColor(0xFFFFFF)));
-                    tooltip.add(statusComp);
+
+                    if (!isAcquired) {
+                        tooltip.add(Component.translatable("gui.playerstats.ability_acquired_no").withStyle(s -> s.withColor(0xAAAAAA)));
+                    } else {
+                        tooltip.add(Component.translatable("gui.playerstats.ability_acquired_yes").withStyle(s -> s.withColor(0x55FF55)));
+                        if (currentVal <= 0) {
+                            tooltip.add(Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFF5555)));
+                        } else {
+                            tooltip.add(Component.translatable("gui.playerstats.ability_status_active").withStyle(s -> s.withColor(0x55FF55)));
+                        }
+                        if (UniqueAbilitiesUtils.isLeveledAbility(descId) && activeLvl >= maxLvl) {
+                            tooltip.add(Component.translatable("gui.playerstats.tooltip.max_reached").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                        }
+                    }
 
                     if (descId.contains("vampirism")) {
                         int displayLvl = Math.max(Math.max(1, currentVal), cachedLvl);
@@ -430,7 +460,7 @@ public class StatsScreen extends Screen {
                         tooltip.add(Component.translatable(descKey).withStyle(s -> s.withColor(0xDDDDDD)));
                     }
 
-                    if (currentVal >= 0.0D || cachedLvl > 0) {
+                    if (isAcquired) {
                         tooltip.add(Component.translatable("gui.playerstats.ability_toggle_hint").withStyle(s -> s.withItalic(true).withColor(0xAAAAAA)));
                     }
 
@@ -450,8 +480,51 @@ public class StatsScreen extends Screen {
     }
 
 
+    private int getCachedAbilityLevel(String descId) {
+        return (entity != null && entity.equals(player)) ? ClientAttributeCache.getAbilityLevel(descId) : 0;
+    }
+
+    private boolean isAbilityAcquired(AttributeInstance instance) {
+        String descId = instance.getAttribute().value().getDescriptionId();
+        int currentVal = (int) Math.round(instance.getValue());
+        int cachedLvl = getCachedAbilityLevel(descId);
+        return currentVal >= 0 || cachedLvl > 0;
+    }
+
+    private boolean shouldShowAbilityPlusButton(AttributeInstance instance) {
+        String descId = instance.getAttribute().value().getDescriptionId();
+        int currentVal = (int) Math.round(instance.getValue());
+        if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
+            int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
+            int activeLvl = Math.max(currentVal, getCachedAbilityLevel(descId));
+            return activeLvl < maxLvl;
+        }
+        return currentVal < 0;
+    }
+
+    private boolean hasAbilityButtonStateChanged() {
+        int y = clipTop - scrollOffset;
+        for (AttributeInstance instance : cachedAbilities) {
+            if (y + 17 <= clipTop) {
+                y += LINE_HEIGHT;
+                continue;
+            }
+            if (y + 4 >= clipBottom) break;
+
+            String descId = instance.getAttribute().value().getDescriptionId();
+            Boolean wasShown = renderedAbilityButtons.get(descId);
+            boolean shouldShow = shouldShowAbilityPlusButton(instance);
+            if (wasShown == null || wasShown != shouldShow) {
+                return true;
+            }
+            y += LINE_HEIGHT;
+        }
+        return false;
+    }
+
     private void rebuildButtons() {
         this.clearWidgets();
+        renderedAbilityButtons.clear();
         addRenderableWidget(attributesButton);
         addRenderableWidget(uniqueAbilitiesButton);
         addRenderableWidget(searchBox);
@@ -488,7 +561,7 @@ public class StatsScreen extends Screen {
                             sendAttributeChange(attr);
                         }
                 );
-                plusButton.setActiveSupplier(() -> !AttributeUtils.isMaxed(instance));
+                plusButton.setActiveSupplier(() -> !isAttributeMaxed(instance, attr));
                 this.addRenderableWidget(plusButton);
 
                 y += LINE_HEIGHT;
@@ -509,18 +582,23 @@ public class StatsScreen extends Screen {
                 }
                 if (y + 4 >= clipBottom) break;
 
+                String descId = instance.getAttribute().value().getDescriptionId();
+                boolean showPlus = shouldShowAbilityPlusButton(instance);
+                renderedAbilityButtons.put(descId, showPlus);
 
-                this.addRenderableWidget(new CustomButton(
-                        leftPos + 20, // X
-                        y,  // Y
-                        14, // Largura
-                        14, // Altura
-                        Component.empty(),
-                        PLUS_BUTTON_TEXTURE,
-                        button -> {
-                            sendAttributeChange(instance.getAttribute().value());
-                        }
-                ));
+                if (showPlus) {
+                    this.addRenderableWidget(new CustomButton(
+                            leftPos + 20, // X
+                            y,  // Y
+                            14, // Largura
+                            14, // Altura
+                            Component.empty(),
+                            PLUS_BUTTON_TEXTURE,
+                            button -> {
+                                sendAttributeChange(instance.getAttribute().value());
+                            }
+                    ));
+                }
 
                 y += LINE_HEIGHT;
             }
@@ -529,9 +607,40 @@ public class StatsScreen extends Screen {
 
     }
 
+    private AttributeModifier getPermanentModifier(AttributeInstance instance, Attribute attr) {
+        String sanitizedPath = AttributeUtils.sanitizeToPath(attr.getDescriptionId());
+        return instance.getModifiers().stream()
+                .filter(mod -> mod.id().getNamespace().equals("playerstats")
+                        && (mod.id().getPath().equals(attr.getDescriptionId()) || mod.id().getPath().equals(sanitizedPath)))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean hasAttributeUpgrades(Attribute attr) {
+        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        if (attrLoc != null && ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrLoc.toString()) > 0) {
+            return true;
+        }
+        AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+        return instance != null && getPermanentModifier(instance, attr) != null;
+    }
+
+    private boolean isAttributeMaxed(AttributeInstance instance, Attribute attr) {
+        if (instance == null) return false;
+        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        String attrKey = attrLoc != null ? attrLoc.toString() : "";
+        int syncedUpgrades = ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey);
+        boolean isDisabled = syncedUpgrades > 0 && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
+        if (isDisabled) {
+            double effectiveValue = instance.getValue() + (syncedUpgrades * AttributeUtils.getIncrement(instance));
+            return AttributeUtils.isMaxed(instance, effectiveValue);
+        }
+        return AttributeUtils.isMaxed(instance);
+    }
+
     private void sendAttributeChange(Attribute attribute) {
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attribute);
-        if (instance != null && AttributeUtils.isMaxed(instance)) {
+        if (instance != null && isAttributeMaxed(instance, attribute)) {
             return;
         }
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
@@ -570,8 +679,22 @@ public class StatsScreen extends Screen {
                 return true;
             }
 
-            // Se estiver na aba de habilidades únicas, clique com o botão direito alterna On/Off
-            if (!showAttributes) {
+            if (showAttributes) {
+                int y = clipTop - scrollOffset;
+                for (Attribute attr : cachedAttributes) {
+                    if (y + 17 > clipTop && y + 4 < clipBottom) {
+                        int textX = leftPos + 40;
+                        int textEndX = leftPos + BG_WIDTH - 25;
+                        if (mouseX >= textX && mouseX <= textEndX && mouseY >= y && mouseY <= y + LINE_HEIGHT) {
+                            if (hasAttributeUpgrades(attr)) {
+                                sendAttributeToggle(attr);
+                                return true;
+                            }
+                        }
+                    }
+                    y += LINE_HEIGHT;
+                }
+            } else {
                 int y = clipTop - scrollOffset;
                 for (AttributeInstance instance : cachedAbilities) {
                     if (y + 17 > clipTop && y + 4 < clipBottom) {
@@ -581,7 +704,8 @@ public class StatsScreen extends Screen {
                         String name = AttributeUtils.getAttributeName(instance.getAttribute().value());
                         int textWidth = font.width(name) + 120;
 
-                        boolean clickedButton = (mouseX >= buttonX && mouseX <= buttonX + 14 && mouseY >= y && mouseY <= y + 14);
+                        boolean clickedButton = shouldShowAbilityPlusButton(instance)
+                                && (mouseX >= buttonX && mouseX <= buttonX + 14 && mouseY >= y && mouseY <= y + 14);
                         boolean clickedText = (mouseX >= textX && mouseX <= textX + textWidth && mouseY >= y && mouseY <= y + LINE_HEIGHT);
 
                         if (clickedButton || clickedText) {
