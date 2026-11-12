@@ -2,6 +2,7 @@ package com.playerstats.util;
 
 import com.playerstats.ModAttributes;
 import com.playerstats.event.PlayerAttributePersistence;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -19,7 +20,7 @@ public class UniqueAbilitiesUtils {
         //Se ainda não tiver dono, seta o player atual como dono
         if(attributeId.contains("follow_owner") || attributeId.contains("defend_owner") || attributeId.contains("taunt")){
             if(!entity.getPersistentData().contains("Owner"))
-                entity.getPersistentData().putUUID("Owner", player.getUUID());
+                entity.getPersistentData().store("Owner", UUIDUtil.CODEC, player.getUUID());
 
             if(attributeId.contains("follow_owner") && state) disableAbility(ModAttributes.PATROL, entity);
         }

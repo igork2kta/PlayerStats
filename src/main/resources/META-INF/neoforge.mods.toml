@@ -4,12 +4,6 @@
 # Note that there are a couple of TOML lists in this file.
 # Find more information on toml format here:  https://github.com/toml-lang/toml
 
-# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
-modLoader="javafml" #mandatory
-
-# A version range to match for said mod loader - for regular FML @Mod it will be the FML version. This is currently 2.
-loaderVersion="${loader_version_range}" #mandatory
-
 # The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.
 # Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.
 license="${mod_license}"
@@ -41,11 +35,13 @@ logoFile="assets/playerstats/textures/logo.png" #optional
 # A text field displayed in the mod UI
 #credits="" #optional
 
-# A text field displayed in the mod UI
-authors="${mod_authors}" #optional
+# The authors of the mod, displayed in the mod UI (optional)
+authors="${mod_authors}"
 
 # The description text for the mod (multi line!) (#mandatory)
-description='''${mod_description}'''
+description='''
+${mod_description}
+'''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
 #[[mixins]]
@@ -55,8 +51,6 @@ description='''${mod_description}'''
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg
 #[[accessTransformers]]
 #file="META-INF/accesstransformer.cfg"
-
-# The coremods config file path is not configurable and is always loaded from META-INF/coremods.json
 
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.${mod_id}]] #optional
@@ -69,7 +63,7 @@ description='''${mod_description}'''
     # Optional field describing why the dependency is required or why it is incompatible
     # reason="..."
     # The version range of the dependency
-    versionRange="${neo_version_range}" #mandatory
+    versionRange="[${neo_version},)" #mandatory
     # An ordering relationship for the dependency.
     # BEFORE - This mod is loaded BEFORE the dependency
     # AFTER - This mod is loaded AFTER the dependency

@@ -1,6 +1,5 @@
 package com.playerstats.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.playerstats.Config;
 import com.playerstats.PlayerStats;
 import com.playerstats.client.widget.CustomSearchBox;
@@ -10,14 +9,16 @@ import com.playerstats.util.AttributeUtils;
 import com.playerstats.util.UniqueAbilitiesUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -30,11 +31,11 @@ import java.util.Locale;
 
 public class StatsScreen extends Screen {
 
-    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/stats_background.png");
-    private static final ResourceLocation PLUS_BUTTON_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/plus_button.png");
-    private static final ResourceLocation ACQUIRED_BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/acquired_badge.png");
-    private static final ResourceLocation TOGGLE_ON_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/toggle_on_button.png");
-    private static final ResourceLocation TOGGLE_OFF_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/toggle_off_button.png");
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath("playerstats", "textures/gui/stats_background.png");
+    private static final Identifier PLUS_BUTTON_TEXTURE = Identifier.fromNamespaceAndPath("playerstats", "textures/gui/plus_button.png");
+    private static final Identifier ACQUIRED_BADGE_TEXTURE = Identifier.fromNamespaceAndPath("playerstats", "textures/gui/acquired_badge.png");
+    private static final Identifier TOGGLE_ON_TEXTURE = Identifier.fromNamespaceAndPath("playerstats", "textures/gui/toggle_on_button.png");
+    private static final Identifier TOGGLE_OFF_TEXTURE = Identifier.fromNamespaceAndPath("playerstats", "textures/gui/toggle_off_button.png");
     private static final int TOGGLE_BUTTON_OFFSET_X = 36;
     //Tamanho do background
     private static final int BG_WIDTH = 300;
@@ -55,7 +56,7 @@ public class StatsScreen extends Screen {
 
     //Entidade que ser alterada
     private LivingEntity entity;
-    //Player de onde serão subtraídos XP e pontos
+    //Player de onde serÃ£o subtraÃ­dos XP e pontos
     private Player player;
 
     private final boolean consumeXp = Config.CONSUME_XP.get();
@@ -95,17 +96,17 @@ public class StatsScreen extends Screen {
         this.leftPos = (this.width - BG_WIDTH) / 2;
         this.topPos = (this.height - BG_HEIGHT) / 2;
 
-        //Posição de corrte do SCROLL
+        //PosiÃ§Ã£o de corrte do SCROLL
         this.clipTop = topPos + 115;
         this.clipBottom = topPos + BG_HEIGHT - 60;
 
-        //Se não tiver entidade, é o proprio player
+        //Se nÃ£o tiver entidade, Ã© o proprio player
         player = Minecraft.getInstance().player;
         if (entity == null) entity = player;
 
         this.searchBox = new CustomSearchBox(this.font, leftPos + 25, topPos + 95, 260, 19);
 
-        //Toda vez que o usuario digita algo, muda para minusculo, reseta a barra de rolagem e redesenha os botões
+        //Toda vez que o usuario digita algo, muda para minusculo, reseta a barra de rolagem e redesenha os botÃµes
         this.searchBox.setResponder(text -> {
             this.searchText = text.toLowerCase();
             this.scrollOffset = 0;
@@ -120,7 +121,7 @@ public class StatsScreen extends Screen {
                 70,                              // largura
                 20,                              // altura
                 Component.literal("Attributes"),
-                ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
+                Identifier.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
                 btn -> {showAttributes = true; scrollOffset = 0; updateFilteredLists(); rebuildButtons();}
         );
 
@@ -130,7 +131,7 @@ public class StatsScreen extends Screen {
                 85,                              // largura
                 20,                              // altura
                 Component.literal("Unique Abilities"),
-                ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
+                Identifier.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
                 btn -> {showAttributes = false; scrollOffset = 0; updateFilteredLists(); rebuildButtons();}
         );
 
@@ -140,7 +141,7 @@ public class StatsScreen extends Screen {
                 70,                              // largura
                 20,                              // altura
                 Component.translatable("gui.playerstats.reset"),
-                ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
+                Identifier.fromNamespaceAndPath("playerstats", "textures/gui/reset_button.png"),
                 btn -> PacketHandler.sendToServer(new ResetAttributesPacket(entity.getId()))
         );
 
@@ -153,26 +154,22 @@ public class StatsScreen extends Screen {
 
     //Sem isso o background fica desfocado
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        //this.renderBlurredBackground(partialTick);
-        super.renderMenuBackground(guiGraphics);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ScreenEvent.BackgroundRendered(this, guiGraphics));
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.extractMenuBackground(guiGraphics);
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 
         if (hasButtonStateChanged()) {
             rebuildButtons();
         }
 
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
-        RenderSystem.setShaderTexture(0, BACKGROUND);
-        guiGraphics.blit(BACKGROUND, leftPos, topPos, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND, leftPos, topPos, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
 
-        super.render(guiGraphics, mouseX, mouseY, partialTicks);
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 
-        this.searchBox.render(guiGraphics, mouseX, mouseY, partialTicks);
+        this.searchBox.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 
         //Nome da entidade
         String displayName = entity.getDisplayName().getString();
@@ -180,28 +177,28 @@ public class StatsScreen extends Screen {
 
         // centraliza dentro do background
         int textX = leftPos + (BG_WIDTH - textWidth) / 2;
-        guiGraphics.drawString(font, displayName, textX, topPos + 24, 0xA0A0A0, false);
+        guiGraphics.text(font, displayName, textX, topPos + 24, 0xFFA0A0A0, false);
 
         if(showAttributes){
 
             int points = ClientAttributeCache.getPoints();
-            int color = points > 0 ? 0x00CC66 : 0xFF5555;
+            int color = points > 0 ? 0xFF00CC66 : 0xFFFF5555;
             Component attributepoints = Component.translatable("gui.playerstats.points", points);
             textWidth = font.width(attributepoints);
             textX = leftPos + (BG_WIDTH - textWidth) / 2;
-            guiGraphics.drawString(font, attributepoints, textX, topPos + 35, color);
+            guiGraphics.text(font, attributepoints, textX, topPos + 35, color);
 
             if(consumeXp){
                 int upgradeCount = ClientAttributeCache.getUpgradeCount();
                 int xpCost = (upgradeCount + 1) * xpIncrement;
                 boolean hasXpForUpgrade = player.experienceLevel > xpCost;
-                color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
+                color = hasXpForUpgrade ? 0xFF00CC66 : 0xFFFF5555; // verde ou vermelho
                 Component xp = Component.translatable("gui.playerstats.xp_cost", xpCost);
                 textWidth = font.width(xp);
                 textX = leftPos + (BG_WIDTH - textWidth) / 2;
-                guiGraphics.drawString(font, xp, textX, topPos + 46, color);
+                guiGraphics.text(font, xp, textX, topPos + 46, color);
             }
-            int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botões
+            int y = clipTop - scrollOffset + 2; //2 para alinhamento do texto com os botÃµes
 
             for (Attribute attr : cachedAttributes) {
                 AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
@@ -215,22 +212,22 @@ public class StatsScreen extends Screen {
                 String value = String.format("%.2f", instance.getValue());
                 int pos = leftPos + 40;
 
-                ResourceLocation attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                Identifier attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
                 String attrKey = attrLocation != null ? attrLocation.toString() : "";
                 int syncedUpgrades = ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey);
                 boolean isDisabled = syncedUpgrades > 0 && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
 
                 // Parte base (nome + valor normal)
                 String baseText = name + ": " + value;
-                guiGraphics.drawString(font, baseText, pos, y, isDisabled ? 0X888888 : 0X291d13, false);
+                guiGraphics.text(font, baseText, pos, y, isDisabled ? 0xFF888888 : 0xFF291d13, false);
 
                 if(entity.equals(player)){
                     // Parte do boost (somente se existir)
                     ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
                     if (boost != null) {
                         String boostText = String.format(" (+%.2f %ds)", boost.amount, boost.secondsRemaining);
-                        int boostX = pos + font.width(baseText); // começa logo após o valor
-                        guiGraphics.drawString(font, boostText, boostX, y, 0x00CC66  , false); // verde
+                        int boostX = pos + font.width(baseText); // comeÃ§a logo apÃ³s o valor
+                        guiGraphics.text(font, boostText, boostX, y, 0xFF00CC66  , false); // verde
                     }
                 }
 
@@ -262,13 +259,13 @@ public class StatsScreen extends Screen {
                     double nextValue = effectiveValue + increment;
 
                     List<Component> tooltip = new ArrayList<>();
-                    // Título em destaque
+                    // TÃ­tulo em destaque
                     tooltip.add(Component.literal(name).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 
                     if (pointsInvested > 0) {
                         if (isDisabled) {
                             tooltip.add(Component.translatable("gui.playerstats.attribute_status_inactive")
-                                    .withStyle(s -> s.withColor(0xFF5555)));
+                                    .withStyle(s -> s.withColor(0xFFFF5555)));
                         } else {
                             tooltip.add(Component.translatable("gui.playerstats.attribute_status_active")
                                     .withStyle(s -> s.withColor(0x55FF55)));
@@ -282,7 +279,7 @@ public class StatsScreen extends Screen {
                         tooltip.add(Component.translatable("gui.playerstats.tooltip.max_reached")
                                 .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
                     } else {
-                        // Ganho por ponto e prévia do próximo nível
+                        // Ganho por ponto e prÃ©via do prÃ³ximo nÃ­vel
                         String incFormatted = (increment > 0 ? "+" : "") + String.format(Locale.ROOT, "%.2f", increment);
                         tooltip.add(Component.translatable("gui.playerstats.tooltip.increment", incFormatted)
                                 .withStyle(ChatFormatting.GREEN));
@@ -327,7 +324,7 @@ public class StatsScreen extends Screen {
                                 .withStyle(s -> s.withItalic(true).withColor(0xAAAAAA)));
                     }
 
-                    // ID técnico
+                    // ID tÃ©cnico
                     tooltip.add(Component.translatable("gui.playerstats.tooltip.attribute_id", attr.getDescriptionId())
                             .withStyle(ChatFormatting.DARK_GRAY));
 
@@ -339,7 +336,7 @@ public class StatsScreen extends Screen {
 
                     tooltip.add(Component.literal(modName).withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
 
-                    guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    guiGraphics.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
                 }
 
                 y += LINE_HEIGHT;
@@ -351,33 +348,33 @@ public class StatsScreen extends Screen {
                 boolean hasXp = player.experienceLevel >= requiredXpforReset && consumeXp;
                 MutableComponent text = hasXp
                         ? Component.translatable("gui.playerstats.can_reset", requiredXpforReset).withStyle(s -> s.withColor(0x00FF00))
-                        : Component.translatable("gui.playerstats.cant_reset", requiredXpforReset).withStyle(s -> s.withColor(0xFF5555));
+                        : Component.translatable("gui.playerstats.cant_reset", requiredXpforReset).withStyle(s -> s.withColor(0xFFFF5555));
 
 
-                guiGraphics.renderTooltip(font, text, mouseX, mouseY);
+                guiGraphics.setTooltipForNextFrame(font, text, mouseX, mouseY);
             }
         }
 
         else{
 
             int points = ClientAttributeCache.getAbilityPoints();
-            int color = points > 0 ? 0x00CC66 : 0xFF5555;
+            int color = points > 0 ? 0xFF00CC66 : 0xFFFF5555;
             Component abilityPoints = Component.translatable("gui.playerstats.points", points);
             textWidth = font.width(abilityPoints);
             textX = leftPos + (BG_WIDTH - textWidth) / 2;
-            guiGraphics.drawString(font, abilityPoints, textX, topPos + 35, color);
+            guiGraphics.text(font, abilityPoints, textX, topPos + 35, color);
 
             if(consumeXp){
                 int xpCost = Config.REQUIRED_XP_FOR_ABILITY.get();
                 boolean hasXpForUpgrade = player.experienceLevel > xpCost;
-                color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
+                color = hasXpForUpgrade ? 0xFF00CC66 : 0xFFFF5555; // verde ou vermelho
                 Component xp = Component.translatable("gui.playerstats.xp_cost", xpCost);
                 textWidth = font.width(xp);
                 textX = leftPos + (BG_WIDTH - textWidth) / 2;
-                guiGraphics.drawString(font, xp, textX, topPos + 46, color);
+                guiGraphics.text(font, xp, textX, topPos + 46, color);
             }
 
-            int y = clipTop - scrollOffset + 3; //2 para alinhamento do texto com os botões
+            int y = clipTop - scrollOffset + 3; //2 para alinhamento do texto com os botÃµes
 
             for (AttributeInstance instance : cachedAbilities) {
 
@@ -398,36 +395,36 @@ public class StatsScreen extends Screen {
 
                 if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
                     if (!isAcquired) {
-                        // Não adquirida: CINZA
-                        guiGraphics.drawString(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0X888888, false);
+                        // NÃ£o adquirida: CINZA
+                        guiGraphics.text(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0xFF888888, false);
                     } else if (currentVal <= 0) {
                         // Desativada: CINZA
-                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X888888, false);
+                        guiGraphics.text(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0xFF888888, false);
                     } else {
-                        // Ativa: COR PADRÃO
-                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X291d13, false);
+                        // Ativa: COR PADRÃƒO
+                        guiGraphics.text(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0xFF291d13, false);
                     }
                 } else {
                     if (!isAcquired) {
-                        // Não adquirida: CINZA
-                        guiGraphics.drawString(font, name, pos, y, 0X888888, false);
+                        // NÃ£o adquirida: CINZA
+                        guiGraphics.text(font, name, pos, y, 0xFF888888, false);
                     } else if (currentVal == 1) {
-                        // Ativa: COR PADRÃO
-                        guiGraphics.drawString(font, name, pos, y, 0X291d13, false);
+                        // Ativa: COR PADRÃƒO
+                        guiGraphics.text(font, name, pos, y, 0xFF291d13, false);
                     } else {
                         // Desativada: CINZA
-                        guiGraphics.drawString(font, name, pos, y, 0X888888, false);
+                        guiGraphics.text(font, name, pos, y, 0xFF888888, false);
                     }
                 }
 
                 int badgeY = y - 3;
                 if (!shouldShowAbilityPlusButton(instance) && badgeY + 4 < clipBottom) {
-                    guiGraphics.blit(ACQUIRED_BADGE_TEXTURE, leftPos + 20, badgeY, 0, 0, 14, 14, 14, 14);
+                    guiGraphics.blit(RenderPipelines.GUI_TEXTURED, ACQUIRED_BADGE_TEXTURE, leftPos + 20, badgeY, 0, 0, 14, 14, 14, 14);
                     if (mouseX >= leftPos + 20 && mouseX <= leftPos + 34 && mouseY >= badgeY && mouseY <= badgeY + 14) {
                         Component badgeTooltip = UniqueAbilitiesUtils.isLeveledAbility(descId)
                                 ? Component.translatable("gui.playerstats.tooltip.ability_maxed_badge").withStyle(ChatFormatting.GOLD)
                                 : Component.translatable("gui.playerstats.tooltip.ability_acquired_badge").withStyle(ChatFormatting.GOLD);
-                        guiGraphics.renderTooltip(font, badgeTooltip, mouseX, mouseY);
+                        guiGraphics.setTooltipForNextFrame(font, badgeTooltip, mouseX, mouseY);
                     }
                 }
 
@@ -445,7 +442,7 @@ public class StatsScreen extends Screen {
                     } else {
                         tooltip.add(Component.translatable("gui.playerstats.ability_acquired_yes").withStyle(s -> s.withColor(0x55FF55)));
                         if (currentVal <= 0) {
-                            tooltip.add(Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFF5555)));
+                            tooltip.add(Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFFFF5555)));
                         } else {
                             tooltip.add(Component.translatable("gui.playerstats.ability_status_active").withStyle(s -> s.withColor(0x55FF55)));
                         }
@@ -484,10 +481,10 @@ public class StatsScreen extends Screen {
                     }
 
                     if (Config.DEBUG_MODE.get()) {
-                        tooltip.add(Component.literal("ID: " + descId).withStyle(s -> s.withColor(0x888888)));
+                        tooltip.add(Component.literal("ID: " + descId).withStyle(s -> s.withColor(0xFF888888)));
                     }
 
-                    guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
+                    guiGraphics.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
                 }
 
                 y += LINE_HEIGHT;
@@ -500,7 +497,7 @@ public class StatsScreen extends Screen {
                 Component toggleTip = entry.isActive().getAsBoolean()
                         ? Component.translatable("gui.playerstats.tooltip.toggle_disable").withStyle(ChatFormatting.RED)
                         : Component.translatable("gui.playerstats.tooltip.toggle_enable").withStyle(ChatFormatting.GREEN);
-                guiGraphics.renderTooltip(font, toggleTip, mouseX, mouseY);
+                guiGraphics.setTooltipForNextFrame(font, toggleTip, mouseX, mouseY);
                 break;
             }
         }
@@ -539,7 +536,7 @@ public class StatsScreen extends Screen {
     }
 
     private boolean isAttributeDisabledClient(Attribute attr) {
-        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        Identifier attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
         if (attrLoc == null) return false;
         String attrKey = attrLoc.toString();
         return ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey) > 0
@@ -556,7 +553,7 @@ public class StatsScreen extends Screen {
                 }
                 if (y + 4 >= clipBottom) break;
 
-                ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                Identifier attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
                 String key = attrLoc != null ? attrLoc.toString() : attr.getDescriptionId();
                 Boolean wasToggleShown = renderedToggleButtons.get(key);
                 boolean shouldShowToggle = hasAttributeUpgrades(attr);
@@ -649,7 +646,7 @@ public class StatsScreen extends Screen {
                 plusButton.setActiveSupplier(() -> !isAttributeMaxed(instance, attr));
                 this.addRenderableWidget(plusButton);
 
-                ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                Identifier attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
                 String key = attrLoc != null ? attrLoc.toString() : attr.getDescriptionId();
                 boolean showToggle = hasAttributeUpgrades(attr);
                 renderedToggleButtons.put(key, showToggle);
@@ -720,7 +717,7 @@ public class StatsScreen extends Screen {
     }
 
     private boolean hasAttributeUpgrades(Attribute attr) {
-        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        Identifier attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
         if (attrLoc != null && ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrLoc.toString()) > 0) {
             return true;
         }
@@ -730,7 +727,7 @@ public class StatsScreen extends Screen {
 
     private boolean isAttributeMaxed(AttributeInstance instance, Attribute attr) {
         if (instance == null) return false;
-        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        Identifier attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
         String attrKey = attrLoc != null ? attrLoc.toString() : "";
         int syncedUpgrades = ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey);
         boolean isDisabled = syncedUpgrades > 0 && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
@@ -746,16 +743,16 @@ public class StatsScreen extends Screen {
         if (instance != null && isAttributeMaxed(instance, attribute)) {
             return;
         }
-        ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
+        Identifier id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (id != null) {
             PacketHandler.sendToServer(new ModifyAttributePacket(entity.getId(), id.toString(), false));
         } else {
-            System.out.println("Atributo sem ResourceLocation válido!");
+            System.out.println("Atributo sem Identifier vÃ¡lido!");
         }
     }
 
     private void sendAttributeToggle(Attribute attribute) {
-        ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
+        Identifier id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (id != null) {
             PacketHandler.sendToServer(new ModifyAttributePacket(entity.getId(), id.toString(), true));
         }
@@ -770,10 +767,13 @@ public class StatsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         // Verifica se foi o botão direito do mouse (1)
         if (button == 1) {
-            // Verifica se o mouse está dentro da caixa de texto
+            // Verifica se o mouse estÃ¡ dentro da caixa de texto
             if (searchBox.isMouseOver(mouseX, mouseY)) {
                 searchBox.setValue("");       // limpa o texto
                 scrollOffset = 0;             // reseta scroll (opcional)
@@ -803,7 +803,7 @@ public class StatsScreen extends Screen {
                     if (y + 17 > clipTop && y + 4 < clipBottom) {
                         String descId = instance.getAttribute().value().getDescriptionId();
                         if (canToggleAbility(descId)) {
-                            // Verifica se clicou na área do botão '+' ou no texto da linha da habilidade
+                            // Verifica se clicou na Ã¡rea do botÃ£o '+' ou no texto da linha da habilidade
                             int buttonX = leftPos + 20;
                             int textX = leftPos + 40;
                             String name = AttributeUtils.getAttributeName(instance.getAttribute().value());
@@ -825,7 +825,7 @@ public class StatsScreen extends Screen {
         }
 
         // Deixa o restante do sistema processar cliques normalmente
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, isDoubleClick);
     }
 
     @Override

@@ -40,9 +40,9 @@ public class PatrolGoal extends Goal {
         this.cooldown = 0;
         this.scanCooldown = 0;
         patrolCenter = new BlockPos(
-                mob.getPersistentData().getInt("PatrolX"),
-                mob.getPersistentData().getInt("PatrolY"),
-                mob.getPersistentData().getInt("PatrolZ")
+                mob.getPersistentData().getIntOr("PatrolX", 0),
+                mob.getPersistentData().getIntOr("PatrolY", 0),
+                mob.getPersistentData().getIntOr("PatrolZ", 0)
         );
         if (patrolCenter.getX() == 0 && patrolCenter.getY() == 0 && patrolCenter.getZ() == 0) {
             patrolCenter = mob.blockPosition();

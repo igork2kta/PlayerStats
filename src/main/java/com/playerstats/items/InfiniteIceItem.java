@@ -2,30 +2,23 @@ package com.playerstats.items;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 public class InfiniteIceItem extends BlockItem {
 
-    public InfiniteIceItem() {
-        super(Blocks.ICE, new Properties()
-                .stacksTo(1)
-                .rarity(Rarity.RARE));
+    public InfiniteIceItem(Properties properties) {
+        super(Blocks.ICE, properties);
     }
 
     @Override
@@ -43,13 +36,13 @@ public class InfiniteIceItem extends BlockItem {
 
         // Se o vanilla consumiu o item (shrink), restaura para manter infinito
         if (result.consumesAction()) {
-            if (!context.getPlayer().isCreative()) {
+            if (context.getPlayer() != null && !context.getPlayer().isCreative()) {
                 itemInHand.setCount(countBefore);
             }
 
             // Registra para evaporar em AR (sem deixar água) após 5 segundos
             Level level = context.getLevel();
-            if (!level.isClientSide) {
+            if (!level.isClientSide()) {
                 BlockPos placedPos = placeContext.getClickedPos();
                 com.playerstats.event.InfiniteIceHandler.registerPlacedIce(level, placedPos);
             }
@@ -59,9 +52,8 @@ public class InfiniteIceItem extends BlockItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.playerstats.infinite_ice.hover_text").withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.translatable("item.playerstats.infinite_ice.hover_text_desc").withStyle(ChatFormatting.GRAY));
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
+        tooltip.accept(Component.translatable("item.playerstats.infinite_ice.hover_text").withStyle(ChatFormatting.AQUA));
+        tooltip.accept(Component.translatable("item.playerstats.infinite_ice.hover_text_desc").withStyle(ChatFormatting.GRAY));
     }
 }
-

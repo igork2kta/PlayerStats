@@ -5,21 +5,26 @@ import com.playerstats.entities.goals.DefendOwnerTargetGoal;
 import com.playerstats.entities.goals.FollowOwnerGoal;
 import com.playerstats.entities.goals.PatrolGoal;
 import com.playerstats.items.ModItems;
+import com.playerstats.sounds.ModSounds;
 import com.playerstats.util.ModDataComponents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.animal.wolf.WolfSoundVariants;
 import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.animal.Wolf;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.animal.wolf.Wolf;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -46,7 +51,7 @@ public class ModAbilityEvents {
     @SubscribeEvent
     public static void onHorseTamed(AnimalTameEvent event){
         if (event.getEntity() instanceof AbstractHorse horse ) {
-            horse.getPersistentData().putUUID("Owner", event.getTamer().getUUID());
+            horse.getPersistentData().store("Owner", UUIDUtil.CODEC, event.getTamer().getUUID());
         }
     }
 
@@ -72,7 +77,7 @@ public class ModAbilityEvents {
         if (!(event.getEntity() instanceof AbstractHorse horse)) return;
 
         Level level = horse.level();
-        if (level.isClientSide || !horse.onGround()) return;
+        if (level.isClientSide() || !horse.onGround()) return;
 
         AttributeInstance attr = horse.getAttribute(ModAttributes.FROST_WALKER.getDelegate());
         if (attr == null || attr.getValue() != 1.0D) return;
@@ -99,8 +104,9 @@ public class ModAbilityEvents {
 
             ItemStack soulFragment = new ItemStack(ModItems.SOUL_FRAGMENT.get());
             if (entity instanceof ServerPlayer player) {
-                CompoundTag soulData = new CompoundTag();
-                player.saveWithoutId(soulData); // salva inventário, XP etc.
+                TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.registryAccess());
+                player.saveWithoutId(output);
+                CompoundTag soulData = output.buildResult(); // salva inventÃ¡rio, XP etc.
                 soulData.putString("id", "minecraft:player");
                 soulData.putString("UUID", player.getUUID().toString()); // Salva explicitamente UUID
                 soulFragment.set(ModDataComponents.STORED_ENTITY, soulData);
@@ -108,8 +114,9 @@ public class ModAbilityEvents {
             }
             else {
                 // mobs normais
-                CompoundTag soulData = new CompoundTag();
-                entity.save(soulData);
+                TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, entity.registryAccess());
+                entity.save(output);
+                CompoundTag soulData = output.buildResult();
                 soulData.putString("StoredEntityName", entity.getDisplayName().getString());
                 soulFragment.set(ModDataComponents.STORED_ENTITY, soulData);
             }
@@ -133,7 +140,7 @@ public class ModAbilityEvents {
         if(event.getNewAboutToBeSetTarget() == null) return;
         if (wolf.getOwner() == null) return;
 
-        // Checa se o atributo HOWL_BUFF está ativo (1 a 3)
+        // Checa se o atributo HOWL_BUFF estÃ¡ ativo (1 a 3)
         var attrInstance = wolf.getAttribute(ModAttributes.HOWL_BUFF.getDelegate());
         if (attrInstance == null || attrInstance.getValue() <= 0.0D) return;
 
@@ -146,40 +153,40 @@ public class ModAbilityEvents {
         // Atualiza cooldown
         howlCooldowns.put(wolf.getUUID(), wolf.level().getGameTime());
 
-        // Raio e duração por nível
+        // Raio e duraÃ§Ã£o por nÃ­vel
         double howlRadius = 4.0D + (level * 4.0D); // Nv 1: 8b, Nv 2: 12b, Nv 3: 16b
         int durationTicks = 20 * (15 + level * 15); // Nv 1: 30s (600t), Nv 2: 45s (900t), Nv 3: 60s (1200t)
-        int amplifier = level >= 3 ? 1 : 0; // Nv 1 e 2: efeito nível 1 (amplifier 0), Nv 3: efeito nível 2 (amplifier 1)
+        int amplifier = level >= 3 ? 1 : 0; // Nv 1 e 2: efeito nÃ­vel 1 (amplifier 0), Nv 3: efeito nÃ­vel 2 (amplifier 1)
 
-        // Buffa aliados próximos (outros lobos vivos)
+        // Buffa aliados prÃ³ximos (outros lobos vivos)
         List<Wolf> allies = wolf.level().getEntitiesOfClass(Wolf.class,
                 wolf.getBoundingBox().inflate(howlRadius),
                 w -> w.isAlive() && w != wolf);
 
         for (Wolf ally : allies) {
-            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, durationTicks, amplifier));
-            ally.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, durationTicks, amplifier));
-            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, durationTicks, amplifier));
+            ally.addEffect(new MobEffectInstance(MobEffects.STRENGTH, durationTicks, amplifier));
+            ally.addEffect(new MobEffectInstance(MobEffects.SPEED, durationTicks, amplifier));
+            ally.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, durationTicks, amplifier));
         }
 
         // Buffa o dono do lobo
         if (wolf.getOwner() instanceof Player owner) {
-            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, durationTicks, amplifier));
-            owner.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, durationTicks, amplifier));
-            owner.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, durationTicks, amplifier));
+            owner.addEffect(new MobEffectInstance(MobEffects.STRENGTH, durationTicks, amplifier));
+            owner.addEffect(new MobEffectInstance(MobEffects.SPEED, durationTicks, amplifier));
+            owner.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, durationTicks, amplifier));
         }
 
-        // Buffa o próprio lobo
-        wolf.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, durationTicks, amplifier));
-        wolf.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, durationTicks, amplifier));
-        wolf.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, durationTicks, amplifier));
+        // Buffa o prÃ³prio lobo
+        wolf.addEffect(new MobEffectInstance(MobEffects.STRENGTH, durationTicks, amplifier));
+        wolf.addEffect(new MobEffectInstance(MobEffects.SPEED, durationTicks, amplifier));
+        wolf.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, durationTicks, amplifier));
 
         // Efeito visual e sonoro
         if (wolf.level() instanceof ServerLevel server) {
             server.sendParticles(ParticleTypes.SOUL, wolf.getX(), wolf.getY() + 1, wolf.getZ(),
                     20 + level * 10, 0.5, 0.5, 0.5, 0.1);
         }
-        wolf.playSound(SoundEvents.WOLF_HOWL, 1.0F, 1.0F);
+        wolf.playSound(ModSounds.WOLF_HOWL.get(), 1.0F, 1.0F);
 
     }
 

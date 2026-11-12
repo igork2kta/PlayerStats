@@ -4,12 +4,13 @@ import com.playerstats.client.ClientBoostCache;
 import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.util.AttributeUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -26,9 +27,9 @@ public class PacketHandler {
 
 
     private static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1.0"); // versão do protocolo (pode ser "1.0")
+        var registrar = event.registrar("1.0"); // versÃ£o do protocolo (pode ser "1.0")
 
-        // Cliente → Servidor
+        // Cliente â†’ Servidor
         registrar.playToServer(
                 ModifyAttributePacket.TYPE,
                 ModifyAttributePacket.CODEC,
@@ -43,59 +44,59 @@ public class PacketHandler {
 
         );
 
-        // Servidor → Cliente
+        // Servidor â†’ Cliente
         registrar.playToClient(
                 UpdateUpgradeCountPacket.TYPE,
                 UpdateUpgradeCountPacket.CODEC,
                 PacketHandler::handleUpdateUpgradeCount
         );
 
-        // Servidor → Cliente (Sincronizar nível de habilidade salvo)
+        // Servidor â†’ Cliente (Sincronizar nÃ­vel de habilidade salvo)
         registrar.playToClient(
                 SyncAbilityLevelPacket.TYPE,
                 SyncAbilityLevelPacket.CODEC,
                 PacketHandler::handleSyncAbilityLevel
         );
 
-        // Cliente → Servidor (Solicitar estado de melhorias/desativações da entidade)
+        // Cliente â†’ Servidor (Solicitar estado de melhorias/desativaÃ§Ãµes da entidade)
         registrar.playToServer(
                 RequestEntityUpgradesPacket.TYPE,
                 RequestEntityUpgradesPacket.CODEC,
                 PacketHandler::handleRequestEntityUpgrades
         );
 
-        // Servidor → Cliente (Sincronizar melhorias e atributos desativados da entidade)
+        // Servidor â†’ Cliente (Sincronizar melhorias e atributos desativados da entidade)
         registrar.playToClient(
                 SyncEntityUpgradesPacket.TYPE,
                 SyncEntityUpgradesPacket.CODEC,
                 PacketHandler::handleSyncEntityUpgrades
         );
 
-        // Cliente → Servidor
+        // Cliente â†’ Servidor
         registrar.playToServer(
                 ResetAttributesPacket.TYPE,
                 ResetAttributesPacket.CODEC,
                 PacketHandler::handleResetAttributes
         );
 
-        // Cliente → Servidor (Ativar Habilidade de Gelo Infinito)
+        // Cliente â†’ Servidor (Ativar Habilidade de Gelo Infinito)
         registrar.playToServer(
                 ActivateInfiniteIcePacket.TYPE,
                 ActivateInfiniteIcePacket.CODEC,
                 PacketHandler::handleActivateInfiniteIce
         );
 
-        // Servidor → Cliente
+        // Servidor â†’ Cliente
         registrar.playToClient(
                 BoostsSyncPacket.TYPE,
                 BoostsSyncPacket.CODEC,
                 PacketHandler::sendBoostsToClient
         );
-        // Exemplo: se UpdatePointsPacket também for C->S:
+        // Exemplo: se UpdatePointsPacket tambÃ©m for C->S:
         // registrar.playToServer(UpdatePointsPacket.TYPE, UpdatePointsPacket.CODEC, PacketHandler::handleUpdatePoints);
 
 
-        // Servidor → Cliente
+        // Servidor â†’ Cliente
         // registrar.playToClient(BoostsSyncPacket.TYPE, BoostsSyncPacket.CODEC, PacketHandler::handleBoostsSync);
     }
 
@@ -108,7 +109,7 @@ public class PacketHandler {
     }
 
     public static void sendToServer(CustomPacketPayload packet) {
-        PacketDistributor.sendToServer(packet);
+        ClientPacketDistributor.sendToServer(packet);
     }
 
     private static void handleModifyAttribute(ModifyAttributePacket msg, IPayloadContext context) {
@@ -118,7 +119,7 @@ public class PacketHandler {
                 var entity = level.getEntity(msg.entityId());
 
                 if (entity instanceof LivingEntity living) {
-                    var attribute = BuiltInRegistries.ATTRIBUTE.get(ResourceLocation.tryParse(msg.attributeId()));
+                    var attribute = BuiltInRegistries.ATTRIBUTE.getValue(Identifier.tryParse(msg.attributeId()));
                     if (attribute != null) {
                         var instance = AttributeUtils.getAttributeInstance(living, attribute);
                         if (instance != null) {
@@ -209,8 +210,8 @@ public class PacketHandler {
             // Limpa cache atual
             ClientBoostCache.activeBoosts.clear();
 
-            for (Map.Entry<ResourceLocation, BoostsSyncPacket.BoostData> entry : pkt.boosts.entrySet()) {
-                Attribute attribute = BuiltInRegistries.ATTRIBUTE.get(entry.getKey());
+            for (Map.Entry<Identifier, BoostsSyncPacket.BoostData> entry : pkt.boosts.entrySet()) {
+                Attribute attribute = BuiltInRegistries.ATTRIBUTE.getValue(entry.getKey());
                 if (attribute != null) {
                     BoostsSyncPacket.BoostData bd = entry.getValue();
                     ClientBoostCache.activeBoosts.put(attribute,

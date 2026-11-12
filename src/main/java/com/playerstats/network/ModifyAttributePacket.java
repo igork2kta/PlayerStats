@@ -3,11 +3,11 @@ package com.playerstats.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record ModifyAttributePacket(int entityId, String attributeId, boolean isToggle) implements CustomPacketPayload {
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("playerstats", "modify_attribute");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath("playerstats", "modify_attribute");
 
     public static final Type<ModifyAttributePacket> TYPE = new Type<>(ID);
 
@@ -15,7 +15,7 @@ public record ModifyAttributePacket(int entityId, String attributeId, boolean is
     public static final StreamCodec<FriendlyByteBuf, ModifyAttributePacket> CODEC =
             StreamCodec.of(ModifyAttributePacket::encode, ModifyAttributePacket::decode);
 
-    // Construtor de conveniência para compatibilidade com upgrades normais
+    // Construtor de conveniÃªncia para compatibilidade com upgrades normais
     public ModifyAttributePacket(int entityId, String attributeId) {
         this(entityId, attributeId, false);
     }

@@ -1,21 +1,14 @@
 package com.playerstats.items;
 
-import com.playerstats.event.PlayerAttributePersistence;
 import com.playerstats.util.ModDataComponents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.item.component.TooltipDisplay;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 public class SoulFragmentItem extends Item {
     public SoulFragmentItem(Properties properties) {
@@ -24,15 +17,12 @@ public class SoulFragmentItem extends Item {
 
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-
-
-        if (stack.get(ModDataComponents.STORED_ENTITY) != null) {
-            String mobName = stack.get(ModDataComponents.STORED_ENTITY).getString("StoredEntityName");
-            //Component mobName = json;
-
-            if (mobName != null) {
-                tooltip.add(Component.translatable("item.playerstats.soul_fragment.hoverText", mobName)
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
+        var stored = stack.get(ModDataComponents.STORED_ENTITY);
+        if (stored != null) {
+            String mobName = stored.getStringOr("StoredEntityName", "");
+            if (!mobName.isEmpty()) {
+                tooltip.accept(Component.translatable("item.playerstats.soul_fragment.hoverText", mobName)
                         .withStyle(ChatFormatting.GRAY));
             }
         }

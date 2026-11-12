@@ -3,10 +3,11 @@ package com.playerstats.event;
 import com.playerstats.ModAttributes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.Parrot;
+import net.minecraft.world.entity.animal.parrot.Parrot;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
@@ -29,8 +30,6 @@ public class ScoutVisionHandler {
 
         // Executa a cada 20 ticks (1 segundo) para balancear responsividade e performance
         if (level.getGameTime() % 20 != 0) return;
-
-        double radius = 16.0D;
 
         for (var player : level.players()) {
             int shoulderLvl = getShoulderScoutVisionLevel(player);
@@ -76,37 +75,36 @@ public class ScoutVisionHandler {
 
     /** Retorna o nível de Scout Vision do papagaio no ombro (ou 0 se não tiver) */
     private static int getShoulderScoutVisionLevel(Player player) {
-        int left = getShoulderLevel(player, true);
-        int right = getShoulderLevel(player, false);
+        if (!(player instanceof ServerPlayer serverPlayer)) return 0;
+        int left = getShoulderLevel(serverPlayer, true);
+        int right = getShoulderLevel(serverPlayer, false);
         return Math.max(left, right);
     }
 
-    private static int getShoulderLevel(Player player, boolean leftShoulder) {
+    private static int getShoulderLevel(ServerPlayer player, boolean leftShoulder) {
         CompoundTag tag = leftShoulder ? player.getShoulderEntityLeft() : player.getShoulderEntityRight();
         if (tag == null || tag.isEmpty()) return 0;
-        if (!"minecraft:parrot".equals(tag.getString("id"))) return 0;
+        if (!"minecraft:parrot".equals(tag.getStringOr("id", ""))) return 0;
 
-        // No 1.21.1 a tag é "attributes" (minúsculo), mantendo suporte a "Attributes"
-        String attrKey = tag.contains("attributes", 9) ? "attributes" : (tag.contains("Attributes", 9) ? "Attributes" : null);
+        String attrKey = tag.contains("attributes") ? "attributes" : (tag.contains("Attributes") ? "Attributes" : null);
         if (attrKey == null) return 0;
 
-        ListTag attributes = tag.getList(attrKey, 10);
+        ListTag attributes = tag.getListOrEmpty(attrKey);
 
         for (int i = 0; i < attributes.size(); i++) {
-            CompoundTag attr = attributes.getCompound(i);
-            // No 1.21.1 é "id", anteriormente era "Name"
-            String id = attr.contains("id") ? attr.getString("id") : attr.getString("Name");
+            CompoundTag attr = attributes.getCompoundOrEmpty(i);
+            String id = attr.contains("id") ? attr.getStringOr("id", "") : attr.getStringOr("Name", "");
 
             if ("playerstats:scout_vision".equals(id) || "attribute.playerstats.scout_vision".equals(id)) {
-                double base = attr.contains("base") ? attr.getDouble("base") : (attr.contains("Base") ? attr.getDouble("Base") : -1.0D);
+                double base = attr.contains("base") ? attr.getDoubleOr("base", -1.0D) : attr.getDoubleOr("Base", -1.0D);
                 double total = base;
 
-                String modKey = attr.contains("modifiers", 9) ? "modifiers" : (attr.contains("Modifiers", 9) ? "Modifiers" : null);
+                String modKey = attr.contains("modifiers") ? "modifiers" : (attr.contains("Modifiers") ? "Modifiers" : null);
                 if (modKey != null) {
-                    ListTag mods = attr.getList(modKey, 10);
+                    ListTag mods = attr.getListOrEmpty(modKey);
                     for (int j = 0; j < mods.size(); j++) {
-                        CompoundTag mod = mods.getCompound(j);
-                        double amount = mod.contains("amount") ? mod.getDouble("amount") : mod.getDouble("Amount");
+                        CompoundTag mod = mods.getCompoundOrEmpty(j);
+                        double amount = mod.contains("amount") ? mod.getDoubleOr("amount", 0.0D) : mod.getDoubleOr("Amount", 0.0D);
                         total += amount;
                     }
                 }

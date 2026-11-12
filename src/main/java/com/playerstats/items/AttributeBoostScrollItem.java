@@ -9,10 +9,10 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -20,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -27,6 +28,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 
@@ -42,11 +44,11 @@ public class AttributeBoostScrollItem extends Item {
     // Classe interna para representar um boost
     public static class BoostInstance {
         public final Attribute attribute;
-        public final ResourceLocation modifierId;
+        public final Identifier modifierId;
         public int ticksRemaining;
         public double amount;
 
-        public BoostInstance(Attribute attribute, ResourceLocation modifierId, int ticksRemaining, double amount) {
+        public BoostInstance(Attribute attribute, Identifier modifierId, int ticksRemaining, double amount) {
             this.attribute = attribute;
             this.modifierId = modifierId;
             this.ticksRemaining = ticksRemaining;
@@ -56,10 +58,10 @@ public class AttributeBoostScrollItem extends Item {
 
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             Random random = new Random();
 
             // Primeiro uso: definir atributo, incremento e tempo
@@ -91,11 +93,11 @@ public class AttributeBoostScrollItem extends Item {
                 }
                 
             } 
-            // Segundo uso: aplicar boost já salvo
+            // Segundo uso: aplicar boost jÃ¡ salvo
             else {
                 String attrKey = stack.get(ModDataComponents.DEFINED_ATTRIBUTE);
                 Attribute attribute = BuiltInRegistries.ATTRIBUTE
-                        .getOptional(ResourceLocation.tryParse(attrKey))
+                        .getOptional(Identifier.tryParse(attrKey))
                         .orElse(null);
 
                 if (attribute != null) {
@@ -108,7 +110,7 @@ public class AttributeBoostScrollItem extends Item {
             }
         }
 
-        return InteractionResultHolder.success(stack);
+        return InteractionResult.SUCCESS;
     }
 
     private void applyBoost(Player player, Attribute attribute, double amount, int duration) {
@@ -118,11 +120,11 @@ public class AttributeBoostScrollItem extends Item {
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = activeBoosts.computeIfAbsent(playerId, k -> new ArrayList<>());
 
-        // Cria um ResourceLocation unico para esse atributo
+        // Cria um Identifier unico para esse atributo
         String sanitizedPath = AttributeUtils.sanitizeToPath(attribute.getDescriptionId());
-        ResourceLocation modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + sanitizedPath);
+        Identifier modifierId = Identifier.fromNamespaceAndPath("playerstats", "scroll_boost." + sanitizedPath);
 
-        // Verifica se já existe boost para o mesmo atributo
+        // Verifica se jÃ¡ existe boost para o mesmo atributo
         for (BoostInstance existing : boosts) {
             if (existing.attribute.equals(attribute)) {
                 // Apenas renova o tempo e atualiza quantidade
@@ -151,28 +153,28 @@ public class AttributeBoostScrollItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
         if (stack.get(ModDataComponents.DEFINED_ATTRIBUTE) != null) {
             Attribute attribute = BuiltInRegistries.ATTRIBUTE
-                    .getOptional(ResourceLocation.tryParse(stack.get(ModDataComponents.DEFINED_ATTRIBUTE)))
+                    .getOptional(Identifier.tryParse(stack.get(ModDataComponents.DEFINED_ATTRIBUTE)))
                     .orElse(null);
             if (attribute != null) {
                 double amount = stack.get(ModDataComponents.BOOST_AMOUNT);
                 int durationSec = stack.get(ModDataComponents.BOOST_DURATION) / 20;
 
-                tooltip.add(Component.translatable(
+                tooltip.accept(Component.translatable(
                         "item.playerstats.attribute_boost_scroll.hover_text_unveiled",
                         AttributeUtils.getAttributeName(attribute)
                 ).withStyle(ChatFormatting.AQUA));
 
-                tooltip.add(Component.translatable(
+                tooltip.accept(Component.translatable(
                         "item.playerstats.attribute_boost_scroll.hover_text_values",
                         amount,
                         durationSec
                 ).withStyle(ChatFormatting.GREEN));
             }
         } else {
-            tooltip.add(Component.translatable("item.playerstats.attribute_boost_scroll.hover_text")
+            tooltip.accept(Component.translatable("item.playerstats.attribute_boost_scroll.hover_text")
                     .withStyle(ChatFormatting.GRAY));
         }
     }
@@ -180,7 +182,7 @@ public class AttributeBoostScrollItem extends Item {
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (event.getEntity().level().isClientSide) return;
+        if (event.getEntity().level().isClientSide()) return;
 
         Player player = event.getEntity();
         UUID playerId = player.getUUID();
@@ -242,7 +244,7 @@ public class AttributeBoostScrollItem extends Item {
             return;
         }
 
-        Map<ResourceLocation, com.playerstats.network.BoostsSyncPacket.BoostData> map = boosts.stream()
+        Map<Identifier, com.playerstats.network.BoostsSyncPacket.BoostData> map = boosts.stream()
                .collect(Collectors.toMap(
                         boost -> BuiltInRegistries.ATTRIBUTE.getKey(boost.attribute),
                         boost -> new com.playerstats.network.BoostsSyncPacket.BoostData(boost.amount, Math.max(0, boost.ticksRemaining / 20))
@@ -274,24 +276,24 @@ public class AttributeBoostScrollItem extends Item {
     }
 
     public static void loadBoostsFromPlayer(Player player) {
-        var tag = player.getPersistentData().getCompound("PlayerStatsBoosts");
-        if (tag == null || tag.isEmpty()) return;
+        var tag = player.getPersistentData().getCompoundOrEmpty("PlayerStatsBoosts");
+        if (tag.isEmpty()) return;
 
         UUID playerId = player.getUUID();
         List<BoostInstance> boosts = new ArrayList<>();
 
-        for (String key : tag.getAllKeys()) {
-            var boostTag = tag.getCompound(key);
-            String attrKey = boostTag.getString("Attribute");
-            String modId = boostTag.getString("ModifierId");
-            int ticks = boostTag.getInt("TicksRemaining");
-            double amount = boostTag.getDouble("Amount");
+        for (String key : tag.keySet()) {
+            var boostTag = tag.getCompoundOrEmpty(key);
+            String attrKey = boostTag.getStringOr("Attribute", "");
+            String modId = boostTag.getStringOr("ModifierId", "");
+            int ticks = boostTag.getIntOr("TicksRemaining", 0);
+            double amount = boostTag.getDoubleOr("Amount", 0.0);
 
-            Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(ResourceLocation.tryParse(attrKey)).orElse(null);
+            Attribute attribute = BuiltInRegistries.ATTRIBUTE.getOptional(Identifier.tryParse(attrKey)).orElse(null);
             if (attribute != null && ticks > 0) {
-                ResourceLocation modifierId = ResourceLocation.tryParse(modId);
+                Identifier modifierId = Identifier.tryParse(modId);
                 if (modifierId == null) {
-                    modifierId = ResourceLocation.fromNamespaceAndPath("playerstats", "scroll_boost." + AttributeUtils.sanitizeToPath(attribute.getDescriptionId()));
+                    modifierId = Identifier.fromNamespaceAndPath("playerstats", "scroll_boost." + AttributeUtils.sanitizeToPath(attribute.getDescriptionId()));
                 }
 
                 AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attribute);

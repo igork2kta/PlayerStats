@@ -10,10 +10,10 @@ import com.playerstats.util.AttributeUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -23,13 +23,13 @@ public class PlayerStatsCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("playerstats")
-                .requires(source -> source.hasPermission(2))
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 // -------------------------------------------------------
                 // ADD ATTRIBUTE POINTS
                 // -------------------------------------------------------
                 .then(Commands.literal("addattributepoints")
                         .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                                // Versão padrão (sem player)
+                                // VersÃ£o padrÃ£o (sem player)
                                 .executes(ctx -> {
                                     ServerPlayer player = ctx.getSource().getPlayerOrException();
                                     int amount = IntegerArgumentType.getInteger(ctx, "amount");
@@ -40,7 +40,7 @@ public class PlayerStatsCommands {
                                             Component.translatable("gui.playerstats.added_points", current + amount), false);
                                     return 1;
                                 })
-                                // Versão com player opcional
+                                // VersÃ£o com player opcional
                                 .then(Commands.argument("target", EntityArgument.player())
                                         .executes(ctx -> {
                                             ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
@@ -146,7 +146,7 @@ public class PlayerStatsCommands {
                 // RELOAD CONFIG
                 // -------------------------------------------------------
                 .then(Commands.literal("reloadconfig")
-                        .requires(source -> source.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(context -> {
                             Config.reloadCustomMobChances();
                             context.getSource().sendSuccess(() ->
@@ -158,7 +158,7 @@ public class PlayerStatsCommands {
                 // SET ATTRIBUTE VALUE
                 // -------------------------------------------------------
                 .then(Commands.literal("set")
-                        .then(Commands.argument("attribute_id", ResourceLocationArgument.id())
+                        .then(Commands.argument("attribute_id", IdentifierArgument.id())
                                 .suggests(AttributeSuggestions.EDITABLE_ATTRIBUTE_IDS)
                                 .then(Commands.argument("value", DoubleArgumentType.doubleArg())
                                         .executes(ctx -> executeSetAttribute(ctx.getSource().getPlayerOrException(), ctx))
@@ -175,10 +175,10 @@ public class PlayerStatsCommands {
     }
 
     private static int executeSetAttribute(ServerPlayer player, com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) {
-        ResourceLocation id = ResourceLocationArgument.getId(ctx, "attribute_id");
-        Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+        Identifier id = IdentifierArgument.getId(ctx, "attribute_id");
+        Attribute attr = BuiltInRegistries.ATTRIBUTE.getValue(id);
         if (attr == null) {
-            ctx.getSource().sendFailure(Component.literal("Atributo não encontrado: " + id));
+            ctx.getSource().sendFailure(Component.literal("Atributo nÃ£o encontrado: " + id));
             return 0;
         }
 

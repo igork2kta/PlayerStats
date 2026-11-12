@@ -1,12 +1,13 @@
 package com.playerstats.event;
 
 import com.playerstats.ModAttributes;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -32,9 +33,9 @@ public class TauntHandler {
 
         // Se o alvo sendo definido é o dono, cancela
         LivingEntity newTarget = event.getNewAboutToBeSetTarget();
-        if (newTarget != null && golem.getPersistentData().hasUUID("Owner")) {
-            UUID ownerId = golem.getPersistentData().getUUID("Owner");
-            if (newTarget.getUUID().equals(ownerId)) {
+        if (newTarget != null) {
+            UUID ownerId = golem.getPersistentData().read("Owner", UUIDUtil.CODEC).orElse(null);
+            if (ownerId != null && newTarget.getUUID().equals(ownerId)) {
                 event.setNewAboutToBeSetTarget(null); // remove o alvo
             }
         }
@@ -45,17 +46,16 @@ public class TauntHandler {
         LivingEntity attacker = event.getEntity();
         LivingEntity originalTarget = event.getOriginalAboutToBeSetTarget();
 
-        // só vale se for hostil mirando em um player
+        // sÃ³ vale se for hostil mirando em um player
         if (!(originalTarget instanceof ServerPlayer)) return;
 
         Level level = attacker.level();
 
         // Evita problemas caso o dono bata no seu mob com taunt
-        if(attacker.getPersistentData().contains("Owner")){
-            if (originalTarget.getUUID().equals(attacker.getPersistentData().getUUID("Owner"))){
-                event.setCanceled(true);
-                return;
-            }
+        UUID attackerOwner = attacker.getPersistentData().read("Owner", UUIDUtil.CODEC).orElse(null);
+        if (attackerOwner != null && originalTarget.getUUID().equals(attackerOwner)) {
+            event.setCanceled(true);
+            return;
         }
 
         // --- GOLEMS ---
@@ -103,7 +103,7 @@ public class TauntHandler {
         }
     }
 
-    // Ativa o taunt se não estiver em cooldown
+    // Ativa o taunt se nÃ£o estiver em cooldown
     private static boolean activateTaunt(LivingEntity entity) {
         long now = entity.level().getGameTime();
 

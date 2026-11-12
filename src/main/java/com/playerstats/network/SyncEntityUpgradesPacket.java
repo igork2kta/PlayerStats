@@ -3,7 +3,7 @@ package com.playerstats.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Sincroniza com o cliente a contagem de melhorias de atributos e quais estão desativados para uma entidade.
+ * Sincroniza com o cliente a contagem de melhorias de atributos e quais estÃ£o desativados para uma entidade.
  */
 public record SyncEntityUpgradesPacket(
         int entityId,
@@ -19,8 +19,8 @@ public record SyncEntityUpgradesPacket(
         Set<String> disabledAttributes
 ) implements CustomPacketPayload {
 
-    public static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath("playerstats", "sync_entity_upgrades");
+    public static final Identifier ID =
+            Identifier.fromNamespaceAndPath("playerstats", "sync_entity_upgrades");
 
     public static final Type<SyncEntityUpgradesPacket> TYPE = new Type<>(ID);
 

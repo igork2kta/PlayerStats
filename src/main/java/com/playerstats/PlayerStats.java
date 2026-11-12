@@ -5,8 +5,9 @@ import com.playerstats.command.PlayerStatsCommands;
 import com.playerstats.items.AttributeBoostScrollItem;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.PacketHandler;
+import com.playerstats.sounds.ModSounds;
 import com.playerstats.util.ModDataComponents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -72,6 +73,8 @@ public class PlayerStats {
         // Registrar os itens
         ModItems.register(modEventBus);
 
+        ModSounds.register(modEventBus);
+
         ModDataComponents.register(modEventBus);
 
         //Registrar pacotes
@@ -81,15 +84,15 @@ public class PlayerStats {
 
         NeoForge.EVENT_BUS.register(this);
 
-        // 🔹 Registra os atributos
+        // ðŸ”¹ Registra os atributos
         ModAttributes.ATTRIBUTES.register(modEventBus);
-        // 🔹 Registra o listener do evento
+        // ðŸ”¹ Registra o listener do evento
         modEventBus.addListener(ModAttributes::onEntityAttributeModification);
 
         modEventBus.addListener(this::onConfigReload);
 
         // Registrar eventos apenas no lado do cliente
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             modEventBus.addListener(this::onClientSetup);
             modEventBus.addListener(com.playerstats.client.KeyMappings::registerBindings);
             com.playerstats.client.ModClientConfigScreen.register(modContainer);
@@ -121,9 +124,9 @@ public class PlayerStats {
 
     @SubscribeEvent
     public void onLootTableLoad(LootTableLoadEvent event) {
-        ResourceLocation name = event.getName();
+        Identifier name = event.getName();
 
-        // Verifica se o loot é de estrutura (todos estão no namespace "minecraft:chests/")
+        // Verifica se o loot Ã© de estrutura (todos estÃ£o no namespace "minecraft:chests/")
         if (name != null && name.getNamespace().equals("minecraft") && name.getPath().startsWith("chests/")) {
             // Pool 1: concorrem entre si
             LootPool pool1 = LootPool.lootPool()

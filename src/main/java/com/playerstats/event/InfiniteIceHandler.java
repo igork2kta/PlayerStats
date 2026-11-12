@@ -39,7 +39,7 @@ public class InfiniteIceHandler {
         CompoundTag data = player.getPersistentData();
 
         // 2. Checa se já está ativo
-        int currentTimer = data.getInt(NBT_ICE_TIMER);
+        int currentTimer = data.getIntOr(NBT_ICE_TIMER, 0);
         if (currentTimer > 0) {
             int remainingSeconds = (currentTimer + 19) / 20;
             player.sendSystemMessage(Component.translatable("gui.playerstats.ice_ability_already_active", remainingSeconds)
@@ -48,7 +48,7 @@ public class InfiniteIceHandler {
         }
 
         // 3. Checa cooldown
-        int currentCooldown = data.getInt(NBT_ICE_COOLDOWN);
+        int currentCooldown = data.getIntOr(NBT_ICE_COOLDOWN, 0);
         if (currentCooldown > 0) {
             int remainingSeconds = (currentCooldown + 19) / 20;
             player.sendSystemMessage(Component.translatable("gui.playerstats.ice_ability_cooldown", remainingSeconds)
@@ -87,18 +87,18 @@ public class InfiniteIceHandler {
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
-        if (player.level().isClientSide) return;
+        if (player.level().isClientSide()) return;
 
         CompoundTag data = player.getPersistentData();
 
         // Reduz cooldown se houver
-        int cooldown = data.getInt(NBT_ICE_COOLDOWN);
+        int cooldown = data.getIntOr(NBT_ICE_COOLDOWN, 0);
         if (cooldown > 0) {
             data.putInt(NBT_ICE_COOLDOWN, cooldown - 1);
         }
 
         // Gerencia timer ativo
-        int timer = data.getInt(NBT_ICE_TIMER);
+        int timer = data.getIntOr(NBT_ICE_TIMER, 0);
         if (timer > 0) {
             timer--;
             data.putInt(NBT_ICE_TIMER, timer);
@@ -118,14 +118,14 @@ public class InfiniteIceHandler {
     private static final java.util.Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>, java.util.Map<net.minecraft.core.BlockPos, Long>> iceBlocks = new java.util.HashMap<>();
 
     public static void registerPlacedIce(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos) {
-        if (level.isClientSide) return;
+        if (level.isClientSide()) return;
         long expireTick = level.getGameTime() + 200; // 10 segundos para sumir
         iceBlocks.computeIfAbsent(level.dimension(), k -> new java.util.HashMap<>()).put(pos.immutable(), expireTick);
     }
 
     @SubscribeEvent
     public static void onLevelTick(net.neoforged.neoforge.event.tick.LevelTickEvent.Post event) {
-        if (event.getLevel().isClientSide) return;
+        if (event.getLevel().isClientSide()) return;
         var level = event.getLevel();
         var map = iceBlocks.get(level.dimension());
         if (map == null || map.isEmpty()) return;
@@ -155,7 +155,7 @@ public class InfiniteIceHandler {
     }
 
     @SubscribeEvent
-    public static void onBlockBreak(net.neoforged.neoforge.event.level.BlockEvent.BreakEvent event) {
+    public static void onBlockBreak(net.neoforged.neoforge.event.level.block.BreakBlockEvent event) {
         // Se quebrarem o gelo temporário com a mão ou ferramenta, não deixa virar água nem dropar
         if (event.getState().is(net.minecraft.world.level.block.Blocks.ICE) || event.getState().is(net.minecraft.world.level.block.Blocks.FROSTED_ICE)) {
             if (event.getLevel() instanceof net.minecraft.world.level.Level level) {

@@ -2,11 +2,12 @@ package com.playerstats.client.widget;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -17,11 +18,11 @@ public class CustomButton extends Button {
     private final MutableComponent LABEL; // Texto que será mostrado
     private final Font font = Minecraft.getInstance().font;
 
-    private final ResourceLocation TEXTURE;
+    private final Identifier TEXTURE;
     private BooleanSupplier activeSupplier;
-    private Supplier<ResourceLocation> textureSupplier;
+    private Supplier<Identifier> textureSupplier;
 
-    public CustomButton(int x, int y, int width, int height, MutableComponent label, ResourceLocation texture, OnPress onPress) {
+    public CustomButton(int x, int y, int width, int height, MutableComponent label, Identifier texture, OnPress onPress) {
         super(x, y, width, height, Component.empty(), onPress, DEFAULT_NARRATION);
         this.LABEL = label;
         this.TEXTURE = texture;
@@ -31,25 +32,24 @@ public class CustomButton extends Button {
         this.activeSupplier = activeSupplier;
     }
 
-    public void setTextureSupplier(Supplier<ResourceLocation> textureSupplier) {
+    public void setTextureSupplier(Supplier<Identifier> textureSupplier) {
         this.textureSupplier = textureSupplier;
     }
 
     @Override
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (this.activeSupplier != null) {
             this.active = this.activeSupplier.getAsBoolean();
         }
 
-        if (!this.active) {
-            graphics.setColor(0.5f, 0.5f, 0.5f, 0.6f);
-        }
+        int tint = !this.active ? 0x99808080 : 0xFFFFFFFF;
 
         //A textura tem o dobro do tamanho exibido, em cima normal e em baixo é a textura hovered. Quando passa o mouse por cima, altera para a textura hovered
         int texY = (this.isHovered() && this.active) ? this.height : 0; // Se hover, desenha a parte inferior
-        ResourceLocation activeTexture = this.textureSupplier != null ? this.textureSupplier.get() : TEXTURE;
+        Identifier activeTexture = this.textureSupplier != null ? this.textureSupplier.get() : TEXTURE;
 
         graphics.blit(
+                RenderPipelines.GUI_TEXTURED,
                 activeTexture,
                 this.getX(),
                 this.getY(),
@@ -58,15 +58,12 @@ public class CustomButton extends Button {
                 this.width,
                 this.height,
                 this.width,
-                this.height * 2 // altura total da textura (dobro da altura do botão)
+                this.height * 2, // altura total da textura (dobro da altura do botão)
+                tint
         );
-
-        if (!this.active) {
-            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        }
 
         int textX = this.getX() + (this.width - font.width(LABEL)) / 2;
         int textY = this.getY() + (this.height - 8) / 2;
-        graphics.drawString(font, LABEL, textX, textY, 0xFFFFFF, false);
+        graphics.text(font, LABEL, textX, textY, 0xFFFFFFFF, false);
     }
 }

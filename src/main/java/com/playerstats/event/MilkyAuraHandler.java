@@ -2,9 +2,10 @@ package com.playerstats.event;
 
 import com.playerstats.ModAttributes;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SpellParticleOption;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.animal.cow.Cow;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -30,10 +31,10 @@ public class MilkyAuraHandler {
         int level = (int) Math.round(levelValue);
         if (level <= 0) return;
 
-        // Escala o raio da aura de acordo com o nível: Nv 1 = 2b, Nv 2 = 4b, Nv 3 = 6b
+        // Escala o raio da aura de acordo com o nÃ­vel: Nv 1 = 2b, Nv 2 = 4b, Nv 3 = 6b
         double auraRadius = level * 2.0D;
 
-        // Área de efeito ao redor da vaca
+        // Ãrea de efeito ao redor da vaca
         AABB auraBox = cow.getBoundingBox().inflate(auraRadius);
         List<LivingEntity> nearby = cow.level().getEntitiesOfClass(
                 LivingEntity.class,
@@ -45,9 +46,9 @@ public class MilkyAuraHandler {
             boolean removed = entity.removeAllEffects();
 
             if (removed && cow.level() instanceof ServerLevel serverLevel) {
-                // Partículas de poção/cura saindo da entidade curada
+                // PartÃ­culas de poÃ§Ã£o/cura saindo da entidade curada
                 serverLevel.sendParticles(
-                        ParticleTypes.EFFECT,
+                        SpellParticleOption.create(ParticleTypes.EFFECT, 0xFFFFFF, 1.0F),
                         entity.getX(),
                         entity.getY() + (entity.getBbHeight() / 2.0),
                         entity.getZ(),
@@ -60,10 +61,10 @@ public class MilkyAuraHandler {
             }
         }
 
-        // Partículas ambientais sutis ao redor da vaca enquanto a aura estiver ativa
+        // PartÃ­culas ambientais sutis ao redor da vaca enquanto a aura estiver ativa
         if (cow.tickCount % 30 == 0 && cow.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(
-                    ParticleTypes.EFFECT,
+                    SpellParticleOption.create(ParticleTypes.EFFECT, 0xFFFFFF, 1.0F),
                     cow.getX(),
                     cow.getY() + (cow.getBbHeight() / 2.0),
                     cow.getZ(),

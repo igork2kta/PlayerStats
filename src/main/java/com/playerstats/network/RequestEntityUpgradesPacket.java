@@ -3,15 +3,15 @@ package com.playerstats.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Solicita ao servidor o estado atual de melhorias e atributos desativados de uma entidade.
  */
 public record RequestEntityUpgradesPacket(int entityId) implements CustomPacketPayload {
 
-    public static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath("playerstats", "request_entity_upgrades");
+    public static final Identifier ID =
+            Identifier.fromNamespaceAndPath("playerstats", "request_entity_upgrades");
 
     public static final Type<RequestEntityUpgradesPacket> TYPE = new Type<>(ID);
 

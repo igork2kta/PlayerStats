@@ -134,13 +134,13 @@ public class PlayerPointHandler {
             player.sendSystemMessage(Component.literal(String.format("PlayerStatsDebug: Point chance: %s", baseChance)));
         }
 
-        if (player.level().random.nextDouble() < baseChance) {
+        if (player.level().getRandom().nextDouble() < baseChance) {
             givePoint(player);
         }
     }
 
     private static void givePoint(ServerPlayer player) {
-        long currentDay = player.level().getDayTime() / 24000L;
+        long currentDay = player.level().getOverworldClockTime() / 24000L;
         UUID uuid = player.getUUID();
 
         Long lastGiven = lastDayPointGiven.getOrDefault(uuid, -1L);

@@ -8,7 +8,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.commands.CommandSourceStack;
@@ -24,7 +24,7 @@ public class AttributeSuggestions {
         }
 
         for (Attribute attr : BuiltInRegistries.ATTRIBUTE) {
-            ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+            Identifier id = BuiltInRegistries.ATTRIBUTE.getKey(attr);
             if (id == null) continue;
 
             // Criamos a ResourceKey para este atributo
@@ -32,8 +32,8 @@ public class AttributeSuggestions {
 
             // Pegamos o Holder correspondente
             Holder.Reference<Attribute> holder = player.level().registryAccess()
-                    .registryOrThrow(Registries.ATTRIBUTE)
-                    .getHolder(key)
+                    .lookupOrThrow(Registries.ATTRIBUTE)
+                    .get(key)
                     .orElse(null);
 
             if (holder == null) continue;

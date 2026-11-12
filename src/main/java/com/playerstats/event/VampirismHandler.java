@@ -46,7 +46,7 @@ public class VampirismHandler {
         }
 
         // Quantidade de cura: 10% do dano causado + 2% por nível acima de 1 (10%, 12%, 14%, 16%, 18%)
-        float damageDealt = event.getNewDamage();
+        float damageDealt = event.getInflictedDamage();
         if (damageDealt <= 0.0F) {
             return;
         }

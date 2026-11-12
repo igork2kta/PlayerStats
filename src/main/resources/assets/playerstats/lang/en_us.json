@@ -1,5 +1,6 @@
 {
   "key.categories.playerstats": "Player Stats",
+  "key.category.playerstats.playerstats": "Player Stats",
   "key.playerstats.open_stats_screen": "Open Stats Screen",
   "key.playerstats.open_entity_stats": "Open Entity stats screen (targeted entity)",
   "key.playerstats.activate_ice": "Activate Ice Ability",

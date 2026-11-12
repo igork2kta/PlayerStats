@@ -4,7 +4,7 @@ import com.playerstats.Config;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -18,7 +18,7 @@ public class AttributeUtils {
 
     /**
      * Sanitiza qualquer identificador de atributo ou translation key (ex: apothic_attributes:arrow_velocity)
-     * para um path valido em ResourceLocation ([a-z0-9/._-]).
+     * para um path valido em Identifier ([a-z0-9/._-]).
      */
     public static String sanitizeToPath(String raw) {
         if (raw == null) return "unknown";
@@ -171,16 +171,16 @@ public class AttributeUtils {
     }
 
     public static final List<String> IGNORED_ATTRIBUTES = List.of(
-            "attribute.name.generic.armor",
+            "attribute.name.armor",
             "attribute.name.forge.name_tag_distance",
-            "attribute.name.generic.gravity",
-            "attribute.name.generic.step_height",
-            "attribute.name.generic.armor_toughness",
+            "attribute.name.gravity",
+            "attribute.name.step_height",
+            "attribute.name.armor_toughness",
             "neoforge.creative_flight",
-            "attribute.name.generic.max_absorption",
+            "attribute.name.max_absorption",
             "neoforge.name_tag_distance",
-            "attribute.name.generic.scale",
-            "attribute.name.generic.movement_efficiency");
+            "attribute.name.scale",
+            "attribute.name.movement_efficiency");
 
 
     public static String getAttributeName(Attribute attr) {
@@ -193,12 +193,12 @@ public class AttributeUtils {
                 .filter(attr -> {
 
                     AttributeInstance instance = getAttributeInstance(entity, attr);
-                    //Aqui, removemos os atributos que não são editáveis (pelo menos a maioria)
+                    //Aqui, removemos os atributos que nÃ£o sÃ£o editÃ¡veis (pelo menos a maioria)
                     if (!attr.isClientSyncable()) return false;
                     if (instance == null) return false;
                     //Aqui removemos os atributos do mod, vai aparecer em outra aba com tratamneto diferente
                     if (attr.getDescriptionId().contains("playerstats")) return false;
-                    //Aqui, removemos os que não queremos que apareça
+                    //Aqui, removemos os que nÃ£o queremos que apareÃ§a
                     if (Config.cachedIgnoredAttributes.contains(attr.getDescriptionId())) return false;
                     if (!searchText.isEmpty()) {
                         String name = AttributeUtils.getAttributeName(attr).toLowerCase();
@@ -211,11 +211,11 @@ public class AttributeUtils {
     public static AttributeInstance getAttributeInstance(LivingEntity entity, Attribute attribute){
 
         // Converte Attribute para Holder<Attribute>
-        ResourceLocation attrId = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
+        Identifier attrId = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
         if (attrId == null) return null;
 
 
-        var optionalHolder = BuiltInRegistries.ATTRIBUTE.getHolder(attrId);
+        var optionalHolder = BuiltInRegistries.ATTRIBUTE.get(attrId);
         if (optionalHolder.isEmpty()) return null;
 
 
@@ -225,20 +225,20 @@ public class AttributeUtils {
     }
 
     public static Attribute getAttributeFromId(String attributeId) {
-        ResourceLocation id = ResourceLocation.tryParse(attributeId);
+        Identifier id = Identifier.tryParse(attributeId);
         if (id == null) {
             return null;
         }
-        return BuiltInRegistries.ATTRIBUTE.get(id);
+        return BuiltInRegistries.ATTRIBUTE.getValue(id);
     }
 
     public static List<AttributeInstance> getCustomAttributes(LivingEntity entity, String searchText){
 
         return entity.getAttributes().getSyncableAttributes().stream().filter(attr -> {
-            // Só pega os atributos do seu mod
+            // SÃ³ pega os atributos do seu mod
             if (attr.getAttribute().value().getDescriptionId().contains("playerstats")) {
                 if(entity instanceof  Player player){
-                    //Não permite rebirth para player se não for Hardcore
+                    //NÃ£o permite rebirth para player se nÃ£o for Hardcore
                     if(attr.getAttribute().value().getDescriptionId().contains("rebirth") && !player.level().getLevelData().isHardcore()) return false;
                 }
 

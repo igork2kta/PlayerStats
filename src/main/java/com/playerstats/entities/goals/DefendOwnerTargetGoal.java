@@ -2,9 +2,10 @@ package com.playerstats.entities.goals;
 
 import com.playerstats.ModAttributes;
 import com.playerstats.util.AttributeUtils;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
-import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.UUID;
@@ -20,10 +21,7 @@ public class DefendOwnerTargetGoal extends TargetGoal {
     @Override
     public boolean canUse() {
 
-        UUID ownerId = null;
-
-        if(golem.getPersistentData().contains("Owner"))
-            ownerId = golem.getPersistentData().getUUID("Owner");
+        UUID ownerId = golem.getPersistentData().read("Owner", UUIDUtil.CODEC).orElse(null);
 
         if (ownerId == null) return false;
 

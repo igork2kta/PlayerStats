@@ -3,12 +3,12 @@ package com.playerstats.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record SyncAbilityLevelPacket(String attributeId, int level) implements CustomPacketPayload {
 
-    public static final ResourceLocation ID =
-            ResourceLocation.fromNamespaceAndPath("playerstats", "sync_ability_level");
+    public static final Identifier ID =
+            Identifier.fromNamespaceAndPath("playerstats", "sync_ability_level");
 
     public static final Type<SyncAbilityLevelPacket> TYPE = new Type<>(ID);
 

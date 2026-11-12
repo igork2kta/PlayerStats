@@ -1,10 +1,11 @@
 package com.playerstats.client.widget;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class CustomSearchBox extends EditBox {
 
@@ -18,12 +19,13 @@ public class CustomSearchBox extends EditBox {
     }
 
     @Override
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
         // Fundo customizado
 
-        ResourceLocation texture = ResourceLocation.tryParse("playerstats:textures/gui/search_box.png");
+        Identifier texture = Identifier.tryParse("playerstats:textures/gui/search_box.png");
 
         graphics.blit(
+                RenderPipelines.GUI_TEXTURED,
                 texture,
                 this.getX() - 5,
                 this.getY() - (this.height - 8) / 2,
@@ -37,18 +39,18 @@ public class CustomSearchBox extends EditBox {
 
         // Placeholder: mostrar só se estiver vazio e não focado
         if (this.getValue().isEmpty() && !this.isFocused()) {
-            graphics.drawString(
+            graphics.text(
                     this.font,
                     Component.translatable("gui.playerstats.search_placeholder"),
                     this.getX() + 4,
                     this.getY() + 2,
-                    0xA0A0A0 ,
+                    0xFFA0A0A0,
                     false
             );
         }
 
         // Texto digitado e cursor
-        super.renderWidget(graphics, mouseX, mouseY, partialTicks);
+        super.extractWidgetRenderState(graphics, mouseX, mouseY, partialTicks);
 
     }
 }

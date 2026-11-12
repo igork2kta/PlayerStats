@@ -3,6 +3,7 @@ package com.playerstats.entities.goals;
 import com.playerstats.ModAttributes;
 import com.playerstats.util.AttributeUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
@@ -34,7 +35,8 @@ public class FollowOwnerGoal extends Goal {
             return false; // se já está atacando alguém, não segue
         }
 
-        if (!mob.getPersistentData().hasUUID("Owner")) {
+        UUID ownerId = mob.getPersistentData().read("Owner", UUIDUtil.CODEC).orElse(null);
+        if (ownerId == null) {
             return false;
         }
 
@@ -47,7 +49,6 @@ public class FollowOwnerGoal extends Goal {
             return false;
         }
 
-        UUID ownerId = mob.getPersistentData().getUUID("Owner");
         owner = mob.level().getPlayerByUUID(ownerId);
 
         return owner != null
@@ -128,7 +129,7 @@ public class FollowOwnerGoal extends Goal {
                     // Verifica se a bounding box completa do mob nesta posição não colide com blocos ou fluidos
                     var boundingBox = mob.getDimensions(mob.getPose()).makeBoundingBox(targetX, targetY, targetZ);
                     if (mob.level().noCollision(mob, boundingBox)) {
-                        mob.moveTo(targetX, targetY, targetZ, mob.getYRot(), mob.getXRot());
+                        mob.snapTo(targetX, targetY, targetZ, mob.getYRot(), mob.getXRot());
                         mob.getNavigation().stop();
                         return;
                     }

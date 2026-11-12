@@ -8,7 +8,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import static net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
 
@@ -42,7 +42,7 @@ public class KeyBindings {
         }
 
         if (KeyMappings.ACTIVATE_ICE_KEY.get().consumeClick()) {
-            PacketDistributor.sendToServer(new ActivateInfiniteIcePacket());
+            ClientPacketDistributor.sendToServer(new ActivateInfiniteIcePacket());
         }
 
         // Ritmo acelerado de colocação: se estiver segurando Infinite Ice e segurando o botão direito,
