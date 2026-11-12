@@ -168,6 +168,10 @@
   "gui.playerstats.ability_status_inactive": "Status: Inactive",
   "gui.playerstats.attribute_status_active": "Status: Active",
   "gui.playerstats.attribute_status_inactive": "Status: Inactive",
+  "gui.playerstats.tooltip.toggle_enable": "Click to enable",
+  "gui.playerstats.tooltip.toggle_disable": "Click to disable",
+  "gui.playerstats.tooltip.ability_acquired_badge": "Ability acquired",
+  "gui.playerstats.tooltip.ability_maxed_badge": "Ability maxed",
   "gui.playerstats.ability_toggle_hint": "Tip: Right-Click to toggle Active/Inactive.",
 
   "item.playerstats.infinite_ice": "Infinite Ice",

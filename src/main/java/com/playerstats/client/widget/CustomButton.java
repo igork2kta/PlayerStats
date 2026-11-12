@@ -9,6 +9,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public class CustomButton extends Button {
 
@@ -18,6 +19,7 @@ public class CustomButton extends Button {
 
     private final ResourceLocation TEXTURE;
     private BooleanSupplier activeSupplier;
+    private Supplier<ResourceLocation> textureSupplier;
 
     public CustomButton(int x, int y, int width, int height, MutableComponent label, ResourceLocation texture, OnPress onPress) {
         super(x, y, width, height, Component.empty(), onPress, DEFAULT_NARRATION);
@@ -27,6 +29,10 @@ public class CustomButton extends Button {
 
     public void setActiveSupplier(BooleanSupplier activeSupplier) {
         this.activeSupplier = activeSupplier;
+    }
+
+    public void setTextureSupplier(Supplier<ResourceLocation> textureSupplier) {
+        this.textureSupplier = textureSupplier;
     }
 
     @Override
@@ -41,9 +47,10 @@ public class CustomButton extends Button {
 
         //A textura tem o dobro do tamanho exibido, em cima normal e em baixo é a textura hovered. Quando passa o mouse por cima, altera para a textura hovered
         int texY = (this.isHovered() && this.active) ? this.height : 0; // Se hover, desenha a parte inferior
+        ResourceLocation activeTexture = this.textureSupplier != null ? this.textureSupplier.get() : TEXTURE;
 
         graphics.blit(
-                TEXTURE,
+                activeTexture,
                 this.getX(),
                 this.getY(),
                 0,

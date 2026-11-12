@@ -167,6 +167,10 @@
   "gui.playerstats.ability_status_inactive": "Status: Inativa",
   "gui.playerstats.attribute_status_active": "Status: Ativo",
   "gui.playerstats.attribute_status_inactive": "Status: Inativo",
+  "gui.playerstats.tooltip.toggle_enable": "Clique para ativar",
+  "gui.playerstats.tooltip.toggle_disable": "Clique para desativar",
+  "gui.playerstats.tooltip.ability_acquired_badge": "Habilidade adquirida",
+  "gui.playerstats.tooltip.ability_maxed_badge": "Habilidade maximizada",
   "gui.playerstats.ability_toggle_hint": "Dica: Clique com o Botão Direito para alternar Ativo/Inativo.",
 
   "item.playerstats.infinite_ice": "Gelo Infinito",

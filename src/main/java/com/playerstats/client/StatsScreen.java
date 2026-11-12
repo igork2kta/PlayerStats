@@ -32,6 +32,10 @@ public class StatsScreen extends Screen {
 
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/stats_background.png");
     private static final ResourceLocation PLUS_BUTTON_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/plus_button.png");
+    private static final ResourceLocation ACQUIRED_BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/acquired_badge.png");
+    private static final ResourceLocation TOGGLE_ON_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/toggle_on_button.png");
+    private static final ResourceLocation TOGGLE_OFF_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/toggle_off_button.png");
+    private static final int TOGGLE_BUTTON_OFFSET_X = 36;
     //Tamanho do background
     private static final int BG_WIDTH = 300;
     private static final int BG_HEIGHT = 300;
@@ -62,6 +66,10 @@ public class StatsScreen extends Screen {
     private List<Attribute> cachedAttributes = List.of();
     private List<AttributeInstance> cachedAbilities = List.of();
     private final java.util.Map<String, Boolean> renderedAbilityButtons = new java.util.HashMap<>();
+    private final java.util.Map<String, Boolean> renderedToggleButtons = new java.util.HashMap<>();
+    private final List<ToggleButtonEntry> toggleButtons = new ArrayList<>();
+
+    private record ToggleButtonEntry(CustomButton button, java.util.function.BooleanSupplier isActive) {}
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
@@ -154,7 +162,7 @@ public class StatsScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 
-        if (!showAttributes && hasAbilityButtonStateChanged()) {
+        if (hasButtonStateChanged()) {
             rebuildButtons();
         }
 
@@ -229,7 +237,7 @@ public class StatsScreen extends Screen {
 
                 // Tooltip informativa do atributo (Sempre ativa)
                 int mouseX1 = pos;
-                int mouseX2 = leftPos + BG_WIDTH - 25;
+                int mouseX2 = leftPos + BG_WIDTH - 40;
                 int mouseY1 = y;
                 int mouseY2 = y + LINE_HEIGHT;
 
@@ -412,8 +420,19 @@ public class StatsScreen extends Screen {
                     }
                 }
 
+                int badgeY = y - 3;
+                if (!shouldShowAbilityPlusButton(instance) && badgeY + 4 < clipBottom) {
+                    guiGraphics.blit(ACQUIRED_BADGE_TEXTURE, leftPos + 20, badgeY, 0, 0, 14, 14, 14, 14);
+                    if (mouseX >= leftPos + 20 && mouseX <= leftPos + 34 && mouseY >= badgeY && mouseY <= badgeY + 14) {
+                        Component badgeTooltip = UniqueAbilitiesUtils.isLeveledAbility(descId)
+                                ? Component.translatable("gui.playerstats.tooltip.ability_maxed_badge").withStyle(ChatFormatting.GOLD)
+                                : Component.translatable("gui.playerstats.tooltip.ability_acquired_badge").withStyle(ChatFormatting.GOLD);
+                        guiGraphics.renderTooltip(font, badgeTooltip, mouseX, mouseY);
+                    }
+                }
+
                 int mouseX1 = pos;
-                int mouseX2 = pos + font.width(name) + 60;
+                int mouseX2 = Math.min(pos + font.width(name) + 60, leftPos + BG_WIDTH - 40);
                 int mouseY1 = y;
                 int mouseY2 = y + LINE_HEIGHT;
 
@@ -460,7 +479,7 @@ public class StatsScreen extends Screen {
                         tooltip.add(Component.translatable(descKey).withStyle(s -> s.withColor(0xDDDDDD)));
                     }
 
-                    if (isAcquired) {
+                    if (isAcquired && canToggleAbility(descId)) {
                         tooltip.add(Component.translatable("gui.playerstats.ability_toggle_hint").withStyle(s -> s.withItalic(true).withColor(0xAAAAAA)));
                     }
 
@@ -476,6 +495,15 @@ public class StatsScreen extends Screen {
             }
         }
 
+        for (ToggleButtonEntry entry : toggleButtons) {
+            if (entry.button().isHovered()) {
+                Component toggleTip = entry.isActive().getAsBoolean()
+                        ? Component.translatable("gui.playerstats.tooltip.toggle_disable").withStyle(ChatFormatting.RED)
+                        : Component.translatable("gui.playerstats.tooltip.toggle_enable").withStyle(ChatFormatting.GREEN);
+                guiGraphics.renderTooltip(font, toggleTip, mouseX, mouseY);
+                break;
+            }
+        }
 
     }
 
@@ -502,8 +530,44 @@ public class StatsScreen extends Screen {
         return currentVal < 0;
     }
 
-    private boolean hasAbilityButtonStateChanged() {
+    private boolean canToggleAbility(String descId) {
+        return !descId.contains("rebirth");
+    }
+
+    private boolean isAbilityActiveClient(AttributeInstance instance) {
+        return (int) Math.round(instance.getValue()) > 0;
+    }
+
+    private boolean isAttributeDisabledClient(Attribute attr) {
+        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        if (attrLoc == null) return false;
+        String attrKey = attrLoc.toString();
+        return ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey) > 0
+                && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
+    }
+
+    private boolean hasButtonStateChanged() {
         int y = clipTop - scrollOffset;
+        if (showAttributes) {
+            for (Attribute attr : cachedAttributes) {
+                if (y + 17 <= clipTop) {
+                    y += LINE_HEIGHT;
+                    continue;
+                }
+                if (y + 4 >= clipBottom) break;
+
+                ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                String key = attrLoc != null ? attrLoc.toString() : attr.getDescriptionId();
+                Boolean wasToggleShown = renderedToggleButtons.get(key);
+                boolean shouldShowToggle = hasAttributeUpgrades(attr);
+                if (wasToggleShown == null || wasToggleShown != shouldShowToggle) {
+                    return true;
+                }
+                y += LINE_HEIGHT;
+            }
+            return false;
+        }
+
         for (AttributeInstance instance : cachedAbilities) {
             if (y + 17 <= clipTop) {
                 y += LINE_HEIGHT;
@@ -512,9 +576,12 @@ public class StatsScreen extends Screen {
             if (y + 4 >= clipBottom) break;
 
             String descId = instance.getAttribute().value().getDescriptionId();
-            Boolean wasShown = renderedAbilityButtons.get(descId);
-            boolean shouldShow = shouldShowAbilityPlusButton(instance);
-            if (wasShown == null || wasShown != shouldShow) {
+            Boolean wasPlusShown = renderedAbilityButtons.get(descId);
+            boolean shouldShowPlus = shouldShowAbilityPlusButton(instance);
+            Boolean wasToggleShown = renderedToggleButtons.get(descId);
+            boolean shouldShowToggle = isAbilityAcquired(instance) && canToggleAbility(descId);
+            if (wasPlusShown == null || wasPlusShown != shouldShowPlus
+                    || wasToggleShown == null || wasToggleShown != shouldShowToggle) {
                 return true;
             }
             y += LINE_HEIGHT;
@@ -522,9 +589,27 @@ public class StatsScreen extends Screen {
         return false;
     }
 
+    private CustomButton createToggleButton(int y, java.util.function.BooleanSupplier isActive, Runnable onToggle) {
+        CustomButton toggleButton = new CustomButton(
+                leftPos + BG_WIDTH - TOGGLE_BUTTON_OFFSET_X,
+                y,
+                14,
+                14,
+                Component.empty(),
+                TOGGLE_ON_TEXTURE,
+                button -> onToggle.run()
+        );
+        toggleButton.setTextureSupplier(() -> isActive.getAsBoolean() ? TOGGLE_ON_TEXTURE : TOGGLE_OFF_TEXTURE);
+        this.addRenderableWidget(toggleButton);
+        toggleButtons.add(new ToggleButtonEntry(toggleButton, isActive));
+        return toggleButton;
+    }
+
     private void rebuildButtons() {
         this.clearWidgets();
         renderedAbilityButtons.clear();
+        renderedToggleButtons.clear();
+        toggleButtons.clear();
         addRenderableWidget(attributesButton);
         addRenderableWidget(uniqueAbilitiesButton);
         addRenderableWidget(searchBox);
@@ -564,6 +649,14 @@ public class StatsScreen extends Screen {
                 plusButton.setActiveSupplier(() -> !isAttributeMaxed(instance, attr));
                 this.addRenderableWidget(plusButton);
 
+                ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                String key = attrLoc != null ? attrLoc.toString() : attr.getDescriptionId();
+                boolean showToggle = hasAttributeUpgrades(attr);
+                renderedToggleButtons.put(key, showToggle);
+                if (showToggle) {
+                    createToggleButton(y, () -> !isAttributeDisabledClient(attr), () -> sendAttributeToggle(attr));
+                }
+
                 y += LINE_HEIGHT;
             }
             addRenderableWidget(resetButton);
@@ -598,6 +691,16 @@ public class StatsScreen extends Screen {
                                 sendAttributeChange(instance.getAttribute().value());
                             }
                     ));
+                }
+
+                boolean showToggle = isAbilityAcquired(instance) && canToggleAbility(descId);
+                renderedToggleButtons.put(descId, showToggle);
+                if (showToggle) {
+                    createToggleButton(
+                            y,
+                            () -> isAbilityActiveClient(instance),
+                            () -> sendAttributeToggle(instance.getAttribute().value())
+                    );
                 }
 
                 y += LINE_HEIGHT;
@@ -684,7 +787,7 @@ public class StatsScreen extends Screen {
                 for (Attribute attr : cachedAttributes) {
                     if (y + 17 > clipTop && y + 4 < clipBottom) {
                         int textX = leftPos + 40;
-                        int textEndX = leftPos + BG_WIDTH - 25;
+                        int textEndX = leftPos + BG_WIDTH - 40;
                         if (mouseX >= textX && mouseX <= textEndX && mouseY >= y && mouseY <= y + LINE_HEIGHT) {
                             if (hasAttributeUpgrades(attr)) {
                                 sendAttributeToggle(attr);
@@ -698,19 +801,22 @@ public class StatsScreen extends Screen {
                 int y = clipTop - scrollOffset;
                 for (AttributeInstance instance : cachedAbilities) {
                     if (y + 17 > clipTop && y + 4 < clipBottom) {
-                        // Verifica se clicou na área do botão '+' ou no texto da linha da habilidade
-                        int buttonX = leftPos + 20;
-                        int textX = leftPos + 40;
-                        String name = AttributeUtils.getAttributeName(instance.getAttribute().value());
-                        int textWidth = font.width(name) + 120;
+                        String descId = instance.getAttribute().value().getDescriptionId();
+                        if (canToggleAbility(descId)) {
+                            // Verifica se clicou na área do botão '+' ou no texto da linha da habilidade
+                            int buttonX = leftPos + 20;
+                            int textX = leftPos + 40;
+                            String name = AttributeUtils.getAttributeName(instance.getAttribute().value());
+                            int textEndX = Math.min(textX + font.width(name) + 120, leftPos + BG_WIDTH - 40);
 
-                        boolean clickedButton = shouldShowAbilityPlusButton(instance)
-                                && (mouseX >= buttonX && mouseX <= buttonX + 14 && mouseY >= y && mouseY <= y + 14);
-                        boolean clickedText = (mouseX >= textX && mouseX <= textX + textWidth && mouseY >= y && mouseY <= y + LINE_HEIGHT);
+                            boolean clickedButton = shouldShowAbilityPlusButton(instance)
+                                    && (mouseX >= buttonX && mouseX <= buttonX + 14 && mouseY >= y && mouseY <= y + 14);
+                            boolean clickedText = (mouseX >= textX && mouseX <= textEndX && mouseY >= y && mouseY <= y + LINE_HEIGHT);
 
-                        if (clickedButton || clickedText) {
-                            sendAttributeToggle(instance.getAttribute().value());
-                            return true;
+                            if (clickedButton || clickedText) {
+                                sendAttributeToggle(instance.getAttribute().value());
+                                return true;
+                            }
                         }
                     }
                     y += LINE_HEIGHT;
