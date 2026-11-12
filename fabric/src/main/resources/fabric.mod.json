@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "${mod_name}",
+  "description": "${description}",
+  "authors": [
+    "${mod_author}"
+  ],
+  "contact": {},
+  "license": "${license}",
+  "icon": "assets/playerstats/textures/logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.playerstats.fabric.PlayerStatsFabric"
+    ],
+    "client": [
+      "com.playerstats.fabric.client.PlayerStatsFabricClient"
+    ]
+  },
+  "mixins": [
+    "playerstats.mixins.json",
+    "playerstats.fabric.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "minecraft": "${minecraft_version_range}",
+    "java": ">=${java_version}",
+    "fabric-api": "*"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.playerstats.fabric.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "MixinDefaultAttributes",
+    "MixinEntity",
+    "MixinLivingEntity",
+    "MixinMob"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

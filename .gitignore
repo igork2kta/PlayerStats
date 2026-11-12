@@ -1,6 +1,31 @@
-/run/
-/.gradle/
-/build/
-/.idea/
+# Gradle
+build/
+**/build/
+.gradle/
+**/.gradle/
+
+# Runs
+run/
+**/run/
+runs/
+**/runs/
+run-data/
+
+# IDEs
+.idea/
+**/.idea/
+*.iml
+*.ipr
+*.iws
+out/
+bin/
+.vscode/
+**/.vscode/
+.settings/
+.metadata/
+.classpath
+.project
+
+# Modding / Cache
 /mcmodsrepo/
-bin
+repo/
