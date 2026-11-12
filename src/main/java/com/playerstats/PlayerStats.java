@@ -92,6 +92,7 @@ public class PlayerStats {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modEventBus.addListener(this::onClientSetup);
             modEventBus.addListener(com.playerstats.client.KeyMappings::registerBindings);
+            com.playerstats.client.ModClientConfigScreen.register(modContainer);
         }
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
