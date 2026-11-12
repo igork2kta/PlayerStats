@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -31,6 +32,7 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 public class PlayerAttributePersistence {
 
     private static final String ATTRIBUTE_UPGRADES_TAG = "PlayerStatsUpgrades";
+    private static final String DISABLED_ATTRIBUTES_TAG = "PlayerStatsDisabledAttributes";
     private static final String POINTS_TAG = "PlayerStatsPoints";
     private static final String UPGRADE_COUNT_TAG = "PlayerStatsUpgradeCount";
     private static final String ABILITY_POINTS_TAG = "PlayerAbilityPoints";
@@ -44,6 +46,7 @@ public class PlayerAttributePersistence {
         ClientAttributeCache.clean();
         CompoundTag root = player.getPersistentData();
         root.put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
+        root.put(DISABLED_ATTRIBUTES_TAG, originalNBT.getCompound(DISABLED_ATTRIBUTES_TAG));
         root.put(ABILITY_UPGRADES_TAG, originalNBT.getCompound(ABILITY_UPGRADES_TAG));
 
         if(Config.RESET_ON_DEATH.get()){
@@ -59,7 +62,7 @@ public class PlayerAttributePersistence {
                 Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
                 AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
 
-                if (attr != null && instance != null) {
+                if (attr != null && instance != null && !isAttributeDisabled(player, key)) {
                     int upgradeCount = upgradesTag.getInt(key);
                     double increment = AttributeUtils.getIncrement(instance);
 
@@ -86,6 +89,7 @@ public class PlayerAttributePersistence {
         }
 
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
+        syncEntityUpgrades(player, (ServerPlayer) player);
     }
 
 
@@ -100,6 +104,7 @@ public class PlayerAttributePersistence {
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), (ServerPlayer) player);
         PacketHandler.sendToClient(new UpdatePointsPacket(getAbilityPoints(player), "ability"), (ServerPlayer) player);
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
+        syncEntityUpgrades(player, (ServerPlayer) player);
 
         // Envia os níveis de habilidades salvas
         CompoundTag abilityTag = player.getPersistentData().getCompound(ABILITY_UPGRADES_TAG);
@@ -108,6 +113,13 @@ public class PlayerAttributePersistence {
             if (savedLevel > 0) {
                 PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(key, savedLevel), (ServerPlayer) player);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            syncEntityUpgrades(player, player);
         }
     }
 
@@ -137,8 +149,13 @@ public class PlayerAttributePersistence {
                 }
 
                 if (playerPoints > 0 && (player.experienceLevel >= xpCost || !consumeXp)) {
+                    CompoundTag upgrades = entity.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
+                    int currentUpgrades = upgrades.getInt(attributeId);
+                    double effectiveValue = isAttributeDisabled(entity, attributeId)
+                            ? instance.getValue() + (currentUpgrades * AttributeUtils.getIncrement(instance))
+                            : instance.getValue();
 
-                    if (AttributeUtils.isMaxed(instance)) {
+                    if (AttributeUtils.isMaxed(instance, effectiveValue)) {
                         player.sendSystemMessage(Component.translatable("gui.playerstats.attribute.max_value_reached", AttributeUtils.getAttributeName(attr)));
                         return;
                     }
@@ -149,6 +166,7 @@ public class PlayerAttributePersistence {
 
                     int count = PlayerAttributePersistence.getUpgradeCount(entity);
                     PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
+                    syncEntityUpgrades(entity, player);
 
                     if (consumeXp) consumeExperience(player, xpCost);
                 }
@@ -279,6 +297,73 @@ public class PlayerAttributePersistence {
         return abilityTag.getInt(attributeId);
     }
 
+    public static boolean isAttributeDisabled(LivingEntity entity, String attributeId) {
+        CompoundTag disabled = entity.getPersistentData().getCompound(DISABLED_ATTRIBUTES_TAG);
+        return disabled.getBoolean(attributeId);
+    }
+
+    public static void toggleAttributeUpgrade(LivingEntity entity, ServerPlayer player, String attributeId) {
+        ResourceLocation id = ResourceLocation.tryParse(attributeId);
+        Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+        if (attr == null) return;
+
+        AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+        if (instance == null) return;
+
+        CompoundTag upgrades = entity.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
+        int upgradeCount = upgrades.getInt(attributeId);
+        if (upgradeCount <= 0) return;
+
+        CompoundTag disabled = entity.getPersistentData().getCompound(DISABLED_ATTRIBUTES_TAG);
+        boolean currentlyDisabled = disabled.getBoolean(attributeId);
+
+        if (currentlyDisabled) {
+            disabled.remove(attributeId);
+            if (disabled.isEmpty()) {
+                entity.getPersistentData().remove(DISABLED_ATTRIBUTES_TAG);
+            } else {
+                entity.getPersistentData().put(DISABLED_ATTRIBUTES_TAG, disabled);
+            }
+            double increment = AttributeUtils.getIncrement(instance);
+            applyModifier(instance, attr.getDescriptionId(), increment * upgradeCount);
+        } else {
+            disabled.putBoolean(attributeId, true);
+            entity.getPersistentData().put(DISABLED_ATTRIBUTES_TAG, disabled);
+            removePlayerStatsModifier(instance, attr.getDescriptionId());
+            if (attr == Attributes.MAX_HEALTH && entity.getHealth() > entity.getMaxHealth()) {
+                entity.setHealth(entity.getMaxHealth());
+            }
+        }
+
+        syncEntityUpgrades(entity, player);
+    }
+
+    public static void syncEntityUpgrades(LivingEntity entity, ServerPlayer player) {
+        if (entity == null || player == null) return;
+
+        CompoundTag upgradesTag = entity.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
+        java.util.Map<String, Integer> upgradesMap = new java.util.HashMap<>();
+        for (String key : upgradesTag.getAllKeys()) {
+            int val = upgradesTag.getInt(key);
+            if (val > 0) {
+                upgradesMap.put(key, val);
+            }
+        }
+
+        CompoundTag disabledTag = entity.getPersistentData().getCompound(DISABLED_ATTRIBUTES_TAG);
+        java.util.Set<String> disabledSet = new java.util.HashSet<>();
+        for (String key : disabledTag.getAllKeys()) {
+            if (disabledTag.getBoolean(key)) {
+                disabledSet.add(key);
+            }
+        }
+
+        PacketHandler.sendToClient(
+                new com.playerstats.network.SyncEntityUpgradesPacket(entity.getId(), upgradesMap, disabledSet),
+                player
+        );
+    }
+
     public static void applyUpgrade(LivingEntity entity, Attribute attr) {
         ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
         CompoundTag upgrades = entity.getPersistentData().getCompound(ATTRIBUTE_UPGRADES_TAG);
@@ -286,6 +371,17 @@ public class PlayerAttributePersistence {
         int currentUpgrades = upgrades.getInt(key.toString()) +1;
         upgrades.putInt(key.toString(), currentUpgrades);
         entity.getPersistentData().put(ATTRIBUTE_UPGRADES_TAG, upgrades);
+
+        // Reativa o atributo caso estivesse desativado ao receber um novo upgrade
+        CompoundTag disabled = entity.getPersistentData().getCompound(DISABLED_ATTRIBUTES_TAG);
+        if (disabled.contains(key.toString())) {
+            disabled.remove(key.toString());
+            if (disabled.isEmpty()) {
+                entity.getPersistentData().remove(DISABLED_ATTRIBUTES_TAG);
+            } else {
+                entity.getPersistentData().put(DISABLED_ATTRIBUTES_TAG, disabled);
+            }
+        }
 
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity,attr);
         if (instance != null) {
@@ -313,17 +409,14 @@ public class PlayerAttributePersistence {
             AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
             if (attr != null && instance != null) {
                 int upgradesApplied = upgrades.getInt(key);
-                // Remove o modificador
-                instance.getModifiers().stream()
-                        .filter(mod -> mod.getName().equals("playerstats:" + attr.getDescriptionId()))
-                        .toList()
-                        .forEach(instance::removeModifier);
+                removePlayerStatsModifier(instance, attr.getDescriptionId());
                 refundedPoints += upgradesApplied;
             }
         }
 
 
         entity.getPersistentData().remove(ATTRIBUTE_UPGRADES_TAG);
+        entity.getPersistentData().remove(DISABLED_ATTRIBUTES_TAG);
         entity.getPersistentData().remove(UPGRADE_COUNT_TAG);
 
         if(!resetByDeath) {
@@ -335,6 +428,7 @@ public class PlayerAttributePersistence {
         }
 
         PacketHandler.sendToClient(new UpdateUpgradeCountPacket(0), player);
+        syncEntityUpgrades(entity, player);
 
     }
 
@@ -350,12 +444,16 @@ public class PlayerAttributePersistence {
         player.giveExperiencePoints(points * -1);
     }
 
-    public static void applyModifier(AttributeInstance instance, String attrId, double value) {
-        // Remover qualquer modificador antigo com o mesmo nome
+    public static void removePlayerStatsModifier(AttributeInstance instance, String attrId) {
         instance.getModifiers().stream()
                 .filter(mod -> mod.getName().equals("playerstats:" + attrId))
                 .toList()
                 .forEach(instance::removeModifier);
+    }
+
+    public static void applyModifier(AttributeInstance instance, String attrId, double value) {
+        // Remover qualquer modificador antigo com o mesmo nome
+        removePlayerStatsModifier(instance, attrId);
 
         AttributeModifier modifier = new AttributeModifier(
                 "playerstats:" + attrId,

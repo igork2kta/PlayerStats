@@ -52,7 +52,11 @@ public class ModifyAttributePacket {
                         var instance = AttributeUtils.getAttributeInstance(living, attribute);
                         if (instance != null) {
                             if (msg.isToggle) {
-                                PlayerAttributePersistence.toggleAbility(living, player, msg.attributeId);
+                                if (msg.attributeId.startsWith("playerstats:")) {
+                                    PlayerAttributePersistence.toggleAbility(living, player, msg.attributeId);
+                                } else {
+                                    PlayerAttributePersistence.toggleAttributeUpgrade(living, player, msg.attributeId);
+                                }
                             } else {
                                 PlayerAttributePersistence.upgradeAttribute(living, player, msg.attributeId);
                             }

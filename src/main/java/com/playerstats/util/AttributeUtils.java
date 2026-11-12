@@ -130,19 +130,23 @@ public class AttributeUtils {
 
     public static boolean isMaxed(AttributeInstance instance) {
         if (instance == null) return false;
+        return isMaxed(instance, instance.getValue());
+    }
+
+    public static boolean isMaxed(AttributeInstance instance, double value) {
+        if (instance == null) return false;
         Attribute attr = instance.getAttribute();
         double increment = getIncrement(instance);
-        double currentValue = instance.getValue();
 
         if ("attribute.name.generic.fall_damage_multiplier".equals(attr.getDescriptionId())) {
-            return currentValue <= 0.5001;
+            return value <= 0.5001;
         }
 
         if (attr instanceof RangedAttribute ranged) {
             if (increment > 0) {
-                return currentValue >= ranged.getMaxValue() - 0.0001;
+                return value >= ranged.getMaxValue() - 0.0001;
             } else if (increment < 0) {
-                return currentValue <= ranged.getMinValue() + 0.0001;
+                return value <= ranged.getMinValue() + 0.0001;
             }
         }
         return false;

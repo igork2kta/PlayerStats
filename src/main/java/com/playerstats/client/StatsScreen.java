@@ -32,6 +32,10 @@ public class StatsScreen extends Screen {
 
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/stats_background.png");
     private static final ResourceLocation PLUS_BUTTON_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/plus_button.png");
+    private static final ResourceLocation ACQUIRED_BADGE_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/acquired_badge.png");
+    private static final ResourceLocation TOGGLE_ON_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/toggle_on_button.png");
+    private static final ResourceLocation TOGGLE_OFF_TEXTURE = ResourceLocation.fromNamespaceAndPath("playerstats", "textures/gui/toggle_off_button.png");
+    private static final int TOGGLE_BUTTON_OFFSET_X = 36;
     //Tamanho do background
     private static final int BG_WIDTH = 300;
     private static final int BG_HEIGHT = 300;
@@ -61,6 +65,11 @@ public class StatsScreen extends Screen {
     private boolean showAttributes = true;
     private List<Attribute> cachedAttributes = List.of();
     private List<AttributeInstance> cachedAbilities = List.of();
+    private final java.util.Map<String, Boolean> renderedAbilityButtons = new java.util.HashMap<>();
+    private final java.util.Map<String, Boolean> renderedToggleButtons = new java.util.HashMap<>();
+    private final List<ToggleButtonEntry> toggleButtons = new ArrayList<>();
+
+    private record ToggleButtonEntry(CustomButton button, java.util.function.BooleanSupplier isActive) {}
 
     public StatsScreen() {
         super(Component.literal("Player Stats"));
@@ -137,12 +146,16 @@ public class StatsScreen extends Screen {
 
         updateFilteredLists();
         rebuildButtons();
+        PacketHandler.sendToServer(new RequestEntityUpgradesPacket(entity.getId()));
 
 
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        if (hasButtonStateChanged()) {
+            rebuildButtons();
+        }
 
         this.renderBackground(guiGraphics);
         RenderSystem.setShaderTexture(0, BACKGROUND);
@@ -192,9 +205,14 @@ public class StatsScreen extends Screen {
                 String value = String.format("%.2f", instance.getValue());
                 int pos = leftPos + 40;
 
+                ResourceLocation attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                String attrKey = attrLocation != null ? attrLocation.toString() : "";
+                int syncedUpgrades = ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey);
+                boolean isDisabled = syncedUpgrades > 0 && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
+
                 // Parte base (nome + valor normal)
                 String baseText = name + ": " + value;
-                guiGraphics.drawString(font,baseText, pos, y, 0X291d13, false);
+                guiGraphics.drawString(font, baseText, pos, y, isDisabled ? 0X888888 : 0X291d13, false);
 
                 if(entity.equals(player)){
                     // Parte do boost (somente se existir)
@@ -209,7 +227,7 @@ public class StatsScreen extends Screen {
 
                 // Tooltip informativa do atributo (Sempre ativa)
                 int mouseX1 = pos;
-                int mouseX2 = leftPos + BG_WIDTH - 25;
+                int mouseX2 = leftPos + BG_WIDTH - 40;
                 int mouseY1 = y;
                 int mouseY2 = y + LINE_HEIGHT;
 
@@ -217,22 +235,37 @@ public class StatsScreen extends Screen {
                     double increment = AttributeUtils.getIncrement(instance);
                     double baseValue = instance.getBaseValue();
                     double currentValue = instance.getValue();
-                    double nextValue = currentValue + increment;
 
-                    AttributeModifier modifier = instance.getModifiers().stream()
-                            .filter(mod -> mod.getName().equals("playerstats:" + attr.getDescriptionId()))
-                            .findFirst()
-                            .orElse(null);
+                    AttributeModifier modifier = getPermanentModifier(instance, attr);
+                    double pointsBonus;
+                    int pointsInvested;
+                    if (isDisabled) {
+                        pointsInvested = syncedUpgrades;
+                        pointsBonus = syncedUpgrades * increment;
+                    } else {
+                        pointsBonus = modifier != null ? modifier.getAmount() : 0.0;
+                        pointsInvested = Math.abs(increment) > 0.0001 && Math.abs(pointsBonus) > 0.0001
+                                ? (int) Math.round(pointsBonus / increment) : syncedUpgrades;
+                    }
 
-                    double pointsBonus = modifier != null ? modifier.getAmount() : 0.0;
-                    int pointsInvested = Math.abs(increment) > 0.0001 && Math.abs(pointsBonus) > 0.0001
-                            ? (int) Math.round(pointsBonus / increment) : 0;
+                    double effectiveValue = isDisabled ? currentValue + pointsBonus : currentValue;
+                    double nextValue = effectiveValue + increment;
 
                     List<Component> tooltip = new ArrayList<>();
                     // Título em destaque
                     tooltip.add(Component.literal(name).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 
-                    boolean isMaxed = AttributeUtils.isMaxed(instance);
+                    if (pointsInvested > 0) {
+                        if (isDisabled) {
+                            tooltip.add(Component.translatable("gui.playerstats.attribute_status_inactive")
+                                    .withStyle(s -> s.withColor(0xFF5555)));
+                        } else {
+                            tooltip.add(Component.translatable("gui.playerstats.attribute_status_active")
+                                    .withStyle(s -> s.withColor(0x55FF55)));
+                        }
+                    }
+
+                    boolean isMaxed = AttributeUtils.isMaxed(instance, effectiveValue);
                     Double limitValue = AttributeUtils.getAttributeLimit(instance);
 
                     if (isMaxed) {
@@ -263,10 +296,10 @@ public class StatsScreen extends Screen {
                         }
                     }
 
-                    if (Math.abs(pointsBonus) > 0.0001) {
+                    if (pointsInvested > 0 || Math.abs(pointsBonus) > 0.0001) {
                         String bonusFormatted = (pointsBonus > 0 ? "+" : "") + String.format(Locale.ROOT, "%.2f", pointsBonus);
                         tooltip.add(Component.translatable("gui.playerstats.tooltip.points_bonus", bonusFormatted, pointsInvested)
-                                .withStyle(ChatFormatting.DARK_GREEN));
+                                .withStyle(isDisabled ? ChatFormatting.GRAY : ChatFormatting.DARK_GREEN));
                     }
 
                     ClientBoostCache.BoostInfo boost = ClientBoostCache.activeBoosts.get(attr);
@@ -279,12 +312,16 @@ public class StatsScreen extends Screen {
                     tooltip.add(Component.translatable("gui.playerstats.tooltip.current_value", String.format(Locale.ROOT, "%.2f", currentValue))
                             .withStyle(ChatFormatting.WHITE));
 
+                    if (pointsInvested > 0) {
+                        tooltip.add(Component.translatable("gui.playerstats.ability_toggle_hint")
+                                .withStyle(s -> s.withItalic(true).withColor(0xAAAAAA)));
+                    }
+
                     // ID técnico
                     tooltip.add(Component.translatable("gui.playerstats.tooltip.attribute_id", attr.getDescriptionId())
                             .withStyle(ChatFormatting.DARK_GRAY));
 
                     // Mod de Origem
-                    ResourceLocation attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
                     String modNamespace = attrLocation != null ? attrLocation.getNamespace() : "minecraft";
                     String modName = net.minecraftforge.fml.ModList.get().getModContainerById(modNamespace)
                             .map(c -> c.getModInfo().getDisplayName())
@@ -343,16 +380,17 @@ public class StatsScreen extends Screen {
 
                 int pos = leftPos + 40;
                 String descId = instance.getAttribute().getDescriptionId();
-                if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
-                    int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
-                    int currentVal = (int) Math.round(instance.getValue());
-                    int cachedLvl = ClientAttributeCache.getAbilityLevel(descId);
-                    int activeLvl = Math.max(currentVal, cachedLvl);
+                int currentVal = (int) Math.round(instance.getValue());
+                int cachedLvl = getCachedAbilityLevel(descId);
+                int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
+                int activeLvl = Math.max(currentVal, cachedLvl);
+                boolean isAcquired = isAbilityAcquired(instance);
 
-                    if (currentVal < 0 && activeLvl <= 0) {
+                if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
+                    if (!isAcquired) {
                         // Não adquirida: CINZA
                         guiGraphics.drawString(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0X888888, false);
-                    } else if (currentVal == 0 || (currentVal < 0 && activeLvl > 0)) {
+                    } else if (currentVal <= 0) {
                         // Desativada: CINZA
                         guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X888888, false);
                     } else {
@@ -360,40 +398,51 @@ public class StatsScreen extends Screen {
                         guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X291d13, false);
                     }
                 } else {
-                    if(instance.getValue() == -1)
+                    if (!isAcquired) {
                         // Não adquirida: CINZA
                         guiGraphics.drawString(font, name, pos, y, 0X888888, false);
-                    else if(instance.getValue() == 1)
+                    } else if (currentVal == 1) {
                         // Ativa: COR PADRÃO
-                        guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_active")), pos, y, 0X291d13, false);
-                    else
+                        guiGraphics.drawString(font, name, pos, y, 0X291d13, false);
+                    } else {
                         // Desativada: CINZA
-                        guiGraphics.drawString(font, Component.literal(name).append(Component.translatable("gui.playerstats.obtained_inactive")), pos, y, 0X888888, false);
+                        guiGraphics.drawString(font, name, pos, y, 0X888888, false);
+                    }
                 }
 
-                
+                int badgeY = y - 3;
+                if (!shouldShowAbilityPlusButton(instance) && badgeY + 4 < clipBottom) {
+                    guiGraphics.blit(ACQUIRED_BADGE_TEXTURE, leftPos + 20, badgeY, 0, 0, 14, 14, 14, 14);
+                    if (mouseX >= leftPos + 20 && mouseX <= leftPos + 34 && mouseY >= badgeY && mouseY <= badgeY + 14) {
+                        Component badgeTooltip = UniqueAbilitiesUtils.isLeveledAbility(descId)
+                                ? Component.translatable("gui.playerstats.tooltip.ability_maxed_badge").withStyle(ChatFormatting.GOLD)
+                                : Component.translatable("gui.playerstats.tooltip.ability_acquired_badge").withStyle(ChatFormatting.GOLD);
+                        guiGraphics.renderTooltip(font, badgeTooltip, mouseX, mouseY);
+                    }
+                }
+
                 int mouseX1 = pos;
-                int mouseX2 = pos + font.width(name) + 60;
+                int mouseX2 = Math.min(pos + font.width(name) + 60, leftPos + BG_WIDTH - 40);
                 int mouseY1 = y;
                 int mouseY2 = y + LINE_HEIGHT;
-                
+
                 if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
-                    int currentVal = (int) Math.round(instance.getValue());
-                    int cachedLvl = ClientAttributeCache.getAbilityLevel(descId);
-                    int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
-
-                    Component statusComp;
-                    if (currentVal < 0 && cachedLvl <= 0) {
-                        statusComp = Component.translatable("gui.playerstats.ability_not_unlocked").withStyle(s -> s.withColor(0xAAAAAA));
-                    } else if (currentVal == 0 || (currentVal < 0 && cachedLvl > 0)) {
-                        statusComp = Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFF5555));
-                    } else {
-                        statusComp = Component.translatable("gui.playerstats.ability_status_active").withStyle(s -> s.withColor(0x55FF55));
-                    }
-
                     List<Component> tooltip = new java.util.ArrayList<>();
                     tooltip.add(Component.translatable(descId).withStyle(s -> s.withBold(true).withColor(0xFFFFFF)));
-                    tooltip.add(statusComp);
+
+                    if (!isAcquired) {
+                        tooltip.add(Component.translatable("gui.playerstats.ability_acquired_no").withStyle(s -> s.withColor(0xAAAAAA)));
+                    } else {
+                        tooltip.add(Component.translatable("gui.playerstats.ability_acquired_yes").withStyle(s -> s.withColor(0x55FF55)));
+                        if (currentVal <= 0) {
+                            tooltip.add(Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFF5555)));
+                        } else {
+                            tooltip.add(Component.translatable("gui.playerstats.ability_status_active").withStyle(s -> s.withColor(0x55FF55)));
+                        }
+                        if (UniqueAbilitiesUtils.isLeveledAbility(descId) && activeLvl >= maxLvl) {
+                            tooltip.add(Component.translatable("gui.playerstats.tooltip.max_reached").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                        }
+                    }
 
                     if (descId.contains("vampirism")) {
                         int displayLvl = Math.max(Math.max(1, currentVal), cachedLvl);
@@ -419,7 +468,7 @@ public class StatsScreen extends Screen {
                         tooltip.add(Component.translatable(descKey).withStyle(s -> s.withColor(0xDDDDDD)));
                     }
 
-                    if (currentVal >= 0.0D || cachedLvl > 0) {
+                    if (isAcquired && canToggleAbility(descId)) {
                         tooltip.add(Component.translatable("gui.playerstats.ability_toggle_hint").withStyle(s -> s.withItalic(true).withColor(0xAAAAAA)));
                     }
 
@@ -436,11 +485,121 @@ public class StatsScreen extends Screen {
         }
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
+        for (ToggleButtonEntry entry : toggleButtons) {
+            if (entry.button().isHovered()) {
+                Component toggleTip = entry.isActive().getAsBoolean()
+                        ? Component.translatable("gui.playerstats.tooltip.toggle_disable").withStyle(ChatFormatting.RED)
+                        : Component.translatable("gui.playerstats.tooltip.toggle_enable").withStyle(ChatFormatting.GREEN);
+                guiGraphics.renderTooltip(font, toggleTip, mouseX, mouseY);
+                break;
+            }
+        }
+
     }
 
 
+    private int getCachedAbilityLevel(String descId) {
+        return (entity != null && entity.equals(player)) ? ClientAttributeCache.getAbilityLevel(descId) : 0;
+    }
+
+    private boolean isAbilityAcquired(AttributeInstance instance) {
+        String descId = instance.getAttribute().getDescriptionId();
+        int currentVal = (int) Math.round(instance.getValue());
+        int cachedLvl = getCachedAbilityLevel(descId);
+        return currentVal >= 0 || cachedLvl > 0;
+    }
+
+    private boolean shouldShowAbilityPlusButton(AttributeInstance instance) {
+        String descId = instance.getAttribute().getDescriptionId();
+        int currentVal = (int) Math.round(instance.getValue());
+        if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
+            int maxLvl = UniqueAbilitiesUtils.getMaxLevel(descId);
+            int activeLvl = Math.max(currentVal, getCachedAbilityLevel(descId));
+            return activeLvl < maxLvl;
+        }
+        return currentVal < 0;
+    }
+
+    private boolean canToggleAbility(String descId) {
+        return !descId.contains("rebirth");
+    }
+
+    private boolean isAbilityActiveClient(AttributeInstance instance) {
+        return (int) Math.round(instance.getValue()) > 0;
+    }
+
+    private boolean isAttributeDisabledClient(Attribute attr) {
+        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        if (attrLoc == null) return false;
+        String attrKey = attrLoc.toString();
+        return ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey) > 0
+                && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
+    }
+
+    private boolean hasButtonStateChanged() {
+        int y = clipTop - scrollOffset;
+        if (showAttributes) {
+            for (Attribute attr : cachedAttributes) {
+                if (y + 17 <= clipTop) {
+                    y += LINE_HEIGHT;
+                    continue;
+                }
+                if (y + 4 >= clipBottom) break;
+
+                ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                String key = attrLoc != null ? attrLoc.toString() : attr.getDescriptionId();
+                Boolean wasToggleShown = renderedToggleButtons.get(key);
+                boolean shouldShowToggle = hasAttributeUpgrades(attr);
+                if (wasToggleShown == null || wasToggleShown != shouldShowToggle) {
+                    return true;
+                }
+                y += LINE_HEIGHT;
+            }
+            return false;
+        }
+
+        for (AttributeInstance instance : cachedAbilities) {
+            if (y + 17 <= clipTop) {
+                y += LINE_HEIGHT;
+                continue;
+            }
+            if (y + 4 >= clipBottom) break;
+
+            String descId = instance.getAttribute().getDescriptionId();
+            Boolean wasPlusShown = renderedAbilityButtons.get(descId);
+            boolean shouldShowPlus = shouldShowAbilityPlusButton(instance);
+            Boolean wasToggleShown = renderedToggleButtons.get(descId);
+            boolean shouldShowToggle = isAbilityAcquired(instance) && canToggleAbility(descId);
+            if (wasPlusShown == null || wasPlusShown != shouldShowPlus
+                    || wasToggleShown == null || wasToggleShown != shouldShowToggle) {
+                return true;
+            }
+            y += LINE_HEIGHT;
+        }
+        return false;
+    }
+
+    private CustomButton createToggleButton(int y, java.util.function.BooleanSupplier isActive, Runnable onToggle) {
+        CustomButton toggleButton = new CustomButton(
+                leftPos + BG_WIDTH - TOGGLE_BUTTON_OFFSET_X,
+                y,
+                14,
+                14,
+                Component.empty(),
+                TOGGLE_ON_TEXTURE,
+                button -> onToggle.run()
+        );
+        toggleButton.setTextureSupplier(() -> isActive.getAsBoolean() ? TOGGLE_ON_TEXTURE : TOGGLE_OFF_TEXTURE);
+        this.addRenderableWidget(toggleButton);
+        toggleButtons.add(new ToggleButtonEntry(toggleButton, isActive));
+        return toggleButton;
+    }
+
     private void rebuildButtons() {
         this.clearWidgets();
+        renderedAbilityButtons.clear();
+        renderedToggleButtons.clear();
+        toggleButtons.clear();
         addRenderableWidget(attributesButton);
         addRenderableWidget(uniqueAbilitiesButton);
         addRenderableWidget(searchBox);
@@ -478,8 +637,16 @@ public class StatsScreen extends Screen {
                             sendAttributeChange(attr);
                         }
                 );
-                plusButton.setActiveSupplier(() -> !AttributeUtils.isMaxed(instance));
+                plusButton.setActiveSupplier(() -> !isAttributeMaxed(instance, attr));
                 this.addRenderableWidget(plusButton);
+
+                ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                String key = attrLoc != null ? attrLoc.toString() : attr.getDescriptionId();
+                boolean showToggle = hasAttributeUpgrades(attr);
+                renderedToggleButtons.put(key, showToggle);
+                if (showToggle) {
+                    createToggleButton(y, () -> !isAttributeDisabledClient(attr), () -> sendAttributeToggle(attr));
+                }
 
                 y += LINE_HEIGHT;
             }
@@ -500,18 +667,33 @@ public class StatsScreen extends Screen {
                 }
                 if (y + 4 >= clipBottom) break;
 
+                String descId = instance.getAttribute().getDescriptionId();
+                boolean showPlus = shouldShowAbilityPlusButton(instance);
+                renderedAbilityButtons.put(descId, showPlus);
 
-                this.addRenderableWidget(new CustomButton(
-                        leftPos + 20, // X
-                        y,  // Y
-                        14, // Largura
-                        14, // Altura
-                        Component.empty(),
-                        PLUS_BUTTON_TEXTURE,
-                        button -> {
-                            sendAttributeChange(instance.getAttribute());
-                        }
-                ));
+                if (showPlus) {
+                    this.addRenderableWidget(new CustomButton(
+                            leftPos + 20, // X
+                            y,  // Y
+                            14, // Largura
+                            14, // Altura
+                            Component.empty(),
+                            PLUS_BUTTON_TEXTURE,
+                            button -> {
+                                sendAttributeChange(instance.getAttribute());
+                            }
+                    ));
+                }
+
+                boolean showToggle = isAbilityAcquired(instance) && canToggleAbility(descId);
+                renderedToggleButtons.put(descId, showToggle);
+                if (showToggle) {
+                    createToggleButton(
+                            y,
+                            () -> isAbilityActiveClient(instance),
+                            () -> sendAttributeToggle(instance.getAttribute())
+                    );
+                }
 
                 y += LINE_HEIGHT;
             }
@@ -520,9 +702,38 @@ public class StatsScreen extends Screen {
 
     }
 
+    private AttributeModifier getPermanentModifier(AttributeInstance instance, Attribute attr) {
+        return instance.getModifiers().stream()
+                .filter(mod -> mod.getName().equals("playerstats:" + attr.getDescriptionId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean hasAttributeUpgrades(Attribute attr) {
+        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        if (attrLoc != null && ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrLoc.toString()) > 0) {
+            return true;
+        }
+        AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+        return instance != null && getPermanentModifier(instance, attr) != null;
+    }
+
+    private boolean isAttributeMaxed(AttributeInstance instance, Attribute attr) {
+        if (instance == null) return false;
+        ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+        String attrKey = attrLoc != null ? attrLoc.toString() : "";
+        int syncedUpgrades = ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey);
+        boolean isDisabled = syncedUpgrades > 0 && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
+        if (isDisabled) {
+            double effectiveValue = instance.getValue() + (syncedUpgrades * AttributeUtils.getIncrement(instance));
+            return AttributeUtils.isMaxed(instance, effectiveValue);
+        }
+        return AttributeUtils.isMaxed(instance);
+    }
+
     private void sendAttributeChange(Attribute attribute) {
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attribute);
-        if (instance != null && AttributeUtils.isMaxed(entity, attribute, instance)) {
+        if (instance != null && isAttributeMaxed(instance, attribute)) {
             return;
         }
         ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
@@ -563,23 +774,41 @@ public class StatsScreen extends Screen {
                 return true;
             }
             
-            // Se estiver na aba de habilidades únicas, clique com o botão direito alterna On/Off
-            if (!showAttributes) {
+            if (showAttributes) {
+                int y = clipTop - scrollOffset;
+                for (Attribute attr : cachedAttributes) {
+                    if (y + 17 > clipTop && y + 4 < clipBottom) {
+                        int textX = leftPos + 40;
+                        int textEndX = leftPos + BG_WIDTH - 40;
+                        if (mouseX >= textX && mouseX <= textEndX && mouseY >= y && mouseY <= y + LINE_HEIGHT) {
+                            if (hasAttributeUpgrades(attr)) {
+                                sendAttributeToggle(attr);
+                                return true;
+                            }
+                        }
+                    }
+                    y += LINE_HEIGHT;
+                }
+            } else {
                 int y = clipTop - scrollOffset;
                 for (AttributeInstance instance : cachedAbilities) {
                     if (y + 17 > clipTop && y + 4 < clipBottom) {
-                        // Verifica se clicou na área do botão '+' ou no texto da linha da habilidade
-                        int buttonX = leftPos + 20;
-                        int textX = leftPos + 40;
-                        String name = AttributeUtils.getAttributeName(instance.getAttribute());
-                        int textWidth = font.width(name) + 120;
+                        String descId = instance.getAttribute().getDescriptionId();
+                        if (canToggleAbility(descId)) {
+                            // Verifica se clicou na área do botão '+' ou no texto da linha da habilidade
+                            int buttonX = leftPos + 20;
+                            int textX = leftPos + 40;
+                            String name = AttributeUtils.getAttributeName(instance.getAttribute());
+                            int textEndX = Math.min(textX + font.width(name) + 120, leftPos + BG_WIDTH - 40);
 
-                        boolean clickedButton = (mouseX >= buttonX && mouseX <= buttonX + 14 && mouseY >= y && mouseY <= y + 14);
-                        boolean clickedText = (mouseX >= textX && mouseX <= textX + textWidth && mouseY >= y && mouseY <= y + LINE_HEIGHT);
+                            boolean clickedButton = shouldShowAbilityPlusButton(instance)
+                                    && (mouseX >= buttonX && mouseX <= buttonX + 14 && mouseY >= y && mouseY <= y + 14);
+                            boolean clickedText = (mouseX >= textX && mouseX <= textEndX && mouseY >= y && mouseY <= y + LINE_HEIGHT);
 
-                        if (clickedButton || clickedText) {
-                            sendAttributeToggle(instance.getAttribute());
-                            return true;
+                            if (clickedButton || clickedText) {
+                                sendAttributeToggle(instance.getAttribute());
+                                return true;
+                            }
                         }
                     }
                     y += LINE_HEIGHT;

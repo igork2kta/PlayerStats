@@ -68,6 +68,18 @@ public class PacketHandler {
                 SyncAbilityLevelPacket::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
+        INSTANCE.registerMessage(id++, RequestEntityUpgradesPacket.class,
+                RequestEntityUpgradesPacket::encode,
+                RequestEntityUpgradesPacket::decode,
+                RequestEntityUpgradesPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        INSTANCE.registerMessage(id++, SyncEntityUpgradesPacket.class,
+                SyncEntityUpgradesPacket::encode,
+                SyncEntityUpgradesPacket::decode,
+                SyncEntityUpgradesPacket::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
     }
 
 
