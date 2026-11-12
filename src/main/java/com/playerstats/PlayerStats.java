@@ -71,8 +71,10 @@ public class PlayerStats {
 
 
     private void onConfigReload(ModConfigEvent event) {
-        if (event.getConfig().getSpec() == Config.SERVER) {
-            Config.reloadCustomMobChances();
+        if (event instanceof ModConfigEvent.Loading || event instanceof ModConfigEvent.Reloading) {
+            if (event.getConfig().getSpec() == Config.SERVER) {
+                Config.reloadCustomMobChances();
+            }
         }
     }
 

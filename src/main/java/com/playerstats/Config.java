@@ -216,6 +216,10 @@ public class Config {
     }
 
     public static void reloadCustomMobChances() {
+        if (!SERVER.isLoaded()) {
+            return;
+        }
+
         cachedCustomMobChances.clear();
         cachedCustomAttributeIncrement.clear();
         cachedIgnoredAttributes.clear();
