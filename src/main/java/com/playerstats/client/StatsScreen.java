@@ -219,7 +219,7 @@ public class StatsScreen extends Screen {
 
                 // Parte base (nome + valor normal)
                 String baseText = name + ": " + value;
-                guiGraphics.text(font, baseText, pos, y, isDisabled ? 0xFF888888 : 0xFF291d13, false);
+                guiGraphics.text(font, baseText, pos, y, isDisabled ? 0xFF555555 : 0xFF291d13, false);
 
                 if(entity.equals(player)){
                     // Parte do boost (somente se existir)
@@ -395,25 +395,25 @@ public class StatsScreen extends Screen {
 
                 if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
                     if (!isAcquired) {
-                        // NÃ£o adquirida: CINZA
-                        guiGraphics.text(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0xFF888888, false);
+                        // Não adquirida: CINZA ESCURO
+                        guiGraphics.text(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0xFF555555, false);
                     } else if (currentVal <= 0) {
-                        // Desativada: CINZA
-                        guiGraphics.text(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0xFF888888, false);
+                        // Desativada: CINZA ESCURO
+                        guiGraphics.text(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0xFF555555, false);
                     } else {
-                        // Ativa: COR PADRÃƒO
+                        // Ativa: COR PADRÃO
                         guiGraphics.text(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0xFF291d13, false);
                     }
                 } else {
                     if (!isAcquired) {
-                        // NÃ£o adquirida: CINZA
-                        guiGraphics.text(font, name, pos, y, 0xFF888888, false);
+                        // Não adquirida: CINZA ESCURO
+                        guiGraphics.text(font, name, pos, y, 0xFF555555, false);
                     } else if (currentVal == 1) {
-                        // Ativa: COR PADRÃƒO
+                        // Ativa: COR PADRÃO
                         guiGraphics.text(font, name, pos, y, 0xFF291d13, false);
                     } else {
-                        // Desativada: CINZA
-                        guiGraphics.text(font, name, pos, y, 0xFF888888, false);
+                        // Desativada: CINZA ESCURO
+                        guiGraphics.text(font, name, pos, y, 0xFF555555, false);
                     }
                 }
 
