@@ -1,0 +1,46 @@
+package com.playerstats.entities.goals;
+
+import com.playerstats.ModAttributes;
+import com.playerstats.platform.Services;
+import com.playerstats.util.AttributeUtils;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.target.TargetGoal;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.UUID;
+
+public class DefendOwnerTargetGoal extends TargetGoal {
+    private final IronGolem golem;
+
+    public DefendOwnerTargetGoal(IronGolem golem) {
+        super(golem, false);
+        this.golem = golem;
+    }
+
+    @Override
+    public boolean canUse() {
+        UUID ownerId = null;
+
+        var data = Services.PLATFORM.getPersistentData(golem);
+        if (data.contains("Owner"))
+            ownerId = data.getUUID("Owner");
+
+        if (ownerId == null) return false;
+
+        if (AttributeUtils.getAttributeValue(golem, ModAttributes.DEFEND_OWNER) < 1) return false;
+
+        Player owner = golem.level().getPlayerByUUID(ownerId);
+        if (owner == null) return false;
+
+        LivingEntity attacker = owner.getLastHurtByMob();
+        if (attacker == golem) return false;
+
+        if (attacker != null && attacker.isAlive()) {
+            this.targetMob = attacker;
+            return true;
+        }
+
+        return false;
+    }
+}
