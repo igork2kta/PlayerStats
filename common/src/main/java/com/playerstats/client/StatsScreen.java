@@ -80,6 +80,15 @@ public class StatsScreen extends Screen {
         this.entity = entity;
     }
 
+    public LivingEntity getEntity() {
+        return this.entity;
+    }
+
+    public void onEntityUpgradesUpdated() {
+        updateFilteredLists();
+        rebuildButtons();
+    }
+
     private void updateFilteredLists() {
         if (showAttributes) {
             this.cachedAttributes = AttributeUtils.getAttributes(entity, searchText);
@@ -181,9 +190,9 @@ public class StatsScreen extends Screen {
             guiGraphics.drawString(font, attributepoints, textX, topPos + 35, color);
 
             if(consumeXp){
-                int upgradeCount = ClientAttributeCache.getUpgradeCount();
+                int upgradeCount = ClientAttributeCache.getUpgradeCount(entity.getId());
                 int xpCost = (upgradeCount + 1) * xpIncrement;
-                boolean hasXpForUpgrade = player.experienceLevel > xpCost;
+                boolean hasXpForUpgrade = player.experienceLevel >= xpCost;
                 color = hasXpForUpgrade ? 0x00CC66 : 0xFF5555; // verde ou vermelho
                 Component xp = Component.translatable("gui.playerstats.xp_cost", xpCost);
                 textWidth = font.width(xp);
@@ -202,13 +211,21 @@ public class StatsScreen extends Screen {
                     continue;
                 }
 
-                String value = String.format("%.2f", instance.getValue());
-                int pos = leftPos + 40;
-
                 ResourceLocation attrLocation = BuiltInRegistries.ATTRIBUTE.getKey(attr);
                 String attrKey = attrLocation != null ? attrLocation.toString() : "";
                 int syncedUpgrades = ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrKey);
                 boolean isDisabled = syncedUpgrades > 0 && ClientAttributeCache.isAttributeDisabled(entity.getId(), attrKey);
+
+                AttributeModifier modifier = getPermanentModifier(instance, attr);
+                double displayValue = instance.getValue();
+                if (modifier == null && syncedUpgrades > 0 && !isDisabled) {
+                    displayValue += syncedUpgrades * AttributeUtils.getIncrement(instance);
+                } else if (modifier != null && syncedUpgrades <= 0) {
+                    displayValue -= modifier.getAmount();
+                }
+
+                String value = String.format("%.2f", displayValue);
+                int pos = leftPos + 40;
 
                 // Parte base (nome + valor normal)
                 String baseText = name + ": " + value;
@@ -234,16 +251,18 @@ public class StatsScreen extends Screen {
                 if (mouseX >= mouseX1 && mouseX <= mouseX2 && mouseY >= mouseY1 && mouseY <= mouseY2) {
                     double increment = AttributeUtils.getIncrement(instance);
                     double baseValue = instance.getBaseValue();
-                    double currentValue = instance.getValue();
+                    double currentValue = displayValue;
 
-                    AttributeModifier modifier = getPermanentModifier(instance, attr);
                     double pointsBonus;
                     int pointsInvested;
                     if (isDisabled) {
                         pointsInvested = syncedUpgrades;
                         pointsBonus = syncedUpgrades * increment;
+                    } else if (syncedUpgrades <= 0 && modifier != null) {
+                        pointsInvested = 0;
+                        pointsBonus = 0.0;
                     } else {
-                        pointsBonus = modifier != null ? modifier.getAmount() : 0.0;
+                        pointsBonus = modifier != null ? modifier.getAmount() : (syncedUpgrades * increment);
                         pointsInvested = Math.abs(increment) > 0.0001 && Math.abs(pointsBonus) > 0.0001
                                 ? (int) Math.round(pointsBonus / increment) : syncedUpgrades;
                     }
@@ -384,11 +403,13 @@ public class StatsScreen extends Screen {
                 int activeLvl = Math.max(currentVal, cachedLvl);
                 boolean isAcquired = isAbilityAcquired(instance);
 
+                boolean isClientActive = isAbilityActiveClient(instance);
+
                 if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
                     if (!isAcquired) {
                         // Não adquirida: CINZA ESCURO
                         guiGraphics.drawString(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0x555555, false);
-                    } else if (currentVal <= 0) {
+                    } else if (!isClientActive) {
                         // Desativada: CINZA ESCURO
                         guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0x555555, false);
                     } else {
@@ -399,7 +420,7 @@ public class StatsScreen extends Screen {
                     if (!isAcquired) {
                         // Não adquirida: CINZA ESCURO
                         guiGraphics.drawString(font, name, pos, y, 0x555555, false);
-                    } else if (currentVal == 1) {
+                    } else if (isClientActive) {
                         // Ativa: COR PADRÃO
                         guiGraphics.drawString(font, name, pos, y, 0x291d13, false);
                     } else {
@@ -432,7 +453,7 @@ public class StatsScreen extends Screen {
                         tooltip.add(Component.translatable("gui.playerstats.ability_acquired_no").withStyle(s -> s.withColor(0xAAAAAA)));
                     } else {
                         tooltip.add(Component.translatable("gui.playerstats.ability_acquired_yes").withStyle(s -> s.withColor(0x55FF55)));
-                        if (currentVal <= 0) {
+                        if (!isClientActive) {
                             tooltip.add(Component.translatable("gui.playerstats.ability_status_inactive").withStyle(s -> s.withColor(0xFF5555)));
                         } else {
                             tooltip.add(Component.translatable("gui.playerstats.ability_status_active").withStyle(s -> s.withColor(0x55FF55)));
@@ -497,7 +518,7 @@ public class StatsScreen extends Screen {
 
 
     private int getCachedAbilityLevel(String descId) {
-        return (entity != null && entity.equals(player)) ? ClientAttributeCache.getAbilityLevel(descId) : 0;
+        return entity != null ? ClientAttributeCache.getAbilityLevel(entity.getId(), descId) : ClientAttributeCache.getAbilityLevel(descId);
     }
 
     private boolean isAbilityAcquired(AttributeInstance instance) {
@@ -515,7 +536,7 @@ public class StatsScreen extends Screen {
             int activeLvl = Math.max(currentVal, getCachedAbilityLevel(descId));
             return activeLvl < maxLvl;
         }
-        return currentVal < 0;
+        return !isAbilityAcquired(instance);
     }
 
     private boolean canToggleAbility(String descId) {
@@ -523,7 +544,10 @@ public class StatsScreen extends Screen {
     }
 
     private boolean isAbilityActiveClient(AttributeInstance instance) {
-        return (int) Math.round(instance.getValue()) > 0;
+        int currentVal = (int) Math.round(instance.getValue());
+        if (currentVal >= 0) return currentVal > 0;
+        String descId = instance.getAttribute().getDescriptionId();
+        return getCachedAbilityLevel(descId) > 0;
     }
 
     private boolean isAttributeDisabledClient(Attribute attr) {
@@ -709,8 +733,9 @@ public class StatsScreen extends Screen {
 
     private boolean hasAttributeUpgrades(Attribute attr) {
         ResourceLocation attrLoc = BuiltInRegistries.ATTRIBUTE.getKey(attr);
-        if (attrLoc != null && ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrLoc.toString()) > 0) {
-            return true;
+        if (attrLoc == null) return false;
+        if (ClientAttributeCache.hasEntitySynced(entity.getId())) {
+            return ClientAttributeCache.getEntityUpgradeCount(entity.getId(), attrLoc.toString()) > 0;
         }
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
         return instance != null && getPermanentModifier(instance, attr) != null;

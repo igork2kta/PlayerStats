@@ -87,15 +87,84 @@ public class PacketHandler {
     }
 
     public static void handleUpdateUpgradeCount(UpdateUpgradeCountPacket msg) {
-        ClientAttributeCache.setUpgradeCount(msg.getUpgradeCount());
+        ClientAttributeCache.setUpgradeCount(msg.getEntityId(), msg.getUpgradeCount());
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.screen instanceof com.playerstats.client.StatsScreen screen) {
+            if (screen.getEntity() != null && screen.getEntity().getId() == msg.getEntityId()) {
+                screen.onEntityUpgradesUpdated();
+            }
+        }
     }
 
     public static void handleSyncAbilityLevel(SyncAbilityLevelPacket msg) {
-        ClientAttributeCache.setAbilityLevel(msg.getAttributeId(), msg.getLevel());
+        if (msg.getLevel() > 0) {
+            if (msg.getEntityId() != -1) {
+                ClientAttributeCache.setAbilityLevel(msg.getEntityId(), msg.getAttributeId(), msg.getLevel());
+            } else {
+                ClientAttributeCache.setAbilityLevel(msg.getAttributeId(), msg.getLevel());
+            }
+        }
+
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null && msg.getEntityId() != -1) {
+            var ent = mc.level.getEntity(msg.getEntityId());
+            if (ent instanceof LivingEntity living) {
+                Attribute attr = BuiltInRegistries.ATTRIBUTE.get(new ResourceLocation(msg.getAttributeId()));
+                if (attr != null) {
+                    var inst = AttributeUtils.getAttributeInstance(living, attr);
+                    if (inst != null) {
+                        if (msg.getLevel() > 0) {
+                            if (com.playerstats.util.UniqueAbilitiesUtils.isLeveledAbility(msg.getAttributeId())) {
+                                PlayerAttributePersistence.applyModifier(inst, attr.getDescriptionId(), 1.0D + msg.getLevel());
+                            } else {
+                                PlayerAttributePersistence.applyModifier(inst, attr.getDescriptionId(), 2.0D);
+                            }
+                        } else if (msg.getLevel() == 0) {
+                            PlayerAttributePersistence.applyModifier(inst, attr.getDescriptionId(), 1.0D);
+                        } else {
+                            PlayerAttributePersistence.removePlayerStatsModifier(inst, attr.getDescriptionId());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (mc.screen instanceof com.playerstats.client.StatsScreen screen) {
+            if (screen.getEntity() != null && screen.getEntity().getId() == msg.getEntityId()) {
+                screen.onEntityUpgradesUpdated();
+            }
+        }
     }
 
     public static void handleSyncEntityUpgrades(SyncEntityUpgradesPacket msg) {
-        ClientAttributeCache.setEntityUpgrades(msg.getEntityId(), msg.getUpgrades(), msg.getDisabledAttributes());
+        ClientAttributeCache.setEntityUpgrades(
+                msg.getEntityId(),
+                msg.getUpgradeCount(),
+                msg.getUpgrades(),
+                msg.getDisabledAttributes()
+        );
+
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null) {
+            var ent = mc.level.getEntity(msg.getEntityId());
+            if (ent instanceof LivingEntity living) {
+                for (var attr : BuiltInRegistries.ATTRIBUTE) {
+                    ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                    if (key != null && !key.getNamespace().equals("playerstats") && !msg.getUpgrades().containsKey(key.toString())) {
+                        var inst = AttributeUtils.getAttributeInstance(living, attr);
+                        if (inst != null) {
+                            PlayerAttributePersistence.removePlayerStatsModifier(inst, attr.getDescriptionId());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (mc.screen instanceof com.playerstats.client.StatsScreen screen) {
+            if (screen.getEntity() != null && screen.getEntity().getId() == msg.getEntityId()) {
+                screen.onEntityUpgradesUpdated();
+            }
+        }
     }
 
     public static void handleBoostsSync(BoostsSyncPacket msg) {

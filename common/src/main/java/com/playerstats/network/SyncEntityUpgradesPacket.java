@@ -9,21 +9,25 @@ import java.util.Set;
 
 public class SyncEntityUpgradesPacket {
     private final int entityId;
+    private final int upgradeCount;
     private final Map<String, Integer> upgrades;
     private final Set<String> disabledAttributes;
 
-    public SyncEntityUpgradesPacket(int entityId, Map<String, Integer> upgrades, Set<String> disabledAttributes) {
+    public SyncEntityUpgradesPacket(int entityId, int upgradeCount, Map<String, Integer> upgrades, Set<String> disabledAttributes) {
         this.entityId = entityId;
+        this.upgradeCount = upgradeCount;
         this.upgrades = upgrades;
         this.disabledAttributes = disabledAttributes;
     }
 
     public int getEntityId() { return entityId; }
+    public int getUpgradeCount() { return upgradeCount; }
     public Map<String, Integer> getUpgrades() { return upgrades; }
     public Set<String> getDisabledAttributes() { return disabledAttributes; }
 
     public static void encode(SyncEntityUpgradesPacket msg, FriendlyByteBuf buf) {
         buf.writeInt(msg.entityId);
+        buf.writeInt(msg.upgradeCount);
 
         buf.writeInt(msg.upgrades.size());
         for (Map.Entry<String, Integer> entry : msg.upgrades.entrySet()) {
@@ -39,6 +43,7 @@ public class SyncEntityUpgradesPacket {
 
     public static SyncEntityUpgradesPacket decode(FriendlyByteBuf buf) {
         int entityId = buf.readInt();
+        int upgradeCount = buf.readInt();
 
         int upgradesSize = buf.readInt();
         Map<String, Integer> upgrades = new HashMap<>(upgradesSize);
@@ -52,6 +57,6 @@ public class SyncEntityUpgradesPacket {
             disabled.add(buf.readUtf());
         }
 
-        return new SyncEntityUpgradesPacket(entityId, upgrades, disabled);
+        return new SyncEntityUpgradesPacket(entityId, upgradeCount, upgrades, disabled);
     }
 }
