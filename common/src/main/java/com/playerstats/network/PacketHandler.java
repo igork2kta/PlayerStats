@@ -76,19 +76,78 @@ public class PacketHandler {
     }
 
     public static void handleUpdateUpgradeCount(UpdateUpgradeCountPacket packet) {
-        com.playerstats.client.ClientAttributeCache.setUpgradeCount(packet.upgradeCount());
+        com.playerstats.client.ClientAttributeCache.setUpgradeCount(packet.entityId(), packet.upgradeCount());
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.screen instanceof com.playerstats.client.StatsScreen screen) {
+            if (screen.getEntity() != null && screen.getEntity().getId() == packet.entityId()) {
+                screen.onEntityUpgradesUpdated();
+            }
+        }
     }
 
     public static void handleSyncAbilityLevel(SyncAbilityLevelPacket packet) {
-        com.playerstats.client.ClientAttributeCache.setAbilityLevel(packet.attributeId(), packet.level());
+        com.playerstats.client.ClientAttributeCache.setAbilityLevel(packet.entityId(), packet.attributeId(), packet.level());
+
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null) {
+            var ent = mc.level.getEntity(packet.entityId());
+            if (ent instanceof LivingEntity living) {
+                Attribute attr = BuiltInRegistries.ATTRIBUTE.get(ResourceLocation.tryParse(packet.attributeId()));
+                if (attr != null) {
+                    var inst = AttributeUtils.getAttributeInstance(living, attr);
+                    if (inst != null) {
+                        if (packet.level() > 0) {
+                            if (com.playerstats.util.UniqueAbilitiesUtils.isLeveledAbility(packet.attributeId())) {
+                                PlayerAttributePersistence.applyModifier(inst, attr.getDescriptionId(), 1.0D + packet.level());
+                            } else {
+                                PlayerAttributePersistence.applyModifier(inst, attr.getDescriptionId(), 2.0D);
+                            }
+                        } else if (packet.level() == 0) {
+                            PlayerAttributePersistence.applyModifier(inst, attr.getDescriptionId(), 1.0D);
+                        } else {
+                            PlayerAttributePersistence.removePlayerStatsModifier(inst, attr.getDescriptionId());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (mc.screen instanceof com.playerstats.client.StatsScreen screen) {
+            if (screen.getEntity() != null && screen.getEntity().getId() == packet.entityId()) {
+                screen.onEntityUpgradesUpdated();
+            }
+        }
     }
 
     public static void handleSyncEntityUpgrades(SyncEntityUpgradesPacket msg) {
         com.playerstats.client.ClientAttributeCache.setEntityUpgrades(
                 msg.entityId(),
+                msg.upgradeCount(),
                 msg.upgrades(),
                 msg.disabledAttributes()
         );
+
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null) {
+            var ent = mc.level.getEntity(msg.entityId());
+            if (ent instanceof LivingEntity living) {
+                for (var attr : BuiltInRegistries.ATTRIBUTE) {
+                    ResourceLocation key = BuiltInRegistries.ATTRIBUTE.getKey(attr);
+                    if (key != null && !key.getNamespace().equals("playerstats") && !msg.upgrades().containsKey(key.toString())) {
+                        var inst = AttributeUtils.getAttributeInstance(living, attr);
+                        if (inst != null) {
+                            PlayerAttributePersistence.removePlayerStatsModifier(inst, attr.getDescriptionId());
+                        }
+                    }
+                }
+            }
+        }
+
+        if (mc.screen instanceof com.playerstats.client.StatsScreen screen) {
+            if (screen.getEntity() != null && screen.getEntity().getId() == msg.entityId()) {
+                screen.onEntityUpgradesUpdated();
+            }
+        }
     }
 
     public static void handleBoostsSync(BoostsSyncPacket pkt) {

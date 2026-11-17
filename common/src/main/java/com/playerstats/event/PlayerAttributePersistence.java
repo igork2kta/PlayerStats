@@ -46,6 +46,7 @@ public class PlayerAttributePersistence {
         CompoundTag root = getPersistentData(player);
         root.put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompound(ATTRIBUTE_UPGRADES_TAG));
         root.put(DISABLED_ATTRIBUTES_TAG, originalNBT.getCompound(DISABLED_ATTRIBUTES_TAG));
+        root.put(ABILITY_UPGRADES_TAG, originalNBT.getCompound(ABILITY_UPGRADES_TAG));
 
         if (Config.RESET_ON_DEATH.get()) {
             resetAttributes(player, (ServerPlayer) player, true);
@@ -69,9 +70,28 @@ public class PlayerAttributePersistence {
                     applyModifier(instance, attr.getDescriptionId(), totalIncrement);
                 }
             }
+
+            CompoundTag abilitiesTag = root.getCompound(ABILITY_UPGRADES_TAG);
+            for (String key : abilitiesTag.getAllKeys()) {
+                int level = abilitiesTag.getInt(key);
+                if (level > 0) {
+                    ResourceLocation id = ResourceLocation.tryParse(key);
+                    Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+                    if (attr != null) {
+                        AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
+                        if (instance != null) {
+                            if (UniqueAbilitiesUtils.isLeveledAbility(key)) {
+                                applyModifier(instance, attr.getDescriptionId(), 1.0D + level);
+                            } else {
+                                applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(player.getId(), getUpgradeCount(player)), (ServerPlayer) player);
         syncEntityUpgrades(player, (ServerPlayer) player);
     }
 
@@ -79,7 +99,7 @@ public class PlayerAttributePersistence {
         ClientAttributeCache.clean();
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
         PacketHandler.sendToClient(new UpdatePointsPacket(getAbilityPoints(player), "ability"), player);
-        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), player);
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(player.getId(), getUpgradeCount(player)), player);
         syncEntityUpgrades(player, player);
     }
 
@@ -130,7 +150,7 @@ public class PlayerAttributePersistence {
                     setPoints(player, playerPoints - 1);
 
                     int count = PlayerAttributePersistence.getUpgradeCount(entity);
-                    PacketHandler.sendToClient(new UpdateUpgradeCountPacket(count), player);
+                    PacketHandler.sendToClient(new UpdateUpgradeCountPacket(entity.getId(), count), player);
                     syncEntityUpgrades(entity, player);
 
                     if (consumeXp) consumeExperience(player, xpCost);
@@ -160,7 +180,7 @@ public class PlayerAttributePersistence {
 
                             applyModifier(instance, attr.getDescriptionId(), 1.0D + nextLevel);
                             saveAbilityLevel(entity, attributeId, nextLevel);
-                            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(attributeId, nextLevel), player);
+                            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, nextLevel), player);
                             setAbilityPoints(player, playerPoints - 1);
                             if (consumeXp) consumeExperience(player, xpCost);
                         }
@@ -185,6 +205,7 @@ public class PlayerAttributePersistence {
 
                             applyModifier(instance, attr.getDescriptionId(), 2);
                             saveAbilityLevel(entity, attributeId, 1);
+                            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
                             setAbilityPoints(player, playerPoints - 1);
                             if (consumeXp) consumeExperience(player, xpCost);
                         }
@@ -195,6 +216,7 @@ public class PlayerAttributePersistence {
                         if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
                         applyModifier(instance, attr.getDescriptionId(), 2);
                         saveAbilityLevel(entity, attributeId, 1);
+                        PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
                     }
                     //Possui, desativando
                     else if(instance.getValue() == 1.0D){
@@ -202,6 +224,7 @@ public class PlayerAttributePersistence {
                         if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
                         applyModifier(instance, attr.getDescriptionId(), 1);
                         saveAbilityLevel(entity, attributeId, 0);
+                        PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
                     }
                 }
             }
@@ -232,10 +255,12 @@ public class PlayerAttributePersistence {
                 // Desativa: modifier = 1.0D (-1.0D base + 1.0D = 0.0D)
                 if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
                 applyModifier(instance, attr.getDescriptionId(), 1.0D);
+                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
             } else {
                 // Reativa: modifier = 1.0D + savedLevel (-1.0D base + 1.0D + savedLevel = savedLevel)
                 if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
                 applyModifier(instance, attr.getDescriptionId(), 1.0D + savedLevel);
+                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, savedLevel), player);
             }
         } else {
             // Habilidade binária padrão
@@ -243,10 +268,12 @@ public class PlayerAttributePersistence {
                 if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
                 applyModifier(instance, attr.getDescriptionId(), 2.0D);
                 saveAbilityLevel(entity, attributeId, 1);
+                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
             } else if (instance.getValue() == 1.0D) {
                 if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
                 applyModifier(instance, attr.getDescriptionId(), 1.0D);
                 saveAbilityLevel(entity, attributeId, 0);
+                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
             }
         }
     }
@@ -324,9 +351,27 @@ public class PlayerAttributePersistence {
         }
 
         PacketHandler.sendToClient(
-                new com.playerstats.network.SyncEntityUpgradesPacket(entity.getId(), upgradesMap, disabledSet),
+                new com.playerstats.network.SyncEntityUpgradesPacket(entity.getId(), getUpgradeCount(entity), upgradesMap, disabledSet),
                 player
         );
+
+        CompoundTag abilityTag = getPersistentData(entity).getCompound(ABILITY_UPGRADES_TAG);
+        for (String key : abilityTag.getAllKeys()) {
+            int savedLevel = abilityTag.getInt(key);
+            ResourceLocation id = ResourceLocation.tryParse(key);
+            Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+            int levelToSync = savedLevel;
+            if (attr != null) {
+                AttributeInstance inst = AttributeUtils.getAttributeInstance(entity, attr);
+                if (inst != null && inst.getValue() == 0.0D) {
+                    levelToSync = 0;
+                }
+            }
+            PacketHandler.sendToClient(
+                    new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), key, levelToSync),
+                    player
+            );
+        }
     }
 
     public static void applyUpgrade(LivingEntity entity, Attribute attr) {
@@ -392,7 +437,7 @@ public class PlayerAttributePersistence {
             player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
         }
 
-        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(0), player);
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(entity.getId(), 0), player);
         syncEntityUpgrades(entity, player);
 
     }

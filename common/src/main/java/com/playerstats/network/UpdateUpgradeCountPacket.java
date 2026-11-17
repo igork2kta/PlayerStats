@@ -5,7 +5,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record UpdateUpgradeCountPacket(int upgradeCount) implements CustomPacketPayload {
+public record UpdateUpgradeCountPacket(int entityId, int upgradeCount) implements CustomPacketPayload {
 
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath("playerstats", "update_upgrade_count");
@@ -21,10 +21,11 @@ public record UpdateUpgradeCountPacket(int upgradeCount) implements CustomPacket
     }
 
     private static void encode(FriendlyByteBuf buf, UpdateUpgradeCountPacket msg) {
-        buf.writeInt(msg.upgradeCount());
+        buf.writeInt(msg.entityId);
+        buf.writeInt(msg.upgradeCount);
     }
 
     private static UpdateUpgradeCountPacket decode(FriendlyByteBuf buf) {
-        return new UpdateUpgradeCountPacket(buf.readInt());
+        return new UpdateUpgradeCountPacket(buf.readInt(), buf.readInt());
     }
 }

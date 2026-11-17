@@ -11,10 +11,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Sincroniza com o cliente a contagem de melhorias de atributos e quais estão desativados para uma entidade.
+ * Sincroniza com o cliente a contagem total de melhorias, melhorias por atributo e quais estão desativados para uma entidade.
  */
 public record SyncEntityUpgradesPacket(
         int entityId,
+        int upgradeCount,
         Map<String, Integer> upgrades,
         Set<String> disabledAttributes
 ) implements CustomPacketPayload {
@@ -34,6 +35,7 @@ public record SyncEntityUpgradesPacket(
 
     private static void encode(FriendlyByteBuf buf, SyncEntityUpgradesPacket msg) {
         buf.writeInt(msg.entityId);
+        buf.writeInt(msg.upgradeCount);
 
         buf.writeInt(msg.upgrades.size());
         for (Map.Entry<String, Integer> entry : msg.upgrades.entrySet()) {
@@ -49,6 +51,7 @@ public record SyncEntityUpgradesPacket(
 
     private static SyncEntityUpgradesPacket decode(FriendlyByteBuf buf) {
         int entityId = buf.readInt();
+        int upgradeCount = buf.readInt();
 
         int upgradesSize = buf.readInt();
         Map<String, Integer> upgrades = new HashMap<>(upgradesSize);
@@ -62,6 +65,6 @@ public record SyncEntityUpgradesPacket(
             disabled.add(buf.readUtf());
         }
 
-        return new SyncEntityUpgradesPacket(entityId, upgrades, disabled);
+        return new SyncEntityUpgradesPacket(entityId, upgradeCount, upgrades, disabled);
     }
 }
