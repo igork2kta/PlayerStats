@@ -1,0 +1,74 @@
+#General configuration options
+[geral]
+	#Reset attributes on death
+	resetOnDeath = true
+	#Amount of health considered high
+	highHealthAmount = 50
+
+#Chances of acquiring points upon defeating bosses and high-health mobs
+[mob_chances]
+	#Chance to gain points when killing Wither
+	# Default: 0.5
+	# Range: 0.0 ~ 1.0
+	witherChance = 0.5
+	#Chance to gain points when killing Ender Dragon
+	# Default: 0.5
+	# Range: 0.0 ~ 1.0
+	enderDragonChance = 0.5
+	#Chance to gain points when killing Warden
+	# Default: 0.3
+	# Range: 0.0 ~ 1.0
+	wardenChance = 0.3
+	#Chance to gain points when killing Elder Guardian
+	# Default: 0.5
+	# Range: 0.0 ~ 1.0
+	elderGuardianChance = 0.5
+	#Chance to gain points when killing mobs with high health
+	# Default: 0.05
+	# Range: 0.0 ~ 1.0
+	highHealthChance = 0.05
+	#Custom mob chances (id=chance)
+	customMobChances = []
+
+#Customize attribute increments and ignored attributes
+[attribute_settings]
+	#Custom attribute increment (id=increment)
+	customAttributeIncrement = []
+	#List of attribute names to ignore
+	ignoredAttributes = []
+
+#Experience costs for upgrading attributes, abilities, and resetting
+[experience]
+	#The cost of experience that will be incremented for the next upgrade
+	# Default: 5
+	# Range: 1 ~ 999
+	experienceCostIncrement = 5
+	#The cost of experience that will be required for reset
+	# Default: 50
+	# Range: 1 ~ 999
+	requiredXpForReset = 50
+	#Consume experience on upgrade?
+	consumeExperience = true
+	#The cost of experience that will be required to by an ability
+	# Default: 30
+	# Range: 1 ~ 999
+	requiredXpForAbility = 30
+
+#Configure multipliers and duration for attribute boost scrolls
+[attribute_boost]
+	#Minimum multiplier for attribute boost
+	# Default: 1
+	# Range: 1 ~ 10
+	boostAmountMinMultiplier = 1
+	#Maximum multiplier for attribute boost
+	# Default: 3
+	# Range: 1 ~ 10
+	boostAmountMaxMultiplier = 3
+	#Minimum duration of boost in minutes
+	# Default: 10
+	# Range: 1 ~ 240
+	boostDurationMinMinutes = 10
+	#Maximum duration of boost in minutes
+	# Default: 30
+	# Range: 1 ~ 240
+	boostDurationMaxMinutes = 30

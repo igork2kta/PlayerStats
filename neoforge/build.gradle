@@ -1,0 +1,27 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.gradle.userdev'
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${neo_version}"
+}
+
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        workingDirectory project.layout.projectDirectory.dir('runs').dir(name)
+        modSource project.sourceSets.main
+    }
+
+    client {
+        client()
+    }
+
+    server {
+        server()
+        argument '--nogui'
+    }
+}

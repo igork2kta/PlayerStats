@@ -1,0 +1,8 @@
+{
+  "wolf_howl": {
+    "subtitle": "subtitles.entity.wolf.howl",
+    "sounds": [
+      "playerstats:wolf_howl1"
+    ]
+  }
+}

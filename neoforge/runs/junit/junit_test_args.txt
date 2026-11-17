@@ -1,0 +1,6 @@
+--version
+26.1.2.126
+--assetIndex
+asset-index
+--assetsDir
+C:\Users\igork\.gradle\caches\minecraft\assets

@@ -1,0 +1,4 @@
+#General configuration options
+[geral]
+	#Activate debug mode
+	debugMode = false
