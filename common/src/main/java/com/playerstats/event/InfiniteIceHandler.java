@@ -59,21 +59,15 @@ public class InfiniteIceHandler {
             return;
         }
 
-        ItemStack heldItem = player.getMainHandItem();
-        Inventory inventory = player.getInventory();
-
-        if (!heldItem.isEmpty()) {
-            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-            if (!inventory.add(heldItem)) {
-                player.setItemInHand(InteractionHand.MAIN_HAND, heldItem);
-                player.sendSystemMessage(Component.translatable("gui.playerstats.ice_inventory_full")
-                        .withStyle(ChatFormatting.RED));
-                return;
-            }
+        if (!stashHeldItem(player)) {
+            player.sendSystemMessage(Component.translatable("gui.playerstats.ice_inventory_full")
+                    .withStyle(ChatFormatting.RED));
+            return;
         }
 
         ItemStack iceStack = new ItemStack(ModItems.INFINITE_ICE.get(), 1);
         player.setItemInHand(InteractionHand.MAIN_HAND, iceStack);
+        player.containerMenu.broadcastChanges();
 
         data.putInt(NBT_ICE_TIMER, DURATION_TICKS);
 
@@ -159,6 +153,98 @@ public class InfiniteIceHandler {
     public static void handlePlayerClone(Player player) {
         removeInfiniteIceItem(player);
         Services.PLATFORM.getPersistentData(player).remove(NBT_ICE_TIMER);
+    }
+
+    public static boolean stashHeldItem(Player player) {
+        Inventory inventory = player.getInventory();
+        int selected = inventory.selected;
+        ItemStack held = inventory.getItem(selected);
+        if (held.isEmpty()) {
+            return true;
+        }
+
+        ItemStack toStash = held.copy();
+        int remaining = toStash.getCount();
+
+        // 1. Calcular espaço disponível em pilhas existentes compatíveis (exceto o slot selecionado)
+        if (toStash.isStackable()) {
+            for (int i = 0; i < inventory.items.size(); i++) {
+                if (i == selected) continue;
+                ItemStack slotStack = inventory.items.get(i);
+                if (!slotStack.isEmpty() && ItemStack.isSameItemSameComponents(slotStack, toStash)) {
+                    int space = slotStack.getMaxStackSize() - slotStack.getCount();
+                    if (space > 0) {
+                        remaining -= space;
+                        if (remaining <= 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Calcular espaço em slots vazios (exceto o slot selecionado)
+        if (remaining > 0) {
+            for (int i = 0; i < inventory.items.size(); i++) {
+                if (i == selected) continue;
+                ItemStack slotStack = inventory.items.get(i);
+                if (slotStack.isEmpty()) {
+                    int space = Math.min(inventory.getMaxStackSize(), toStash.getMaxStackSize());
+                    remaining -= space;
+                    if (remaining <= 0) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Se não houver espaço suficiente para guardar o item inteiro, aborta sem alterar nada
+        if (remaining > 0) {
+            return false;
+        }
+
+        // Espaço garantido! Executa a transferência do item
+        ItemStack movingStack = held.copy();
+
+        // Passo A: Mesclar com pilhas existentes
+        if (movingStack.isStackable()) {
+            for (int i = 0; i < inventory.items.size(); i++) {
+                if (i == selected) continue;
+                ItemStack slotStack = inventory.items.get(i);
+                if (!slotStack.isEmpty() && ItemStack.isSameItemSameComponents(slotStack, movingStack)) {
+                    int space = slotStack.getMaxStackSize() - slotStack.getCount();
+                    if (space > 0) {
+                        int toMove = Math.min(movingStack.getCount(), space);
+                        slotStack.grow(toMove);
+                        movingStack.shrink(toMove);
+                        if (movingStack.isEmpty()) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Passo B: Alocar o restante em slots vazios
+        if (!movingStack.isEmpty()) {
+            for (int i = 0; i < inventory.items.size(); i++) {
+                if (i == selected) continue;
+                ItemStack slotStack = inventory.items.get(i);
+                if (slotStack.isEmpty()) {
+                    int space = Math.min(inventory.getMaxStackSize(), movingStack.getMaxStackSize());
+                    int toMove = Math.min(movingStack.getCount(), space);
+                    inventory.items.set(i, movingStack.copyWithCount(toMove));
+                    movingStack.shrink(toMove);
+                    if (movingStack.isEmpty()) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Passo C: Limpar o slot da mão principal
+        inventory.setItem(selected, ItemStack.EMPTY);
+        return true;
     }
 
     private static void removeInfiniteIceItem(Player player) {
