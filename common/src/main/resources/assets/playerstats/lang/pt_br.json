@@ -174,6 +174,12 @@
   "gui.playerstats.tooltip.ability_acquired_badge": "Habilidade adquirida",
   "gui.playerstats.tooltip.ability_maxed_badge": "Habilidade maximizada",
   "gui.playerstats.ability_toggle_hint": "Dica: Clique com o Botão Direito para alternar Ativo/Inativo.",
+  "gui.playerstats.ability_max_level": "Habilidade já está no nível máximo!",
+  "gui.playerstats.ability_upgraded_level": "%s melhorada para o Nível %s/%s!",
+  "gui.playerstats.ability_acquired": "Habilidade %s adquirida!",
+  "gui.playerstats.ability_already_acquired": "Você já possui esta habilidade!",
+  "gui.playerstats.ability_activated": "Habilidade %s ativada!",
+  "gui.playerstats.ability_deactivated": "Habilidade %s desativada!",
 
   "item.playerstats.infinite_ice": "Gelo Infinito",
   "item.playerstats.infinite_ice.hover_text": "Gelo Infinito Temporário",
