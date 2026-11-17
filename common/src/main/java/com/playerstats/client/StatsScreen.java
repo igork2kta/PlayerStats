@@ -151,11 +151,9 @@ public class StatsScreen extends Screen {
 
     }
 
-    //Sem isso o background fica desfocado
     @Override
     public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        //this.renderBlurredBackground(partialTick);
-        super.renderMenuBackground(guiGraphics);
+        // Vazio para evitar que super.render() desenhe o fundo de menu por cima da textura
     }
 
     @Override
@@ -165,7 +163,7 @@ public class StatsScreen extends Screen {
             rebuildButtons();
         }
 
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
+        this.renderTransparentBackground(guiGraphics);
         RenderSystem.setShaderTexture(0, BACKGROUND);
         guiGraphics.blit(BACKGROUND, leftPos, topPos, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
 
@@ -221,7 +219,7 @@ public class StatsScreen extends Screen {
 
                 // Parte base (nome + valor normal)
                 String baseText = name + ": " + value;
-                guiGraphics.drawString(font, baseText, pos, y, isDisabled ? 0X888888 : 0X291d13, false);
+                guiGraphics.drawString(font, baseText, pos, y, isDisabled ? 0x555555 : 0x291d13, false);
 
                 if(entity.equals(player)){
                     // Parte do boost (somente se existir)
@@ -395,25 +393,25 @@ public class StatsScreen extends Screen {
 
                 if (UniqueAbilitiesUtils.isLeveledAbility(descId)) {
                     if (!isAcquired) {
-                        // Não adquirida: CINZA
-                        guiGraphics.drawString(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0X888888, false);
+                        // Não adquirida: CINZA ESCURO
+                        guiGraphics.drawString(font, name + " (Nv. 0/" + maxLvl + ")", pos, y, 0x555555, false);
                     } else if (currentVal <= 0) {
-                        // Desativada: CINZA
-                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X888888, false);
+                        // Desativada: CINZA ESCURO
+                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0x555555, false);
                     } else {
                         // Ativa: COR PADRÃO
-                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0X291d13, false);
+                        guiGraphics.drawString(font, name + " (Nv. " + activeLvl + "/" + maxLvl + ")", pos, y, 0x291d13, false);
                     }
                 } else {
                     if (!isAcquired) {
-                        // Não adquirida: CINZA
-                        guiGraphics.drawString(font, name, pos, y, 0X888888, false);
+                        // Não adquirida: CINZA ESCURO
+                        guiGraphics.drawString(font, name, pos, y, 0x555555, false);
                     } else if (currentVal == 1) {
                         // Ativa: COR PADRÃO
-                        guiGraphics.drawString(font, name, pos, y, 0X291d13, false);
+                        guiGraphics.drawString(font, name, pos, y, 0x291d13, false);
                     } else {
-                        // Desativada: CINZA
-                        guiGraphics.drawString(font, name, pos, y, 0X888888, false);
+                        // Desativada: CINZA ESCURO
+                        guiGraphics.drawString(font, name, pos, y, 0x555555, false);
                     }
                 }
 

@@ -173,6 +173,12 @@
   "gui.playerstats.tooltip.ability_acquired_badge": "Ability acquired",
   "gui.playerstats.tooltip.ability_maxed_badge": "Ability maxed",
   "gui.playerstats.ability_toggle_hint": "Tip: Right-Click to toggle Active/Inactive.",
+  "gui.playerstats.ability_max_level": "Ability is already at max level!",
+  "gui.playerstats.ability_upgraded_level": "%s upgraded to Level %s/%s!",
+  "gui.playerstats.ability_acquired": "Ability %s acquired!",
+  "gui.playerstats.ability_already_acquired": "You already have this ability!",
+  "gui.playerstats.ability_activated": "Ability %s activated!",
+  "gui.playerstats.ability_deactivated": "Ability %s deactivated!",
 
   "item.playerstats.infinite_ice": "Infinite Ice",
   "item.playerstats.infinite_ice.hover_text": "Temporary Infinite Ice",
