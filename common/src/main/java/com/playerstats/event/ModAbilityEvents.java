@@ -51,13 +51,14 @@ public class ModAbilityEvents {
     }
 
     public static void handleEntityJoin(Entity entity, Level level) {
+        if (level.isClientSide()) return;
         if (entity instanceof AbstractHorse horse) {
             ((MobAccessor) horse).playerstats$getGoalSelector().addGoal(5, new FollowOwnerGoal(horse));
         }
         if (entity instanceof IronGolem golem) {
             ((MobAccessor) golem).playerstats$getTargetSelector().addGoal(1, new DefendOwnerTargetGoal(golem));
-            ((MobAccessor) golem).playerstats$getGoalSelector().addGoal(4, new FollowOwnerGoal(golem));
-            ((MobAccessor) golem).playerstats$getGoalSelector().addGoal(5, new PatrolGoal(golem, 1.0D, 16.0D));
+            ((MobAccessor) golem).playerstats$getGoalSelector().addGoal(2, new FollowOwnerGoal(golem));
+            ((MobAccessor) golem).playerstats$getGoalSelector().addGoal(3, new PatrolGoal(golem, 1.0D, 16.0D));
         }
         if (entity instanceof Wolf wolf) {
             ((MobAccessor) wolf).playerstats$getGoalSelector().addGoal(5, new PatrolGoal(wolf, 1.0D, 16.0D));

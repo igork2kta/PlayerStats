@@ -1,4 +1,0 @@
-/pl
-/playerstats addabilitypoints 50
-/playerstats addattributepoints 50
-/kill dev

@@ -6,6 +6,8 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.item.Item;
@@ -32,7 +34,9 @@ public class NeoForgeRegistryHelper implements IRegistryHelper {
 
     @Override
     public <T extends Item> Supplier<T> registerItem(String name, Function<Item.Properties, T> itemFunction, Item.Properties properties) {
-        return ITEMS.registerItem(name, itemFunction::apply, () -> properties);
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(PlayerStats.MODID, name));
+        properties.setId(key);
+        return ITEMS.register(name, () -> itemFunction.apply(properties));
     }
 
     @Override

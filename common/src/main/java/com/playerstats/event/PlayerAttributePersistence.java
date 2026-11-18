@@ -44,6 +44,7 @@ public class PlayerAttributePersistence {
         CompoundTag root = getPersistentData(player);
         root.put(ATTRIBUTE_UPGRADES_TAG, originalNBT.getCompoundOrEmpty(ATTRIBUTE_UPGRADES_TAG));
         root.put(DISABLED_ATTRIBUTES_TAG, originalNBT.getCompoundOrEmpty(DISABLED_ATTRIBUTES_TAG));
+        root.put(ABILITY_UPGRADES_TAG, originalNBT.getCompoundOrEmpty(ABILITY_UPGRADES_TAG));
 
         if (Config.RESET_ON_DEATH.get()) {
             resetAttributes(player, (ServerPlayer) player, true);
@@ -67,9 +68,37 @@ public class PlayerAttributePersistence {
                     applyModifier(instance, attr.getDescriptionId(), totalIncrement);
                 }
             }
+
+            CompoundTag abilitiesTag = root.getCompoundOrEmpty(ABILITY_UPGRADES_TAG);
+            for (String key : abilitiesTag.keySet()) {
+                int level = abilitiesTag.getIntOr(key, 0);
+                if (level > 0) {
+                    Identifier id = Identifier.tryParse(key);
+                    Attribute attr = BuiltInRegistries.ATTRIBUTE.getValue(id);
+                    if (attr != null) {
+                        AttributeInstance oldInst = AttributeUtils.getAttributeInstance(original, attr);
+                        AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
+                        if (instance != null) {
+                            if (instance.getBaseValue() != -1.0D) {
+                                instance.setBaseValue(-1.0D);
+                            }
+                            boolean wasDisabled = (oldInst != null && (int) Math.round(oldInst.getValue()) == 0);
+                            if (wasDisabled) {
+                                applyModifier(instance, attr.getDescriptionId(), 1.0D);
+                            } else {
+                                if (UniqueAbilitiesUtils.isLeveledAbility(key)) {
+                                    applyModifier(instance, attr.getDescriptionId(), 1.0D + level);
+                                } else {
+                                    applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), (ServerPlayer) player);
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(player.getId(), getUpgradeCount(player)), (ServerPlayer) player);
         syncEntityUpgrades(player, (ServerPlayer) player);
     }
 
@@ -77,7 +106,7 @@ public class PlayerAttributePersistence {
         ClientAttributeCache.clean();
         PacketHandler.sendToClient(new UpdatePointsPacket(getPoints(player), "attribute"), player);
         PacketHandler.sendToClient(new UpdatePointsPacket(getAbilityPoints(player), "ability"), player);
-        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(player)), player);
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(player.getId(), getUpgradeCount(player)), player);
         syncEntityUpgrades(player, player);
     }
 
@@ -127,7 +156,8 @@ public class PlayerAttributePersistence {
                     setPoints(player, playerPoints - 1);
                     applyUpgrade(entity, attr);
 
-                    PacketHandler.sendToClient(new UpdateUpgradeCountPacket(getUpgradeCount(entity)), player);
+                    PacketHandler.sendToClient(new UpdateUpgradeCountPacket(entity.getId(), getUpgradeCount(entity)), player);
+                    syncEntityUpgrades(entity, player);
                 } else if (playerPoints <= 0) {
                     player.sendSystemMessage(Component.translatable("gui.playerstats.no_points"));
                 } else {
@@ -163,10 +193,12 @@ public class PlayerAttributePersistence {
         if (attr != null) {
             AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
             if (instance != null) {
-                double currentValue = instance.getValue();
-
                 if (UniqueAbilitiesUtils.isLeveledAbility(attributeId)) {
-                    int currentLevel = (int) Math.round(currentValue);
+                    double currentVal = instance.getValue();
+                    int currentLevel = (int) Math.round(currentVal);
+                    if (currentLevel < 0) {
+                        currentLevel = 0;
+                    }
                     int maxLevel = UniqueAbilitiesUtils.getMaxLevel(attributeId);
 
                     if (currentLevel >= maxLevel) {
@@ -174,11 +206,12 @@ public class PlayerAttributePersistence {
                         return;
                     }
 
-                    int newLevel = currentLevel <= 0 ? 1 : currentLevel + 1;
-                    instance.setBaseValue((double) newLevel);
+                    int nextLevel = currentLevel + 1;
+                    if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
 
-                    saveAbilityLevel(entity, attributeId, newLevel);
-                    PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(attributeId, newLevel), player);
+                    applyModifier(instance, attr.getDescriptionId(), 1.0D + nextLevel);
+                    saveAbilityLevel(entity, attributeId, nextLevel);
+                    PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, nextLevel), player);
 
                     if (consumeXp) {
                         consumeExperience(player, requiredXp);
@@ -187,18 +220,37 @@ public class PlayerAttributePersistence {
 
                     player.sendSystemMessage(Component.translatable("gui.playerstats.ability_upgraded_level",
                             Component.translatable("attribute." + attributeId.replace(":", ".")),
-                            newLevel, maxLevel));
+                            nextLevel, maxLevel));
                     return;
                 }
 
-                if (currentValue < 1.0D) {
-                    instance.setBaseValue(1.0D);
+                if (instance.getBaseValue() != -1.0D) {
+                    instance.setBaseValue(-1.0D);
+                }
+                int val = (int) Math.round(instance.getValue());
+
+                // Não possui, comprando
+                if (val <= -1) {
+                    if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+
+                    applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                    saveAbilityLevel(entity, attributeId, 1);
+                    PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
 
                     if (consumeXp) {
                         consumeExperience(player, requiredXp);
                     }
                     setAbilityPoints(player, playerAbilityPoints - 1);
                     player.sendSystemMessage(Component.translatable("gui.playerstats.ability_acquired",
+                            Component.translatable("attribute." + attributeId.replace(":", "."))));
+                }
+                // Possui, ativando
+                else if (val == 0) {
+                    if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+                    applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                    saveAbilityLevel(entity, attributeId, 1);
+                    PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
+                    player.sendSystemMessage(Component.translatable("gui.playerstats.ability_activated",
                             Component.translatable("attribute." + attributeId.replace(":", "."))));
                 } else {
                     player.sendSystemMessage(Component.translatable("gui.playerstats.ability_already_acquired"));
@@ -215,33 +267,51 @@ public class PlayerAttributePersistence {
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
         if (instance == null) return;
 
-        double currentValue = instance.getValue();
+        if (instance.getBaseValue() != -1.0D) {
+            instance.setBaseValue(-1.0D);
+        }
 
-        if (UniqueAbilitiesUtils.isLeveledAbility(attributeId)) {
+        boolean isLeveled = UniqueAbilitiesUtils.isLeveledAbility(attributeId);
+        if (isLeveled) {
             int savedLevel = getSavedAbilityLevel(entity, attributeId);
+            if (savedLevel <= 0) return; // ainda não desbloqueou nível algum
 
-            if (currentValue <= 0.0D) {
-                int restoreLevel = savedLevel > 0 ? savedLevel : 1;
-                instance.setBaseValue((double) restoreLevel);
-                player.sendSystemMessage(Component.translatable("gui.playerstats.ability_activated",
+            double currentVal = instance.getValue();
+            boolean isActive = currentVal > 0.0D;
+
+            if (isActive) {
+                // Desativa: modifier = 1.0D (-1.0D base + 1.0D = 0.0D)
+                if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
+                applyModifier(instance, attr.getDescriptionId(), 1.0D);
+                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
+                player.sendSystemMessage(Component.translatable("gui.playerstats.ability_deactivated",
                         Component.translatable("attribute." + attributeId.replace(":", "."))));
             } else {
-                int activeLevel = (int) Math.round(currentValue);
-                saveAbilityLevel(entity, attributeId, activeLevel);
-                instance.setBaseValue(-1.0D);
-                player.sendSystemMessage(Component.translatable("gui.playerstats.ability_deactivated",
+                // Reativa: modifier = 1.0D + savedLevel (-1.0D base + 1.0D + savedLevel = savedLevel)
+                if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+                applyModifier(instance, attr.getDescriptionId(), 1.0D + savedLevel);
+                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, savedLevel), player);
+                player.sendSystemMessage(Component.translatable("gui.playerstats.ability_activated",
                         Component.translatable("attribute." + attributeId.replace(":", "."))));
             }
             return;
         }
 
-        if (currentValue == 1.0D) {
-            instance.setBaseValue(-1.0D);
-            player.sendSystemMessage(Component.translatable("gui.playerstats.ability_deactivated",
-                    Component.translatable("attribute." + attributeId.replace(":", "."))));
-        } else if (currentValue == -1.0D) {
-            instance.setBaseValue(1.0D);
+        // Habilidade binária padrão
+        int val = (int) Math.round(instance.getValue());
+        if (val == 0) {
+            if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+            applyModifier(instance, attr.getDescriptionId(), 2.0D);
+            saveAbilityLevel(entity, attributeId, 1);
+            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
             player.sendSystemMessage(Component.translatable("gui.playerstats.ability_activated",
+                    Component.translatable("attribute." + attributeId.replace(":", "."))));
+        } else if (val == 1) {
+            if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
+            applyModifier(instance, attr.getDescriptionId(), 1.0D);
+            saveAbilityLevel(entity, attributeId, 1);
+            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
+            player.sendSystemMessage(Component.translatable("gui.playerstats.ability_deactivated",
                     Component.translatable("attribute." + attributeId.replace(":", "."))));
         }
     }
@@ -319,9 +389,32 @@ public class PlayerAttributePersistence {
         }
 
         PacketHandler.sendToClient(
-                new com.playerstats.network.SyncEntityUpgradesPacket(entity.getId(), upgradesMap, disabledSet),
+                new com.playerstats.network.SyncEntityUpgradesPacket(entity.getId(), getUpgradeCount(entity), upgradesMap, disabledSet),
                 player
         );
+
+        CompoundTag abilityTag = getPersistentData(entity).getCompoundOrEmpty(ABILITY_UPGRADES_TAG);
+        for (String key : abilityTag.keySet()) {
+            int savedLevel = abilityTag.getIntOr(key, 0);
+            Identifier id = Identifier.tryParse(key);
+            Attribute attr = BuiltInRegistries.ATTRIBUTE.getValue(id);
+            int levelToSync = savedLevel;
+            if (attr != null) {
+                AttributeInstance inst = AttributeUtils.getAttributeInstance(entity, attr);
+                if (inst != null) {
+                    if (inst.getBaseValue() != -1.0D) {
+                        inst.setBaseValue(-1.0D);
+                    }
+                    if ((int) Math.round(inst.getValue()) == 0) {
+                        levelToSync = 0;
+                    }
+                }
+            }
+            PacketHandler.sendToClient(
+                    new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), key, levelToSync),
+                    player
+            );
+        }
     }
 
     public static void applyUpgrade(LivingEntity entity, Attribute attr) {
@@ -382,7 +475,7 @@ public class PlayerAttributePersistence {
             player.sendSystemMessage(Component.translatable("gui.playerstats.reset", refundedPoints));
         }
 
-        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(0), player);
+        PacketHandler.sendToClient(new UpdateUpgradeCountPacket(entity.getId(), 0), player);
         syncEntityUpgrades(entity, player);
     }
 
@@ -400,14 +493,21 @@ public class PlayerAttributePersistence {
 
     public static void removePlayerStatsModifier(AttributeInstance instance, String attrId) {
         String sanitizedPath = AttributeUtils.sanitizeToPath(attrId);
+        String simpleName = attrId.contains(".") ? attrId.substring(attrId.lastIndexOf('.') + 1) : attrId;
         instance.getModifiers().stream()
                 .filter(mod -> mod.id().getNamespace().equals("playerstats")
-                        && (mod.id().getPath().equals(attrId) || mod.id().getPath().equals(sanitizedPath)))
-                .findFirst()
-                .ifPresent(mod -> instance.removeModifier(mod.id()));
+                        && (mod.id().getPath().equals(attrId)
+                        || mod.id().getPath().equals(sanitizedPath)
+                        || mod.id().getPath().equals(simpleName)))
+                .toList()
+                .forEach(mod -> instance.removeModifier(mod.id()));
     }
 
     public static void applyModifier(AttributeInstance instance, String attrId, double value) {
+        if (instance.getAttribute().value().getDescriptionId().contains("playerstats") && instance.getBaseValue() != -1.0D) {
+            instance.setBaseValue(-1.0D);
+        }
+
         removePlayerStatsModifier(instance, attrId);
 
         String sanitizedPath = AttributeUtils.sanitizeToPath(attrId);

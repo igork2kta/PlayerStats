@@ -7,6 +7,7 @@ import com.playerstats.event.*;
 import com.playerstats.items.AttributeBoostScrollItem;
 import com.playerstats.items.ModItems;
 import com.playerstats.network.*;
+import com.playerstats.sounds.ModSounds;
 import com.playerstats.util.ModDataComponents;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -32,6 +33,7 @@ public class PlayerStatsFabric implements ModInitializer {
         ModItems.init();
         ModDataComponents.init();
         ModAttributes.init();
+        ModSounds.init();
         PlayerStats.init();
 
         // Registra tipos de payloads

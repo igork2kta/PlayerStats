@@ -1,8 +1,9 @@
 ### Gradle ###
-.gradle
+.gradle/
+**/.gradle/
 build/
+**/build/
 !gradle/wrapper/gradle-wrapper.jar
-!**/src/**/build/
 
 ### IntelliJ IDEA ###
 .idea/
@@ -10,8 +11,7 @@ build/
 *.iml
 *.ipr
 out/
-!**/src/**/out/
-
+**/out/
 .run/
 
 ### Eclipse ###
@@ -20,11 +20,11 @@ out/
 .eclipse/
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 bin/
-!**/src/**/bin/
+**/bin/
 
 ### VS Code ###
 .vscode/
@@ -32,9 +32,24 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-### Minecraft Modding ###
+### Minecraft Modding & Run Dirs ###
 run/
-!**/src/**/run/
+runs/
+**/run/
+**/runs/
+run-data/
+**/run-data/
+*.log
+*.log.gz
+crash-reports/
+**/crash-reports/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+
+# Agent & AI configs
+GEMINI.md
+AGENTS.md
+.agent/
+.agents/
+.cursorrules

@@ -33,8 +33,8 @@ public class VampirismHandler {
             return;
         }
 
-        // Chance de disparo: 30% no nível 1, aumentando 5% a cada nível (30%, 35%, 40%, 45%, 50%)
-        float procChance = 0.30F + (level - 1) * 0.05F;
+        // Chance de disparo: 15% no nível 1, aumentando 5% a cada nível (15%, 20%, 25%, 30%, 35%)
+        float procChance = 0.15F + (level - 1) * 0.05F;
         if (attacker.getRandom().nextFloat() > procChance) {
             return;
         }
