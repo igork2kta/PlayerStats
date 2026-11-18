@@ -78,12 +78,21 @@ public class PlayerAttributePersistence {
                     ResourceLocation id = ResourceLocation.tryParse(key);
                     Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
                     if (attr != null) {
+                        AttributeInstance oldInst = AttributeUtils.getAttributeInstance(original, attr);
                         AttributeInstance instance = AttributeUtils.getAttributeInstance(player, attr);
                         if (instance != null) {
-                            if (UniqueAbilitiesUtils.isLeveledAbility(key)) {
-                                applyModifier(instance, attr.getDescriptionId(), 1.0D + level);
+                            if (instance.getBaseValue() != -1.0D) {
+                                instance.setBaseValue(-1.0D);
+                            }
+                            boolean wasDisabled = (oldInst != null && (int) Math.round(oldInst.getValue()) == 0);
+                            if (wasDisabled) {
+                                applyModifier(instance, attr.getDescriptionId(), 1.0D);
                             } else {
-                                applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                                if (UniqueAbilitiesUtils.isLeveledAbility(key)) {
+                                    applyModifier(instance, attr.getDescriptionId(), 1.0D + level);
+                                } else {
+                                    applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                                }
                             }
                         }
                     }
@@ -154,85 +163,109 @@ public class PlayerAttributePersistence {
                     syncEntityUpgrades(entity, player);
 
                     if (consumeXp) consumeExperience(player, xpCost);
-                }
-            }
-            else{
-                int playerPoints = getAbilityPoints(player);
-                boolean isLeveled = UniqueAbilitiesUtils.isLeveledAbility(attributeId);
-                int maxLevel = UniqueAbilitiesUtils.getMaxLevel(attributeId);
-
-                if (isLeveled) {
-                    double currentVal = instance.getValue();
-                    int currentLevel = (int) Math.round(currentVal);
-                    if (currentLevel < 0) {
-                        currentLevel = 0;
-                    }
-
-                    if (currentLevel < maxLevel) {
-                        int xpCost = Config.REQUIRED_XP_FOR_ABILITY.get();
-                        boolean consumeXp = Config.CONSUME_XP.get();
-                        if (player.gameMode.getGameModeForPlayer() == GameType.CREATIVE)
-                            consumeXp = false;
-
-                        if (playerPoints > 0 && (player.experienceLevel >= xpCost || !consumeXp)) {
-                            int nextLevel = currentLevel + 1;
-                            if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
-
-                            applyModifier(instance, attr.getDescriptionId(), 1.0D + nextLevel);
-                            saveAbilityLevel(entity, attributeId, nextLevel);
-                            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, nextLevel), player);
-                            setAbilityPoints(player, playerPoints - 1);
-                            if (consumeXp) consumeExperience(player, xpCost);
-                        }
-                    } else {
-                        player.sendSystemMessage(Component.translatable("gui.playerstats.attribute.max_value_reached", AttributeUtils.getAttributeName(attr)));
-                    }
+                } else if (playerPoints <= 0) {
+                    player.sendSystemMessage(Component.translatable("gui.playerstats.no_points"));
                 } else {
-                    //Não possui, comprando
-                    if(instance.getValue() == -1.0D){
-
-                        int xpCost = Config.REQUIRED_XP_FOR_ABILITY.get();
-
-                        boolean consumeXp = Config.CONSUME_XP.get();
-                        if (player.gameMode.getGameModeForPlayer() == GameType.CREATIVE)
-                            consumeXp = false;//Creative mod doesn't need XP
-
-
-                        if(playerPoints > 0 && (player.experienceLevel >= xpCost || !consumeXp)) {
-
-                            //Base value = -1 + 2 = 1 = active
-                            if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true))return;
-
-                            applyModifier(instance, attr.getDescriptionId(), 2);
-                            saveAbilityLevel(entity, attributeId, 1);
-                            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
-                            setAbilityPoints(player, playerPoints - 1);
-                            if (consumeXp) consumeExperience(player, xpCost);
-                        }
-                    }
-                    //Possui, ativando
-                    else if(instance.getValue() == 0.0D){
-                        //Base value = -1 + 2 = 1 = active
-                        if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
-                        applyModifier(instance, attr.getDescriptionId(), 2);
-                        saveAbilityLevel(entity, attributeId, 1);
-                        PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
-                    }
-                    //Possui, desativando
-                    else if(instance.getValue() == 1.0D){
-                        //Base value = -1 + 1 = 0 = inactive
-                        if(!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
-                        applyModifier(instance, attr.getDescriptionId(), 1);
-                        saveAbilityLevel(entity, attributeId, 0);
-                        PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
-                    }
+                    player.sendSystemMessage(Component.translatable("gui.playerstats.no_xp", xpCost));
                 }
+            } else {
+                upgradeUniqueAbility(entity, player, attributeId);
             }
         }
         else {
             System.err.println("Unknown attribute ID: " + id);
         }
 
+    }
+
+    public static void upgradeUniqueAbility(LivingEntity entity, ServerPlayer player, String attributeId) {
+        ResourceLocation id = ResourceLocation.tryParse(attributeId);
+        Attribute attr = BuiltInRegistries.ATTRIBUTE.get(id);
+
+        int playerAbilityPoints = getAbilityPoints(player);
+        int requiredXp = Config.REQUIRED_XP_FOR_ABILITY.get();
+        boolean consumeXp = Config.CONSUME_XP.get();
+
+        if (player.gameMode.getGameModeForPlayer() == GameType.CREATIVE)
+            consumeXp = false;
+
+        if (playerAbilityPoints <= 0) {
+            player.sendSystemMessage(Component.translatable("gui.playerstats.no_ability_points"));
+            return;
+        }
+
+        if (player.experienceLevel < requiredXp && consumeXp) {
+            player.sendSystemMessage(Component.translatable("gui.playerstats.no_xp", requiredXp));
+            return;
+        }
+
+        if (attr != null) {
+            AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
+            if (instance != null) {
+                if (UniqueAbilitiesUtils.isLeveledAbility(attributeId)) {
+                    double currentVal = instance.getValue();
+                    int currentLevel = (int) Math.round(currentVal);
+                    if (currentLevel < 0) {
+                        currentLevel = 0;
+                    }
+                    int maxLevel = UniqueAbilitiesUtils.getMaxLevel(attributeId);
+
+                    if (currentLevel >= maxLevel) {
+                        player.sendSystemMessage(Component.translatable("gui.playerstats.ability_max_level"));
+                        return;
+                    }
+
+                    int nextLevel = currentLevel + 1;
+                    if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+
+                    applyModifier(instance, attr.getDescriptionId(), 1.0D + nextLevel);
+                    saveAbilityLevel(entity, attributeId, nextLevel);
+                    PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, nextLevel), player);
+
+                    if (consumeXp) {
+                        consumeExperience(player, requiredXp);
+                    }
+                    setAbilityPoints(player, playerAbilityPoints - 1);
+
+                    player.sendSystemMessage(Component.translatable("gui.playerstats.ability_upgraded_level",
+                            Component.translatable("attribute." + attributeId.replace(":", ".")),
+                            nextLevel, maxLevel));
+                    return;
+                }
+
+                if (instance.getBaseValue() != -1.0D) {
+                    instance.setBaseValue(-1.0D);
+                }
+                int val = (int) Math.round(instance.getValue());
+
+                // Não possui, comprando
+                if (val <= -1) {
+                    if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+
+                    applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                    saveAbilityLevel(entity, attributeId, 1);
+                    PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
+
+                    if (consumeXp) {
+                        consumeExperience(player, requiredXp);
+                    }
+                    setAbilityPoints(player, playerAbilityPoints - 1);
+                    player.sendSystemMessage(Component.translatable("gui.playerstats.ability_acquired",
+                            Component.translatable("attribute." + attributeId.replace(":", "."))));
+                }
+                // Possui, ativando
+                else if (val == 0) {
+                    if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+                    applyModifier(instance, attr.getDescriptionId(), 2.0D);
+                    saveAbilityLevel(entity, attributeId, 1);
+                    PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
+                    player.sendSystemMessage(Component.translatable("gui.playerstats.ability_activated",
+                            Component.translatable("attribute." + attributeId.replace(":", "."))));
+                } else {
+                    player.sendSystemMessage(Component.translatable("gui.playerstats.ability_already_acquired"));
+                }
+            }
+        }
     }
 
     public static void toggleAbility(LivingEntity entity, ServerPlayer player, String attributeId) {
@@ -242,6 +275,10 @@ public class PlayerAttributePersistence {
 
         AttributeInstance instance = AttributeUtils.getAttributeInstance(entity, attr);
         if (instance == null) return;
+
+        if (instance.getBaseValue() != -1.0D) {
+            instance.setBaseValue(-1.0D);
+        }
 
         boolean isLeveled = UniqueAbilitiesUtils.isLeveledAbility(attributeId);
         if (isLeveled) {
@@ -256,25 +293,35 @@ public class PlayerAttributePersistence {
                 if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
                 applyModifier(instance, attr.getDescriptionId(), 1.0D);
                 PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
+                player.sendSystemMessage(Component.translatable("gui.playerstats.ability_deactivated",
+                        Component.translatable("attribute." + attributeId.replace(":", "."))));
             } else {
                 // Reativa: modifier = 1.0D + savedLevel (-1.0D base + 1.0D + savedLevel = savedLevel)
                 if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
                 applyModifier(instance, attr.getDescriptionId(), 1.0D + savedLevel);
                 PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, savedLevel), player);
+                player.sendSystemMessage(Component.translatable("gui.playerstats.ability_activated",
+                        Component.translatable("attribute." + attributeId.replace(":", "."))));
             }
-        } else {
-            // Habilidade binária padrão
-            if (instance.getValue() == 0.0D) {
-                if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
-                applyModifier(instance, attr.getDescriptionId(), 2.0D);
-                saveAbilityLevel(entity, attributeId, 1);
-                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
-            } else if (instance.getValue() == 1.0D) {
-                if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
-                applyModifier(instance, attr.getDescriptionId(), 1.0D);
-                saveAbilityLevel(entity, attributeId, 0);
-                PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
-            }
+            return;
+        }
+
+        // Habilidade binária padrão
+        int val = (int) Math.round(instance.getValue());
+        if (val == 0) {
+            if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, true)) return;
+            applyModifier(instance, attr.getDescriptionId(), 2.0D);
+            saveAbilityLevel(entity, attributeId, 1);
+            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 1), player);
+            player.sendSystemMessage(Component.translatable("gui.playerstats.ability_activated",
+                    Component.translatable("attribute." + attributeId.replace(":", "."))));
+        } else if (val == 1) {
+            if (!UniqueAbilitiesUtils.validateAbility(entity, player, attributeId, false)) return;
+            applyModifier(instance, attr.getDescriptionId(), 1.0D);
+            saveAbilityLevel(entity, attributeId, 1);
+            PacketHandler.sendToClient(new com.playerstats.network.SyncAbilityLevelPacket(entity.getId(), attributeId, 0), player);
+            player.sendSystemMessage(Component.translatable("gui.playerstats.ability_deactivated",
+                    Component.translatable("attribute." + attributeId.replace(":", "."))));
         }
     }
 
