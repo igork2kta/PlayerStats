@@ -29,3 +29,10 @@ bin/
 # Modding / Cache
 /mcmodsrepo/
 repo/
+
+# Agent & AI configs
+GEMINI.md
+AGENTS.md
+.agent/
+.agents/
+.cursorrules

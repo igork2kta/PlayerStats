@@ -55,6 +55,11 @@ public class InfiniteIceItem extends BlockItem {
     }
 
     @Override
+    public boolean canFitInsideContainerItems() {
+        return false;
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.playerstats.infinite_ice.hover_text").withStyle(ChatFormatting.AQUA));
         tooltip.add(Component.translatable("item.playerstats.infinite_ice.hover_text_desc").withStyle(ChatFormatting.GRAY));
