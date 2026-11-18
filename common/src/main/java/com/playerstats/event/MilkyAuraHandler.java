@@ -65,5 +65,20 @@ public class MilkyAuraHandler {
                 );
             }
         }
+
+        // Partículas ambientes periódicas na vaca para indicar a aura ativa (como no 1.20.1)
+        if (cow.tickCount % 30 == 0 && cow.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(
+                    ParticleTypes.EFFECT,
+                    cow.getX(),
+                    cow.getY() + (cow.getBbHeight() / 2.0),
+                    cow.getZ(),
+                    3,
+                    0.4,
+                    0.2,
+                    0.4,
+                    0.02
+            );
+        }
     }
 }

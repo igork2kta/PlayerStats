@@ -6,7 +6,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "MobAccessor",
-    "AttributeSupplierAccessor"
+    "AttributeSupplierAccessor",
+    "MixinServerPlayer",
+    "MixinSlot"
   ],
   "client": [],
   "server": [],

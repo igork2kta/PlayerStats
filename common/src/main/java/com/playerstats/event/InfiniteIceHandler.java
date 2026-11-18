@@ -22,6 +22,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.storage.LevelResource;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,42 +111,156 @@ public class InfiniteIceHandler {
                 player.sendSystemMessage(Component.translatable("gui.playerstats.ice_ability_expired")
                         .withStyle(ChatFormatting.GRAY));
             }
+        } else {
+            // Se o timer expirou ou está inativo, garante que nenhum item de gelo infinito permaneça
+            removeInfiniteIceItem(player);
         }
     }
 
     private static final Map<ResourceKey<Level>, Map<BlockPos, Long>> iceBlocks = new HashMap<>();
+    private static MinecraftServer currentServer = null;
+    private static boolean loadedFromDisk = false;
+    private static boolean isDirty = false;
+
+    private static Path getSaveFilePath(ServerLevel level) {
+        return level.getServer().getWorldPath(LevelResource.ROOT).resolve("data").resolve("playerstats_infinite_ice.dat");
+    }
+
+    private static synchronized void checkServerSwitch(ServerLevel level) {
+        MinecraftServer server = level.getServer();
+        if (currentServer != server) {
+            currentServer = server;
+            iceBlocks.clear();
+            loadedFromDisk = false;
+            isDirty = false;
+        }
+    }
+
+    private static synchronized void saveToDisk(ServerLevel level) {
+        if (!isDirty) return;
+        try {
+            Path path = getSaveFilePath(level);
+            boolean allEmpty = true;
+            for (var m : iceBlocks.values()) {
+                if (!m.isEmpty()) {
+                    allEmpty = false;
+                    break;
+                }
+            }
+            if (allEmpty) {
+                Files.deleteIfExists(path);
+                isDirty = false;
+                return;
+            }
+            Files.createDirectories(path.getParent());
+            Path tempPath = path.resolveSibling("playerstats_infinite_ice.tmp");
+            try (DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(tempPath)))) {
+                dos.writeInt(1); // version
+                int total = 0;
+                for (var m : iceBlocks.values()) {
+                    total += m.size();
+                }
+                dos.writeInt(total);
+                for (var dimEntry : iceBlocks.entrySet()) {
+                    String dimKey = dimEntry.getKey().location().toString();
+                    for (var blockEntry : dimEntry.getValue().entrySet()) {
+                        dos.writeUTF(dimKey);
+                        BlockPos pos = blockEntry.getKey();
+                        dos.writeInt(pos.getX());
+                        dos.writeInt(pos.getY());
+                        dos.writeInt(pos.getZ());
+                        dos.writeLong(blockEntry.getValue());
+                    }
+                }
+            }
+            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            isDirty = false;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static synchronized void loadFromDisk(ServerLevel level) {
+        checkServerSwitch(level);
+        if (loadedFromDisk) return;
+        loadedFromDisk = true;
+        try {
+            Path path = getSaveFilePath(level);
+            if (!Files.exists(path)) return;
+            try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(path)))) {
+                int version = dis.readInt();
+                int count = dis.readInt();
+                for (int i = 0; i < count; i++) {
+                    String dimKey = dis.readUTF();
+                    int x = dis.readInt();
+                    int y = dis.readInt();
+                    int z = dis.readInt();
+                    long expireTick = dis.readLong();
+                    ResourceLocation loc = ResourceLocation.tryParse(dimKey);
+                    if (loc != null) {
+                        ResourceKey<Level> resKey = ResourceKey.create(Registries.DIMENSION, loc);
+                        iceBlocks.computeIfAbsent(resKey, k -> new HashMap<>()).put(new BlockPos(x, y, z), expireTick);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void registerPlacedIce(Level level, BlockPos pos) {
         if (level.isClientSide) return;
         long expireTick = level.getGameTime() + 200;
         iceBlocks.computeIfAbsent(level.dimension(), k -> new HashMap<>()).put(pos.immutable(), expireTick);
+        isDirty = true;
+        if (level instanceof ServerLevel serverLevel) {
+            checkServerSwitch(serverLevel);
+            saveToDisk(serverLevel);
+        }
     }
 
     public static void handleLevelTick(Level level) {
         if (level.isClientSide) return;
+        if (!(level instanceof ServerLevel serverLevel)) return;
+
+        loadFromDisk(serverLevel);
+
         var map = iceBlocks.get(level.dimension());
-        if (map == null || map.isEmpty()) return;
+        if (map == null || map.isEmpty()) {
+            if (isDirty) {
+                saveToDisk(serverLevel);
+            }
+            return;
+        }
 
         long currentTime = level.getGameTime();
         var iterator = map.entrySet().iterator();
+        boolean changed = false;
 
         while (iterator.hasNext()) {
             var entry = iterator.next();
             if (currentTime >= entry.getValue()) {
                 BlockPos pos = entry.getKey();
+                if (!level.isLoaded(pos)) {
+                    continue; // Espera o chunk carregar para evaporar o gelo
+                }
                 var state = level.getBlockState(pos);
                 if (state.is(Blocks.ICE) || state.is(Blocks.FROSTED_ICE)) {
                     level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-                    if (level instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(
-                                ParticleTypes.POOF,
-                                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                                5, 0.2, 0.2, 0.2, 0.05
-                        );
-                    }
+                    serverLevel.sendParticles(
+                            ParticleTypes.POOF,
+                            pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                            5, 0.2, 0.2, 0.2, 0.05
+                    );
                 }
                 iterator.remove();
+                changed = true;
             }
+        }
+
+        if (changed) {
+            isDirty = true;
+            saveToDisk(serverLevel);
         }
     }
 
@@ -143,6 +269,10 @@ public class InfiniteIceHandler {
             var map = iceBlocks.get(level.dimension());
             if (map != null && map.containsKey(pos)) {
                 map.remove(pos);
+                isDirty = true;
+                if (level instanceof ServerLevel serverLevel) {
+                    saveToDisk(serverLevel);
+                }
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 return true;
             }
@@ -247,13 +377,34 @@ public class InfiniteIceHandler {
         return true;
     }
 
-    private static void removeInfiniteIceItem(Player player) {
+    public static boolean isAbilityActive(Player player) {
+        CompoundTag data = Services.PLATFORM.getPersistentData(player);
+        return data.contains(NBT_ICE_TIMER) && data.getInt(NBT_ICE_TIMER) > 0;
+    }
+
+    public static boolean isInfiniteIce(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(ModItems.INFINITE_ICE.get());
+    }
+
+    public static void removeInfiniteIceItem(Player player) {
         Inventory inv = player.getInventory();
+        boolean changed = false;
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack stack = inv.getItem(i);
             if (!stack.isEmpty() && stack.is(ModItems.INFINITE_ICE.get())) {
                 inv.setItem(i, ItemStack.EMPTY);
+                changed = true;
             }
+        }
+        if (player.containerMenu != null) {
+            ItemStack carried = player.containerMenu.getCarried();
+            if (!carried.isEmpty() && carried.is(ModItems.INFINITE_ICE.get())) {
+                player.containerMenu.setCarried(ItemStack.EMPTY);
+                changed = true;
+            }
+        }
+        if (changed) {
+            player.containerMenu.broadcastChanges();
         }
     }
 }

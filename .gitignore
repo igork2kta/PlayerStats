@@ -28,10 +28,14 @@ eclipse
 run
 runs
 run-data
+.vscode/
 
 repo
+
+# Agent & AI configs
 GEMINI.md
+AGENTS.md
+.agent/
+.agents/
 .cursorrules
-.agent/rules/playerstats.md
-.vscode
 ideias.md
