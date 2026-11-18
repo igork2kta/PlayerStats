@@ -103,6 +103,7 @@ public class ModAttributes {
             consumer.accept(type, DEFEND_OWNER.get());
             consumer.accept(type, TAUNT.get());
             consumer.accept(type, PATROL.get());
+            consumer.accept(type, REBIRTH.get());
         }
 
         if (type == EntityType.WOLF) {
